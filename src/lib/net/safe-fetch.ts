@@ -16,6 +16,8 @@ export interface SafeFetchOptions {
   maxBytes?: number;
   maxRedirects?: number;
   accept?: string;
+  /** Override the User-Agent (social crawlers get the rich og: markup that browsers may not). */
+  userAgent?: string;
   /** Extra request headers (e.g. referer). */
   headers?: Record<string, string>;
   /** Override DNS resolution (used in tests). */
@@ -33,7 +35,7 @@ export interface SafeFetchResult {
 }
 
 // Many shops and CDNs reject unknown bots; a mainstream browser identity gets the same HTML a visitor sees.
-const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
+export const CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 
 export function parsePublicUrl(raw: string): URL {
   let input = raw.trim();
@@ -80,7 +82,7 @@ function requestOnce(url: URL, ip: string, opts: Required<Pick<SafeFetchOptions,
           method: "GET",
           timeout: opts.timeoutMs,
           headers: {
-            "user-agent": USER_AGENT,
+            "user-agent": opts.userAgent ?? CHROME_UA,
             accept: opts.accept ?? "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
             "accept-language": "en-US,en;q=0.9",
             ...(opts.headers ?? {}),

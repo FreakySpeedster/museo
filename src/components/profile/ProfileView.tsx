@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, History, LayoutGrid } from "lucide-react";
+import { Check, History, LayoutGrid, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, TimelineEntry, ViewerDTO } from "@/lib/dto";
@@ -418,7 +418,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
                   atLimit ? "cursor-not-allowed border-line text-muted" : "border-line text-muted hover:border-accent hover:bg-accent-soft/40 hover:text-ink",
                 )}
               >
-                {atLimit ? `Shelf limit reached (${MAX_SHELVES_PER_PAGE}/${MAX_SHELVES_PER_PAGE})` : <>＋ Add a shelf <span className="text-xs">({shelfCount}/{MAX_SHELVES_PER_PAGE})</span></>}
+                {atLimit ? `Shelf limit reached (${MAX_SHELVES_PER_PAGE}/${MAX_SHELVES_PER_PAGE})` : <><Plus className="size-4" aria-hidden /> Add a shelf <span className="text-xs">({shelfCount}/{MAX_SHELVES_PER_PAGE})</span></>}
               </button>
             )}
           </div>

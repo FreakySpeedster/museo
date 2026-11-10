@@ -9,7 +9,7 @@ export const maxDuration = 30;
 
 const str = (v: FormDataEntryValue | null) => (typeof v === "string" ? v : undefined);
 
-/** multipart/form-data: type=LINK|PHOTO, title?, description?, url (LINK), file (PHOTO) */
+/** multipart/form-data: type=LINK|PHOTO, title?, description?, url (LINK), imageUrl? / file? (LINK: chosen candidate or own photo), file (PHOTO) */
 export const POST = route<{ id: string }>(
   async ({ req, user, params }) => {
     let form: FormData;
@@ -23,7 +23,16 @@ export const POST = route<{ id: string }>(
 
     if (type === "LINK") {
       const input = itemCreateLinkSchema.parse({ ...text, url: str(form.get("url")) });
-      return ok({ item: toItemDTO(await createLinkItem(user.id, params.id, input)) }, 201);
+      // Optional: a candidate photo the user picked, or their own photo (takes priority).
+      const pick = str(form.get("imageUrl"));
+      const own = form.get("file");
+      let photo: Buffer | undefined;
+      if (own instanceof File && own.size > 0) {
+        if (own.size > maxUploadBytes()) throw new AppError("UPLOAD_INVALID", `Image is too large (max ${Math.round(maxUploadBytes() / 1024 / 1024)}MB)`);
+        photo = Buffer.from(await own.arrayBuffer());
+      }
+      const item = await createLinkItem(user.id, params.id, input, { imageUrl: pick && pick.length <= 2000 ? pick : undefined, photo });
+      return ok({ item: toItemDTO(item) }, 201);
     }
     if (type === "PHOTO") {
       const file = form.get("file");

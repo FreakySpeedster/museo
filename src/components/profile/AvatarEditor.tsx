@@ -17,8 +17,8 @@ export function AvatarEditor({ viewer, onChange }: { viewer: ViewerDTO; onChange
   async function pick(file: File | undefined) {
     if (!file) return;
     setError("");
-    if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
-      setError("Choose a JPG, PNG, WebP or GIF image.");
+    if (!file.type.startsWith("image/")) {
+      setError("Choose an image file.");
       return;
     }
     setBusy("upload");
@@ -66,7 +66,7 @@ export function AvatarEditor({ viewer, onChange }: { viewer: ViewerDTO; onChange
         <p className="text-xs text-muted">JPG, PNG, WebP or GIF. We crop it to a square.</p>
         {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
-      <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" aria-label="Profile photo" data-testid="avatar-input" onChange={(e) => pick(e.target.files?.[0])} />
+      <input ref={input} type="file" accept="image/*" className="sr-only" aria-label="Profile photo" data-testid="avatar-input" onChange={(e) => pick(e.target.files?.[0])} />
     </div>
   );
 }

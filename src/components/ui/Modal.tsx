@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 import { gsap, reducedMotion } from "@/lib/gsap";
 
 const FOCUSABLE = 'a[href],button:not([disabled]),textarea,input:not([type="hidden"]),select,[tabindex]:not([tabindex="-1"])';
@@ -70,6 +71,16 @@ export function Modal({
     };
   }, [visible, open]);
 
+  // If focus was lost (e.g. a focused button just unmounted), Escape should still dismiss the dialog.
+  useEffect(() => {
+    if (!visible || !open || !dismissible) return;
+    const onDoc = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && (e.target === document.body || e.target === document.documentElement)) onClose();
+    };
+    document.addEventListener("keydown", onDoc);
+    return () => document.removeEventListener("keydown", onDoc);
+  }, [visible, open, dismissible, onClose]);
+
   const onKey = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Escape" && dismissible) {
@@ -116,9 +127,7 @@ export function Modal({
           </div>
           {dismissible && (
             <button onClick={onClose} aria-label="Close" className="-mr-2 rounded-full p-2 text-muted transition hover:bg-surface-2 hover:text-ink">
-              <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
+              <X className="size-5" aria-hidden />
             </button>
           )}
         </div>

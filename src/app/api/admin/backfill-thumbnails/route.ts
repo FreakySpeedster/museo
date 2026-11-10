@@ -15,8 +15,16 @@ function authorized(req: NextRequest): boolean {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-/** Operator endpoint: fills in missing link thumbnails. Requires `Authorization: Bearer $CRON_SECRET`. */
+/** Operator endpoint: fills in (scope=missing) or re-runs (scope=all) link thumbnails. Requires `Authorization: Bearer $CRON_SECRET`. */
 export async function POST(req: NextRequest) {
   if (!authorized(req)) return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Not allowed" } }, { status: 401 });
-  return NextResponse.json(await backfillThumbnails(10));
+  const body = (await req.json().catch(() => ({}))) as { scope?: string; after?: string; limit?: number; dryRun?: boolean };
+  return NextResponse.json(
+    await backfillThumbnails({
+      scope: body.scope === "all" ? "all" : "missing",
+      after: typeof body.after === "string" ? body.after : undefined,
+      limit: Math.min(Math.max(Number(body.limit) || 5, 1), 8),
+      dryRun: body.dryRun === true,
+    }),
+  );
 }

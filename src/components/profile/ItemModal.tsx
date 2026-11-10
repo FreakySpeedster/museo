@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, ImagePlus, RefreshCw } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { PhotoPicker, type PhotoCandidate } from "./PhotoPicker";
 import { categoryMeta } from "@/lib/categories";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { timeAgo } from "@/lib/time";
@@ -58,6 +60,7 @@ function ItemBody({
 }) {
   const toast = useToast();
   const [editing, setEditing] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -138,10 +141,12 @@ function ItemBody({
                   <div className="mt-auto space-y-3 pt-6">
                     <div className="flex flex-wrap items-center gap-2">
                       <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>Edit</Button>
+                      <Button variant="secondary" size="sm" data-testid="change-photo" aria-expanded={photoOpen} onClick={() => setPhotoOpen((v) => !v)}><ImagePlus className="size-4" aria-hidden /> Photo</Button>
                       <Button variant="secondary" size="sm" disabled={idx <= 0} onClick={() => onMove(it, -1)} aria-label="Move earlier on shelf"><ArrowLeft className="size-4" aria-hidden /> Earlier</Button>
                       <Button variant="secondary" size="sm" disabled={!shelf || idx >= shelf.items.length - 1} onClick={() => onMove(it, 1)} aria-label="Move later on shelf">Later <ArrowRight className="size-4" aria-hidden /></Button>
                       {!confirming && <Button variant="ghost" size="sm" className="ml-auto hover:text-red-600" onClick={() => setConfirming(true)}>Delete</Button>}
                     </div>
+                    {photoOpen && <ItemPhotoEditor it={it} onUpdated={(u) => { onUpdated(u); setPhotoOpen(false); }} onCancel={() => setPhotoOpen(false)} />}
                     {confirming && (
                       <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-3">
                         <p className="text-sm">Delete this item for good?</p>
@@ -158,5 +163,86 @@ function ItemBody({
             )}
           </div>
         </div>
+  );
+}
+
+/** Owner tool: pick another detected photo, use their own, or re-fetch the link's photo. */
+function ItemPhotoEditor({ it, onUpdated, onCancel }: { it: ItemDTO; onUpdated: (item: ItemDTO) => void; onCancel: () => void }) {
+  const toast = useToast();
+  const isLink = it.type === "LINK" && Boolean(it.url);
+  const [candidates, setCandidates] = useState<PhotoCandidate[] | null>(isLink ? null : []);
+  const [pick, setPick] = useState<string | null>(null);
+  const [own, setOwn] = useState<File | null>(null);
+  const [busy, setBusy] = useState<"" | "apply" | "refresh">("");
+  const [error, setError] = useState("");
+  const ownUrl = useMemo(() => (own ? URL.createObjectURL(own) : null), [own]);
+  useEffect(() => () => {
+    if (ownUrl) URL.revokeObjectURL(ownUrl);
+  }, [ownUrl]);
+
+  useEffect(() => {
+    if (!isLink) return;
+    let live = true;
+    api<{ candidates: PhotoCandidate[] }>(`/api/items/${it.id}/thumbnail`)
+      .then((r) => live && setCandidates(r.candidates))
+      .catch(() => live && setCandidates([]));
+    return () => {
+      live = false;
+    };
+  }, [it.id, isLink]);
+
+  async function apply() {
+    setError("");
+    setBusy("apply");
+    try {
+      let res: { item: ItemDTO };
+      if (own) {
+        const form = new FormData();
+        form.set("file", own);
+        res = await api(`/api/items/${it.id}/thumbnail`, { form });
+      } else if (pick) {
+        res = await api(`/api/items/${it.id}/thumbnail`, { json: { mode: "candidate", imageUrl: pick } });
+      } else return setError("Pick a photo first.");
+      toast.success("Photo updated");
+      onUpdated(res.item);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Couldn't update the photo");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function refresh() {
+    setError("");
+    setBusy("refresh");
+    try {
+      const res = await api<{ item: ItemDTO }>(`/api/items/${it.id}/thumbnail`, { json: { mode: "auto" } });
+      toast.success("Photo refreshed from the link");
+      onUpdated(res.item);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Couldn't refresh the photo");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  return (
+    <div data-testid="photo-editor" className="space-y-3 rounded-2xl border border-line bg-surface-2 p-3">
+      {candidates === null ? (
+        <div aria-busy="true" className="flex gap-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="size-16 shrink-0 sm:size-[72px]" />)}</div>
+      ) : (
+        <PhotoPicker candidates={candidates} selected={pick} onSelect={(u) => { setPick(u); setOwn(null); }} ownUrl={ownUrl} onOwn={setOwn} onClearOwn={() => setOwn(null)} onError={setError} />
+      )}
+      {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" onClick={apply} loading={busy === "apply"} disabled={!own && !pick} data-testid="apply-photo">Use this photo</Button>
+        {isLink && (
+          <Button size="sm" variant="secondary" onClick={refresh} loading={busy === "refresh"} data-testid="refresh-photo">
+            <RefreshCw className="size-4" aria-hidden /> Refresh from link
+          </Button>
+        )}
+        <Button size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
+      </div>
+    </div>
   );
 }
