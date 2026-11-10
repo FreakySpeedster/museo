@@ -3,6 +3,7 @@ import {
   cleanImageUrl,
   decodeHtml,
   headOf,
+  isBlockPageTitle,
   imageKey,
   looksLikeIcon,
   oembedCandidates,
@@ -145,7 +146,7 @@ async function gatherPage(rawUrl: string, opts: { deadlineMs: number }): Promise
       const meta = parseMetadata(html, res.url);
       const headMeta = html.length > 400_000 ? parseMetadata(headOf(html), res.url) : meta;
       const merged = meta.imageCandidates.length >= headMeta.imageCandidates.length ? meta : headMeta;
-      const botWalled = !meta.title && !meta.imageCandidates.length;
+      const botWalled = (!meta.title && !meta.imageCandidates.length) || (isBlockPageTitle(meta.title) && !hasStrong(meta.imageCandidates));
       if (botWalled) continue;
       if (!gotPage) {
         finalUrl = res.url;

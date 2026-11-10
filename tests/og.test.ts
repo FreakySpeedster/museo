@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rankMeasured } from "@/lib/link-preview";
-import { cleanImageUrl, decodeHtml, oembedCandidates, parseMetadata, urlCandidates } from "@/lib/net/og";
+import { isBlockPageTitle, cleanImageUrl, decodeHtml, oembedCandidates, parseMetadata, urlCandidates } from "@/lib/net/og";
 
 const BASE = "https://example.com/blog/post";
 
@@ -183,5 +183,12 @@ describe("urlCandidates / oembedCandidates / rankMeasured", () => {
     expect(rankMeasured(c, 80, 80)).toBeLessThan(rankMeasured({ ...c, score: 30 }, 1200, 1200));
     expect(rankMeasured(c, 2000, 300)).toBeLessThan(rankMeasured(c, 1200, 900));
     expect(rankMeasured(c, 800, 800, "svg")).toBeLessThan(rankMeasured(c, 800, 800, "jpeg"));
+  });
+});
+
+describe("isBlockPageTitle", () => {
+  it("recognises bot-wall, maintenance and login titles but not real products", () => {
+    for (const t of ["Site Maintenance", "Access Denied", "Just a moment...", "Login • Instagram", "Online Shopping India | Buy Mobiles, Electronics"]) expect(isBlockPageTitle(t)).toBe(true);
+    for (const t of ["Atomic Habits", "BILLY bookcase, white", "Loginova sneakers"]) expect(isBlockPageTitle(t)).toBe(false);
   });
 });

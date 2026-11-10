@@ -107,6 +107,10 @@ const num = (v: unknown) => {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 };
 
+/** Titles of bot-challenge / maintenance / login walls that sites serve to datacenter crawlers instead of the product page. */
+const BLOCK_TITLE_RE = /^(site maintenance|access denied|just a moment|attention required|robot or human|are you a robot|403 forbidden|request blocked|pardon our interruption|security check|verify you are human|please verify|login( |$)|log in( |$)|sign in( |$)|online shopping india( |\|))/i;
+export const isBlockPageTitle = (title: string) => BLOCK_TITLE_RE.test(title.trim());
+
 /** Only the document head matters for social crawlers (WhatsApp reads roughly the first 300 KB). */
 export function headOf(html: string): string {
   const end = html.search(/<\/head\s*>/i);

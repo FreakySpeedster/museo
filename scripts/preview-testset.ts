@@ -17,7 +17,7 @@ async function main() {
   for (const t of set) {
     const t0 = Date.now();
     const r = await call(`/api/preview?url=${encodeURIComponent(t.url)}`);
-    out.push({ ...t, status: r.status, ms: Date.now() - t0, preview: r.body?.preview ?? r.body?.error ?? null });
+    out.push({ ...t, status: r.status, ms: Date.now() - t0, preview: r.body?.preview ? { ...r.body.preview, candidates: (r.body.preview.candidates ?? []).map((c: { thumb?: string }) => ({ ...c, thumb: undefined })) } : (r.body?.error ?? null) });
   }
   console.log(JSON.stringify(out, null, 1));
 }
