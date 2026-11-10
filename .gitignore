@@ -43,7 +43,5 @@ next-env.d.ts
 # shelfie
 !.env.example
 /uploads
-/prisma/*.db
-/prisma/*.db-journal
 .shelfie-server.log
 .tmp

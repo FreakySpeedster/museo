@@ -123,6 +123,10 @@ const USERS: SeedUser[] = [
 ];
 
 async function main() {
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_SEED !== "1") {
+    console.error("Refusing to seed demo accounts with public passwords in production. Set ALLOW_SEED=1 to override.");
+    process.exit(1);
+  }
   await db.user.deleteMany({ where: { email: { in: USERS.map((u) => u.email) } } });
   const now = Date.now();
   let hoursAgo = 1.5;

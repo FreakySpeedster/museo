@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { categoryMeta } from "@/lib/categories";
+import { MAX_REQUEST_BYTES, prepareImage } from "@/lib/client-image";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
@@ -75,13 +76,15 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
   const preview = settled ? result!.preview : null;
   const previewState: "idle" | "loading" | "error" = !candidate ? "idle" : !settled ? "loading" : result!.preview ? "idle" : "error";
 
-  const pickFile = useCallback((f: File | undefined | null) => {
-    if (!f) return;
-    if (!ACCEPT.includes(f.type)) return setError("Please choose a JPG, PNG, WebP or GIF image.");
-    if (f.size > MAX_MB * 1024 * 1024) return setError(`That image is too large (max ${MAX_MB}MB).`);
+  const pickFile = useCallback(async (picked: File | undefined | null) => {
+    if (!picked) return;
+    if (!ACCEPT.includes(picked.type)) return setError("Please choose a JPG, PNG, WebP or GIF image.");
+    if (picked.size > MAX_MB * 1024 * 1024) return setError(`That image is too large (max ${MAX_MB}MB).`);
+    const f = await prepareImage(picked); // downscales big photos so they fit serverless body limits
+    if (f.size > MAX_REQUEST_BYTES) return setError("That image is too large to upload. Try a smaller file (GIFs must be under 4MB).");
     setError("");
     setFile(f);
-    setTitle((t) => t || f.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim());
+    setTitle((t) => t || picked.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim());
   }, []);
 
   function onDrop(e: DragEvent) {

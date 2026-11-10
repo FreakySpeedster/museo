@@ -62,7 +62,7 @@ export function route<P>(
       if (opts.auth && !user) throw new AppError("UNAUTHORIZED", "Please sign in to continue");
       if (opts.limit) {
         const id = user?.id ?? clientIp(req);
-        const rl = rateLimit(`${opts.limit.key}:${id}`, opts.limit.max, opts.limit.windowMs);
+        const rl = await rateLimit(`${opts.limit.key}:${id}`, opts.limit.max, opts.limit.windowMs);
         if (!rl.ok) throw new AppError("RATE_LIMITED", `Too many requests. Try again in ${rl.retryAfter}s.`);
       }
       const params = (ctx?.params ? await ctx.params : {}) as P;

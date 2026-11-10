@@ -1,12 +1,15 @@
 import { execSync } from "node:child_process";
-import fs from "node:fs";
-import path from "node:path";
+import { PrismaClient } from "@prisma/client";
 
-// Fresh throwaway SQLite file for every test run (never touches dev.db).
-export default function setup() {
-  for (const f of ["test.db", "test.db-journal"]) fs.rmSync(path.resolve("prisma", f), { force: true });
-  execSync("npx prisma db push --skip-generate", {
-    stdio: "ignore",
-    env: { ...process.env, DATABASE_URL: "file:./test.db" },
-  });
+// Fresh schema for every run on a dedicated *test* Postgres database (never touches your dev data).
+export default async function setup() {
+  const url = process.env.TEST_DATABASE_URL || "postgresql://postgres@localhost:5433/shelfie_test";
+  if (!/test/i.test(new URL(url).pathname)) {
+    throw new Error(`Refusing to reset "${url}": the test database name must contain "test".`);
+  }
+  const db = new PrismaClient({ datasources: { db: { url } } });
+  await db.$executeRawUnsafe("DROP SCHEMA IF EXISTS public CASCADE");
+  await db.$executeRawUnsafe("CREATE SCHEMA public");
+  await db.$disconnect();
+  execSync("npx prisma migrate deploy", { stdio: "ignore", env: { ...process.env, DATABASE_URL: url, DIRECT_URL: url } });
 }

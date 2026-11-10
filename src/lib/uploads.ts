@@ -1,12 +1,11 @@
-import fs from "node:fs/promises";
 import crypto from "node:crypto";
-import path from "node:path";
 import sharp from "sharp";
 import { AppError } from "./errors";
-import { maxUploadBytes, uploadDir } from "./env";
+import { maxUploadBytes } from "./env";
+import { LOCAL_NAME_RE, LOCAL_URL_PREFIX, storeDelete, storePut } from "./storage";
 
-export const UPLOAD_URL_PREFIX = "/api/uploads/";
-export const UPLOAD_NAME_RE = /^[a-f0-9]{32}\.(webp|gif|ico)$/;
+export const UPLOAD_URL_PREFIX = LOCAL_URL_PREFIX;
+export const UPLOAD_NAME_RE = LOCAL_NAME_RE;
 
 type Kind = "jpeg" | "png" | "gif" | "webp" | "ico" | null;
 
@@ -23,12 +22,8 @@ export function sniffImage(buf: Buffer): Kind {
 
 const rand = () => crypto.randomBytes(16).toString("hex");
 
-async function write(name: string, data: Buffer) {
-  const dir = uploadDir();
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(path.join(dir, name), data, { mode: 0o640 });
-  return UPLOAD_URL_PREFIX + name;
-}
+const MIME = { webp: "image/webp", gif: "image/gif", ico: "image/x-icon" } as const;
+const write = (name: string, data: Buffer) => storePut(name, data, MIME[name.split(".")[1] as keyof typeof MIME]);
 
 /**
  * Validate + normalise an uploaded image. Raster images are decoded and re-encoded to WebP
@@ -81,9 +76,4 @@ export async function saveRemoteImage(buf: Buffer): Promise<string | null> {
   }
 }
 
-export async function deleteUploadByUrl(url: string | null | undefined) {
-  if (!url || !url.startsWith(UPLOAD_URL_PREFIX)) return;
-  const name = url.slice(UPLOAD_URL_PREFIX.length);
-  if (!UPLOAD_NAME_RE.test(name)) return;
-  await fs.rm(path.join(uploadDir(), name), { force: true }).catch(() => {});
-}
+export const deleteUploadByUrl = storeDelete;

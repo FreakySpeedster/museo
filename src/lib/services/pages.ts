@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { withLock } from "../mutex";
+import { advisoryLock } from "../locks";
 import { AppError } from "../errors";
 import { pageCreationGate } from "../limits";
 import { deleteUploadByUrl } from "../uploads";
@@ -23,11 +23,8 @@ export async function assertPageOwner(userId: string, pageId: string) {
 
 /** Create a page. The first page is free; further pages require an active subscription. */
 export async function createPage(userId: string, input: z.infer<typeof pageSchema>) {
-  return withLock(`user:${userId}`, () => createPageLocked(userId, input));
-}
-
-async function createPageLocked(userId: string, input: z.infer<typeof pageSchema>) {
   return db.$transaction(async (tx) => {
+    await advisoryLock(tx, `user-pages:${userId}`);
     const user = await tx.user.findUnique({ where: { id: userId } });
     if (!user) throw new AppError("UNAUTHORIZED", "Please sign in to continue");
     const pageCount = await tx.page.count({ where: { userId } });

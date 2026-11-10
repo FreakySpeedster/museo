@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { withLock } from "../mutex";
+import { advisoryLock } from "../locks";
 import { AppError } from "../errors";
 import { canAddShelf, MAX_SHELVES_PER_PAGE } from "../limits";
 import { deleteUploadByUrl } from "../uploads";
@@ -15,17 +15,12 @@ export async function assertShelfOwner(userId: string, shelfId: string) {
 
 /** Create a shelf. Enforced server-side: at most 5 shelves per page. */
 export async function createShelf(userId: string, pageId: string, input: z.infer<typeof shelfSchema>) {
-  return withLock(`page:${pageId}`, () => createShelfLocked(userId, pageId, input));
-}
-
-async function createShelfLocked(userId: string, pageId: string, input: z.infer<typeof shelfSchema>) {
   return db.$transaction(async (tx) => {
-    // Touching the page row first takes the write lock, serialising concurrent creates.
-    const touched = await tx.page.updateMany({ where: { id: pageId, userId }, data: { updatedAt: new Date() } });
-    if (touched.count === 0) {
-      const exists = await tx.page.findUnique({ where: { id: pageId }, select: { id: true } });
-      throw exists ? new AppError("FORBIDDEN", "That page belongs to someone else") : new AppError("NOT_FOUND", "Page not found");
-    }
+    // Serialise concurrent creates for this page (advisory lock is released on commit).
+    await advisoryLock(tx, `page:${pageId}`);
+    const page = await tx.page.findUnique({ where: { id: pageId }, select: { userId: true } });
+    if (!page) throw new AppError("NOT_FOUND", "Page not found");
+    if (page.userId !== userId) throw new AppError("FORBIDDEN", "That page belongs to someone else");
     const count = await tx.shelf.count({ where: { pageId } });
     if (!canAddShelf(count)) {
       throw new AppError("SHELF_LIMIT", `A page can hold at most ${MAX_SHELVES_PER_PAGE} shelves`);

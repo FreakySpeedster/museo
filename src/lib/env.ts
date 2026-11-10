@@ -1,7 +1,12 @@
 import path from "node:path";
 
+/** Public base URL. APP_URL wins; on Vercel we fall back to the production/preview hostname. */
 export function appUrl(): string {
-  return (process.env.APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+  const explicit = process.env.APP_URL;
+  if (explicit) return explicit.replace(/\/+$/, "");
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  if (vercel) return `https://${vercel}`;
+  return "http://localhost:3000";
 }
 
 export function uploadDir(): string {

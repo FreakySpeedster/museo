@@ -4,7 +4,7 @@
 (each shelf holds one category), and drop in links or photos. Everything you add also lands on your public
 **timeline**, and in the home feed of people who follow you.
 
-Built with **Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Prisma + SQLite · GSAP**.
+Built with **Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Prisma + PostgreSQL · GSAP**.
 
 ![landing](screenshots/01-landing.png)
 
@@ -30,21 +30,19 @@ Built with **Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Prisma +
 
 ## Quick start
 
-Requires Node 20+ (tested on Node 24).
+Requires Node 20+ (tested on Node 24) and a PostgreSQL database (local Postgres, Docker, or a free Neon project).
 
 ```bash
+docker run -d --name shelfie-pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17   # or any Postgres
+docker exec shelfie-pg createdb -U postgres shelfie && docker exec shelfie-pg createdb -U postgres shelfie_test
+
 npm install                 # also runs `prisma generate`
-cp .env.example .env        # defaults work out of the box
+cp .env.example .env        # defaults match the docker command above
 npm run db:setup            # prisma migrate deploy + seed demo data
 npm run dev                 # http://localhost:3000
 ```
 
-Production-style:
-
-```bash
-npm run build
-npm run start               # http://localhost:3000
-```
+Production-style: `npm run build && npm run start`.
 
 ### Demo accounts (created by the seed)
 
@@ -59,19 +57,23 @@ Re-running `npm run db:seed` resets just those three users.
 
 ## Environment variables
 
-See [`.env.example`](.env.example). Nothing secret is hard-coded.
+See [`.env.example`](.env.example) (every variable is documented there). Nothing secret is hard-coded.
 
-| Variable | Default | Purpose |
+| Variable | Required | Purpose |
 |---|---|---|
-| `DATABASE_URL` | `file:./dev.db` | Prisma connection string (SQLite file, relative to `prisma/`). |
-| `APP_URL` | `http://localhost:3000` | Public base URL: Stripe redirect URLs, metadata, and the `Secure` cookie flag when it starts with `https://`. |
-| `UPLOAD_DIR` | `./uploads` | Where photos & cached thumbnails are stored (served via `/api/uploads/<name>`). |
-| `MAX_UPLOAD_MB` | `8` | Upload size limit. |
-| `STRIPE_SECRET_KEY` | _empty_ | Stripe secret key. |
-| `STRIPE_PRICE_ID` | _empty_ | Price ID of the recurring Plus price. |
-| `STRIPE_WEBHOOK_SECRET` | _empty_ | Signing secret for the webhook endpoint. |
-| `PLUS_PRICE_LABEL` | `$4 / month` | Display text only. |
-| `SSRF_ALLOW_CIDRS` | _empty_ | Escape hatch for networks whose DNS maps public sites into a reserved range (e.g. some sandboxes use `198.18.0.0/15`). Leave empty in production. |
+| `DATABASE_URL` | **yes** | Postgres runtime connection (use the *pooled* URL on serverless). |
+| `DIRECT_URL` | **yes** | Direct (non-pooled) URL for `prisma migrate`. Same value as `DATABASE_URL` if you have no pooler. |
+| `BLOB_READ_WRITE_TOKEN` | **yes on Vercel** | Enables Vercel Blob storage for photos and cached link thumbnails. Empty → local disk. |
+| `APP_URL` | recommended | Public base URL (Stripe redirects, cookie `Secure` flag). Falls back to `VERCEL_PROJECT_PRODUCTION_URL`. |
+| `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` | optional | Real subscriptions. All empty → clearly-labelled demo-mode upgrade. |
+| `PLUS_PRICE_LABEL` | optional | Display text for the price (default `$4 / month`). |
+| `MAX_UPLOAD_MB` | optional | Server image size limit (default 8). |
+| `UPLOAD_DIR` | local only | Local-disk upload directory (default `./uploads`). |
+| `SSRF_ALLOW_CIDRS` | optional | Escape hatch for networks that map public DNS into a reserved range. Leave empty in production. |
+| `TEST_DATABASE_URL` | tests | Throwaway Postgres DB for `npm test` (name must contain `test`; schema is dropped each run). |
+| `ALLOW_SEED` | seeding | Needed to run the demo seed when `NODE_ENV=production`. |
+
+There is **no session secret**: sessions are random 256-bit tokens stored hashed in Postgres.
 
 ### Subscriptions: Stripe vs demo mode
 
@@ -86,9 +88,10 @@ See [`.env.example`](.env.example). Nothing secret is hard-coded.
 
 | Script | What it does |
 |---|---|
-| `npm run dev` / `build` / `start` | Next.js |
+| `npm run dev` / `build` / `start` | Next.js (`build` = `prisma generate && next build`) |
+| `npm run vercel-build` | What Vercel runs: `prisma generate && prisma migrate deploy && next build` |
 | `npm run lint` · `npm run typecheck` | ESLint · `tsc --noEmit` |
-| `npm test` | Vitest (shelf limit, paywall, SSRF guard, OG parsing, authorization, uploads, Stripe webhook logic) on a throwaway SQLite file |
+| `npm test` | Vitest (shelf limit & races, paywall, SSRF guard, OG parsing, authorization, uploads, storage adapter, DB rate limiter, Stripe webhook logic) on a throwaway Postgres database |
 | `npm run e2e` | HTTP end-to-end script against a running server (`BASE_URL`, default `localhost:3000`) |
 | `npm run screenshots` | Playwright (headless Chromium) UI flow + screenshots into `screenshots/` |
 | `npm run db:migrate` · `db:seed` · `db:setup` | Prisma migrate deploy · seed · both |
@@ -98,7 +101,7 @@ For the Playwright scripts: `npx playwright install chromium` once.
 ## Architecture
 
 ```
-prisma/schema.prisma        User, Session, Page, Shelf, Item, Follow (enums are validated strings → Postgres-portable)
+prisma/schema.prisma        User, Session, Page, Shelf, Item, Follow (enums are validated strings)
 src/lib/limits.ts           business rules: 5 shelves/page, 1 free page (pure functions)
 src/lib/services/*          domain logic + authorization (accounts, pages, shelves, items, feed, billing, profile)
 src/lib/net/ip-guard.ts     SSRF: blocklist of private/loopback/link-local/reserved ranges (v4 + v6 + mapped)
@@ -111,12 +114,23 @@ src/components/**           UI (profile/, feed/, landing/, ui/, motion/)
 
 Security notes: passwords hashed with bcrypt; sessions are random 256-bit tokens stored **hashed** in the DB, sent as
 `HttpOnly; SameSite=Lax` cookies (`Secure` on https); mutating requests require a same-origin `Origin`; all input is
-validated with zod; every mutation checks ownership server-side; uploads can't be served with a content type other than the
-re-encoded image and carry `CSP: sandbox`; auth/preview/create endpoints are rate limited (in-memory — swap for Redis when running multiple instances).
+validated with zod; every mutation checks ownership server-side; uploads are re-encoded images only;
+auth/preview/create endpoints are rate limited with a **Postgres-backed** fixed-window limiter, and the shelf/page limits
+are race-free thanks to **Postgres advisory transaction locks** — both are safe on serverless with any number of instances.
 
-## Deploying (e.g. Vercel + Postgres + Stripe)
+## Deploying to Vercel (Postgres + Blob + Stripe)
 
-1. Switch `provider` to `"postgresql"` in `prisma/schema.prisma`, set `DATABASE_URL` to your Postgres URL, run `prisma migrate dev` once to generate Postgres migrations, then `prisma migrate deploy` on deploy.
-2. **Uploads:** local disk doesn't persist on serverless. Move `saveUploadedImage` / `/api/uploads` to S3/R2/Vercel Blob (all file I/O is isolated in `src/lib/uploads.ts` and the uploads route).
-3. Set `APP_URL` (https), the three `STRIPE_*` vars, and create the webhook endpoint in the Stripe dashboard.
-4. Replace the in-memory rate limiter / mutex (`src/lib/rate-limit.ts`, `src/lib/mutex.ts`) with Redis or DB-level locking for multi-instance setups.
+1. **Database:** create a Postgres database (Vercel Marketplace → Neon, or any Postgres). Set `DATABASE_URL` (pooled) and
+   `DIRECT_URL` (direct). With the Vercel↔Neon integration map: `DATABASE_URL` ← `POSTGRES_PRISMA_URL`/`POSTGRES_URL`, `DIRECT_URL` ← `POSTGRES_URL_NON_POOLING`.
+2. **Storage:** Project → Storage → create a **Blob** store and connect it; `BLOB_READ_WRITE_TOKEN` is added automatically.
+   (Without it, uploads fail with a clear error on Vercel because serverless disk is read-only.) Seed images ship in `public/seed/`.
+3. **Import the repo** in Vercel (framework: Next.js). The `vercel-build` script runs `prisma migrate deploy` on every deploy, so the schema
+   is migrated automatically using `DIRECT_URL`. No `vercel.json` is needed. `postinstall` runs `prisma generate`.
+4. Set `APP_URL` to your production URL/custom domain (optional on `*.vercel.app`).
+5. **Stripe (optional):** set `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` (a recurring price), create a webhook endpoint
+   `https://<your-domain>/api/billing/webhook` listening to `checkout.session.completed` and `customer.subscription.created|updated|deleted`,
+   and set `STRIPE_WEBHOOK_SECRET`. Leave all three empty to ship the demo-mode upgrade.
+6. **Demo data (optional):** `ALLOW_SEED=1 NODE_ENV=production DATABASE_URL=… DIRECT_URL=… npm run db:seed` from your machine. Don't seed public demo passwords into a real production DB.
+
+Notes: Vercel limits request bodies to 4.5 MB, so the browser downscales big photos before upload (GIFs must be < 4 MB).
+Link previews run inside the `/api/shelves/[id]/items` function (`maxDuration = 30`).
