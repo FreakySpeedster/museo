@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { followingFeed, globalFeed } from "@/lib/services/feed";
@@ -28,9 +27,6 @@ export default async function Home() {
         </div>
       </div>
       <HomeFeed initialScope={scope} initial={initial} hasFollows={followCount > 0} />
-      <p className="mt-12 text-center text-xs text-muted">
-        Looking for collectors? Try <Link className="underline" href="/u/maya">@maya</Link> or <Link className="underline" href="/u/kenji">@kenji</Link>.
-      </p>
     </div>
   );
 }

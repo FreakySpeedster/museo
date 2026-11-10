@@ -113,7 +113,7 @@ export function Landing() {
           </p>
           <div data-hero-fade className="mt-8 flex flex-wrap items-center gap-3">
             <LinkButton href="/signup" size="lg">Start your first shelf — free</LinkButton>
-            <LinkButton href="/u/demo" variant="secondary" size="lg">Peek at a demo ↗</LinkButton>
+            <LinkButton href="/pricing" variant="secondary" size="lg">See pricing</LinkButton>
           </div>
           <p data-hero-fade className="mt-4 text-xs text-muted">No credit card. Your first page is free forever.</p>
         </div>
