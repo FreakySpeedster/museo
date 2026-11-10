@@ -1,0 +1,96 @@
+import { z } from "zod";
+import { CATEGORY_IDS } from "./categories";
+
+const trimmed = (min: number, max: number, label: string) =>
+  z
+    .string({ error: `${label} is required` })
+    .trim()
+    .min(min, min === 1 ? `${label} is required` : `${label} must be at least ${min} characters`)
+    .max(max, `${label} must be at most ${max} characters`);
+
+const optionalText = (max: number, label: string) =>
+  z
+    .string()
+    .trim()
+    .max(max, `${label} must be at most ${max} characters`)
+    .optional()
+    .transform((v) => v ?? "");
+
+export const RESERVED_USERNAMES = new Set([
+  "admin", "api", "app", "login", "logout", "signup", "settings", "pricing", "billing",
+  "u", "about", "help", "support", "explore", "feed", "uploads", "shelfie", "static", "_next",
+]);
+
+export const usernameSchema = z
+  .string({ error: "Username is required" })
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9_]{3,20}$/, "Username must be 3–20 characters: letters, numbers or underscores")
+  .refine((v) => !RESERVED_USERNAMES.has(v), "That username is reserved");
+
+export const signupSchema = z.object({
+  email: z.string({ error: "Email is required" }).trim().toLowerCase().max(254).pipe(z.email("Enter a valid email")),
+  username: usernameSchema,
+  displayName: trimmed(1, 50, "Display name").optional(),
+  password: z
+    .string({ error: "Password is required" })
+    .min(8, "Password must be at least 8 characters")
+    .max(128, "Password must be at most 128 characters"),
+});
+
+export const loginSchema = z.object({
+  email: z.string().trim().toLowerCase().max(254),
+  password: z.string().min(1, "Password is required").max(128),
+});
+
+export const profileSchema = z.object({
+  displayName: trimmed(1, 50, "Display name"),
+  bio: optionalText(240, "Bio"),
+});
+
+export const pageSchema = z.object({
+  title: trimmed(1, 60, "Page title"),
+  description: optionalText(240, "Description"),
+  emoji: z.string().trim().min(1).max(8).optional().default("📚"),
+});
+export const pageUpdateSchema = pageSchema.partial();
+
+export const shelfSchema = z.object({
+  name: trimmed(1, 40, "Shelf name"),
+  category: z.enum(CATEGORY_IDS, { error: "Choose a category" }),
+});
+export const shelfUpdateSchema = z.object({
+  name: trimmed(1, 40, "Shelf name").optional(),
+  // A shelf holds items of one category; category is fixed once set to keep that promise.
+});
+
+export const itemTextSchema = z.object({
+  title: z.string().trim().max(120, "Title must be at most 120 characters").optional().transform((v) => v ?? ""),
+  description: optionalText(500, "Description"),
+});
+
+export const itemCreateLinkSchema = itemTextSchema.extend({
+  url: z.string({ error: "Link is required" }).trim().min(1, "Link is required").max(2048),
+});
+
+export const itemUpdateSchema = z.object({
+  title: trimmed(1, 120, "Title").optional(),
+  description: optionalText(500, "Description").optional(),
+});
+
+export const reorderSchema = z.object({
+  itemIds: z.array(z.string().min(1).max(40)).min(1).max(500),
+});
+
+export const previewQuerySchema = z.object({
+  url: z.string().trim().min(1, "Link is required").max(2048),
+});
+
+export const feedQuerySchema = z.object({
+  scope: z.enum(["global", "following"]).default("global"),
+  cursor: z.string().max(60).optional(),
+});
+
+export function firstIssue(err: z.ZodError): string {
+  return err.issues[0]?.message ?? "Invalid input";
+}

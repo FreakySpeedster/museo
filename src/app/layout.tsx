@@ -1,0 +1,39 @@
+import type { Metadata, Viewport } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+import "./globals.css";
+import { Navbar } from "@/components/Navbar";
+import { ToastProvider } from "@/components/ui/Toast";
+import { appUrl } from "@/lib/env";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(appUrl()),
+  title: { default: "Shelfie — show off what you collect", template: "%s · Shelfie" },
+  description: "Shelfie is a home for your collections. Build pages, stock shelves with links and photos, and share them with the world.",
+  openGraph: { title: "Shelfie", description: "Show off what you collect.", type: "website" },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f2ea" },
+    { media: "(prefers-color-scheme: dark)", color: "#100f0d" },
+  ],
+};
+
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d)}catch(e){}})()`;
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body>
+        <ToastProvider>
+          <Navbar />
+          <main>{children}</main>
+        </ToastProvider>
+      </body>
+    </html>
+  );
+}
