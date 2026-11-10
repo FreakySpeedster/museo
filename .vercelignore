@@ -1,0 +1,11 @@
+node_modules
+.next
+.env*
+uploads
+screenshots
+.shelfie-server.log
+.tmp
+*.tsbuildinfo
+*.db
+*.db-journal
+tests
