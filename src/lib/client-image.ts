@@ -27,3 +27,24 @@ export async function prepareImage(file: File): Promise<File> {
   }
   return file;
 }
+
+/** Centre-crop to a square and downscale (default 512px) so avatars stay far below the request limit. */
+export async function squareCrop(file: File, size = 512): Promise<File> {
+  const bmp = await createImageBitmap(file);
+  const side = Math.min(bmp.width, bmp.height);
+  const sx = Math.floor((bmp.width - side) / 2);
+  const sy = Math.floor((bmp.height - side) / 2);
+  const out = Math.min(size, side);
+  const canvas = document.createElement("canvas");
+  canvas.width = out;
+  canvas.height = out;
+  const ctx = canvas.getContext("2d")!;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bmp, sx, sy, side, side, 0, 0, out, out);
+  bmp.close?.();
+  for (const [type, q] of [["image/webp", 0.88], ["image/jpeg", 0.85]] as const) {
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, type, q));
+    if (blob && blob.type === type) return new File([blob], `avatar.${type === "image/webp" ? "webp" : "jpg"}`, { type });
+  }
+  throw new Error("Couldn't process that image");
+}

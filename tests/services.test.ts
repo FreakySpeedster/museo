@@ -38,7 +38,7 @@ describe("shelf limit (server-side)", () => {
     expect(await db.shelf.count({ where: { pageId: page.id } })).toBe(5);
 
     await activateDemoSubscription(u.id);
-    const p2 = await createPage(u.id, { title: "Second", description: "", emoji: "🎧" });
+    const p2 = await createPage(u.id, { title: "Second", description: "" });
     await createShelf(u.id, p2.id, { name: "Fresh", category: "music" });
   });
 
@@ -57,19 +57,19 @@ describe("page paywall", () => {
   it("first page is free (created at signup); second is blocked until subscribed", async () => {
     const { u } = await newUser("bob");
     expect(await db.page.count({ where: { userId: u.id } })).toBe(1);
-    await expectCode(createPage(u.id, { title: "Two", description: "", emoji: "📚" }), "PAYWALL");
+    await expectCode(createPage(u.id, { title: "Two", description: "" }), "PAYWALL");
 
     await activateDemoSubscription(u.id);
-    const p = await createPage(u.id, { title: "Two", description: "", emoji: "📚" });
+    const p = await createPage(u.id, { title: "Two", description: "" });
     expect(p.title).toBe("Two");
   });
 
   it("a canceled Stripe subscription re-locks new pages but keeps existing ones", async () => {
     const { u } = await newUser("carol");
     await applyStripeSubscription({ userId: u.id, customerId: "cus_1", subscriptionId: "sub_1", status: "active" });
-    await createPage(u.id, { title: "Two", description: "", emoji: "📚" });
+    await createPage(u.id, { title: "Two", description: "" });
     await applyStripeSubscription({ customerId: "cus_1", status: "canceled" });
-    await expectCode(createPage(u.id, { title: "Three", description: "", emoji: "📚" }), "PAYWALL");
+    await expectCode(createPage(u.id, { title: "Three", description: "" }), "PAYWALL");
     expect(await db.page.count({ where: { userId: u.id } })).toBe(2);
   });
 });
@@ -132,7 +132,7 @@ describe("page creation race", () => {
   it("concurrent page creates cannot bypass the paywall", async () => {
     const { u } = await newUser("pagerace");
     const results = await Promise.allSettled(
-      Array.from({ length: 5 }, (_, i) => createPage(u.id, { title: `P${i}`, description: "", emoji: "📚" })),
+      Array.from({ length: 5 }, (_, i) => createPage(u.id, { title: `P${i}`, description: "" })),
     );
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(0);
     expect(await db.page.count({ where: { userId: u.id } })).toBe(1);

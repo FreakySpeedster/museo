@@ -25,7 +25,6 @@ export interface PageDTO {
   id: string;
   title: string;
   description: string;
-  emoji: string;
   position: number;
   shelves: ShelfDTO[];
 }
@@ -35,12 +34,13 @@ export interface PublicUser {
   username: string;
   displayName: string;
   bio: string;
+  avatarUrl: string | null;
 }
 
 export interface TimelineEntry extends ItemDTO {
   user: PublicUser;
   shelf: { id: string; name: string; category: string };
-  page: { id: string; title: string; emoji: string };
+  page: { id: string; title: string };
 }
 
 export interface ViewerDTO extends PublicUser {

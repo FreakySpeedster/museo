@@ -62,3 +62,29 @@ describe("decodeHtml", () => {
     expect(decodeHtml(buf, "text/html; charset=iso-8859-1")).toBe("café");
   });
 });
+
+describe("parseMetadata thumbnail candidates", () => {
+  it("collects og:image (multi-line tags), JSON-LD product images and large body images in order", () => {
+    const m = parseMetadata(
+      `<head><meta
+         property="og:image"
+         content="http://shop.example.com/cdn/a.jpg?v=1"
+       >
+       <script type="application/ld+json">{"@type":"Product","image":["//shop.example.com/cdn/b.jpg",{"url":"https://shop.example.com/cdn/c.jpg"}]}</script></head>
+       <body><img src="/logo.svg" width="300"><img src="/cdn/d.jpg" width="900" height="900"></body>`,
+      "https://shop.example.com/products/x",
+    );
+    expect(m.image).toBe("http://shop.example.com/cdn/a.jpg?v=1");
+    expect(m.imageCandidates).toEqual([
+      "http://shop.example.com/cdn/a.jpg?v=1",
+      "https://shop.example.com/cdn/b.jpg",
+      "https://shop.example.com/cdn/c.jpg",
+      "https://shop.example.com/cdn/d.jpg",
+    ]);
+  });
+
+  it("uses JSON-LD when the page has no og:image", () => {
+    const m = parseMetadata(`<script type="application/ld+json">{"@graph":[{"@type":"Product","image":"https://c.example.com/p.jpg"}]}</script>`, BASE);
+    expect(m.image).toBe("https://c.example.com/p.jpg");
+  });
+});

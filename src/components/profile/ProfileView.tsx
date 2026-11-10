@@ -1,8 +1,9 @@
 "use client";
 
 import clsx from "clsx";
+import { Check, History, LayoutGrid } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, TimelineEntry, ViewerDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { MAX_SHELVES_PER_PAGE, pageCreationGate } from "@/lib/limits";
@@ -58,6 +59,27 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   const [paywall, setPaywall] = useState(false);
   const [profileDialog, setProfileDialog] = useState(false);
   const [confirm, setConfirm] = useState<null | { kind: "shelf" | "page"; id: string; name: string }>(null);
+
+  // Owners: quietly retry thumbnails for link items that were saved without one (older items, flaky sites).
+  const thumbsTried = useRef(false);
+  useEffect(() => {
+    if (!isOwner || thumbsTried.current) return;
+    thumbsTried.current = true;
+    const missing = profile.pages.flatMap((p) => p.shelves).flatMap((sh) => sh.items).filter((i) => i.type === "LINK" && !i.imageUrl && i.url).slice(0, 6);
+    if (!missing.length) return;
+    (async () => {
+      for (const it of missing) {
+        try {
+          const { item } = await api<{ item: ItemDTO }>(`/api/items/${it.id}/thumbnail`, { method: "POST", json: {} });
+          if (!item.imageUrl && !item.faviconUrl) continue;
+          setPages((ps) => ps.map((p) => ({ ...p, shelves: p.shelves.map((sh) => (sh.id === item.shelfId ? { ...sh, items: sh.items.map((i) => (i.id === item.id ? item : i)) } : sh)) })));
+          setEntries((es) => es.map((e) => (e.id === item.id ? { ...e, imageUrl: item.imageUrl, faviconUrl: item.faviconUrl } : e)));
+        } catch {
+          /* best effort */
+        }
+      }
+    })();
+  }, [isOwner, profile.pages]);
 
   const captureFns = useRef<Record<string, () => void>>({});
   const registerCapture = useCallback((id: string, fn: (() => void) | null) => {
@@ -135,7 +157,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       window.history.replaceState(null, "", url);
       toast.success(`Page “${saved.title}” created`);
     } else {
-      setPages((ps) => ps.map((p) => (p.id === saved.id ? { ...p, title: saved.title, description: saved.description, emoji: saved.emoji } : p)));
+      setPages((ps) => ps.map((p) => (p.id === saved.id ? { ...p, title: saved.title, description: saved.description } : p)));
       toast.success("Page updated");
     }
   }
@@ -183,7 +205,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     captureFns.current[shelf.id]?.();
     patchShelf(shelf.id, (s) => ({ ...s, items: [...s.items, item] }));
     setEntries((es) => [
-      { ...item, user, shelf: { id: shelf.id, name: shelf.name, category: shelf.category }, page: { id: owningPage.id, title: owningPage.title, emoji: owningPage.emoji } },
+      { ...item, user, shelf: { id: shelf.id, name: shelf.name, category: shelf.category }, page: { id: owningPage.id, title: owningPage.title } },
       ...es,
     ]);
     setStats((s) => ({ ...s, items: s.items + 1 }));
@@ -197,7 +219,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
 
   function onItemUpdated(item: ItemDTO) {
     patchShelf(item.shelfId, (s) => ({ ...s, items: s.items.map((i) => (i.id === item.id ? item : i)) }));
-    setEntries((es) => es.map((e) => (e.id === item.id ? { ...e, title: item.title, description: item.description } : e)));
+    setEntries((es) => es.map((e) => (e.id === item.id ? { ...e, title: item.title, description: item.description, imageUrl: item.imageUrl, faviconUrl: item.faviconUrl } : e)));
   }
 
   function onItemDeleted(item: ItemDTO) {
@@ -269,7 +291,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       {/* ---------------------------------------------------------- header */}
       <div ref={header} className="flex flex-col gap-6 py-8 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-5">
-          <span data-avatar className="inline-block"><Avatar name={user.displayName} username={user.username} size={84} className="shadow-xl ring-4 ring-surface" /></span>
+          <span data-avatar className="inline-block"><Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={84} className="shadow-xl ring-4 ring-surface" /></span>
           <div data-head className="min-w-0 space-y-1">
             <h1 className="truncate text-3xl font-semibold tracking-tight sm:text-4xl">{user.displayName}</h1>
             <p className="text-sm text-muted">@{user.username}</p>
@@ -286,7 +308,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
             <Button variant="secondary" onClick={() => setProfileDialog(true)}>Edit profile</Button>
           ) : (
             <Button variant={following ? "secondary" : "primary"} onClick={toggleFollow} data-testid="follow-button">
-              {following ? "Following ✓" : "Follow"}
+              {following ? <><Check className="size-4" aria-hidden strokeWidth={2.4} /> Following</> : "Follow"}
             </Button>
           )}
           <Button
@@ -316,9 +338,9 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
               aria-selected={tab === t}
               data-testid={`tab-${t}`}
               onClick={() => selectTab(t)}
-              className={clsx("rounded-full px-5 py-1.5 text-sm font-medium capitalize transition", tab === t ? "bg-ink text-bg shadow" : "text-muted hover:text-ink")}
+              className={clsx("inline-flex items-center gap-2 rounded-full px-5 py-1.5 text-sm font-medium capitalize transition", tab === t ? "bg-ink text-bg shadow" : "text-muted hover:text-ink")}
             >
-              {t === "shelves" ? "🗄️ Shelves" : "🕰️ Timeline"}
+              {t === "shelves" ? <><LayoutGrid className="size-4" aria-hidden /> Shelves</> : <><History className="size-4" aria-hidden /> Timeline</>}
             </button>
           ))}
         </div>
@@ -345,7 +367,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="flex items-center gap-3 text-2xl font-semibold tracking-tight sm:text-3xl" data-testid="page-title">
-                  <span aria-hidden className="text-3xl">{page.emoji}</span> {page.title}
+                  {page.title}
                 </h2>
                 {page.description && <p className="mt-1 max-w-2xl text-muted">{page.description}</p>}
               </div>
@@ -362,7 +384,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
 
             {page.shelves.length === 0 && (
               <div className="grid place-items-center rounded-3xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center">
-                <div className="text-5xl">🗄️</div>
+                <LayoutGrid className="size-11 text-accent" aria-hidden strokeWidth={1.5} />
                 <h3 className="mt-3 text-xl font-semibold">{isOwner ? "Build your first shelf" : "No shelves yet"}</h3>
                 <p className="mt-1 max-w-sm text-sm text-muted">
                   {isOwner ? "A shelf holds one category — books, records, sneakers, bookmarks. Start with something you love." : "This page doesn’t have any shelves yet."}
@@ -420,8 +442,13 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
           {viewer && (
             <ProfileDialog
               open={profileDialog}
-              viewer={{ ...viewer, displayName: user.displayName, bio: user.bio }}
+              viewer={{ ...viewer, displayName: user.displayName, bio: user.bio, avatarUrl: user.avatarUrl }}
               onClose={() => setProfileDialog(false)}
+              onAvatar={(u) => {
+                setUser((x) => ({ ...x, avatarUrl: u.avatarUrl }));
+                toast.success(u.avatarUrl ? "Profile photo updated" : "Profile photo removed");
+                router.refresh();
+              }}
               onSaved={(u) => {
                 setUser((x) => ({ ...x, displayName: u.displayName, bio: u.bio }));
                 setProfileDialog(false);

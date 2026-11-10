@@ -1,17 +1,16 @@
 "use client";
 
-import clsx from "clsx";
+import { FileStack, Heart, Zap, type LucideIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { CATEGORIES } from "@/lib/categories";
 import type { PageDTO, ShelfDTO, ViewerDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { Button } from "@/components/ui/Button";
-import { Field, Input, Select, Textarea } from "@/components/ui/Field";
+import { AvatarEditor } from "./AvatarEditor";
+import { CategoryPicker } from "@/components/ui/CategoryPicker";
+import { Field, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { MAX_SHELVES_PER_PAGE } from "@/lib/limits";
-
-const EMOJIS = ["📚", "🎧", "🎬", "🎮", "🎨", "📷", "👟", "🍜", "🧭", "💾", "🪴", "🛋️", "🧸", "🧪", "🌌", "🔥"];
 
 function useSubmit() {
   const [busy, setBusy] = useState(false);
@@ -59,13 +58,12 @@ export function PageDialog({
 }
 
 function PageForm({ page, onClose, onSaved, onPaywall }: { page: PageDTO | null; onClose: () => void; onSaved: (page: PageDTO, created: boolean) => void; onPaywall: () => void }) {
-  const [emoji, setEmoji] = useState(page?.emoji ?? "📚");
   const { busy, error, run } = useSubmit();
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const body = { title: f.get("title"), description: f.get("description") || "", emoji };
+    const body = { title: f.get("title"), description: f.get("description") || "" };
     run(async () => {
       try {
         const res = page
@@ -91,23 +89,6 @@ function PageForm({ page, onClose, onSaved, onPaywall }: { page: PageDTO | null;
       <Field label="Description" htmlFor="page-desc" hint="optional">
         <Textarea id="page-desc" name="description" maxLength={240} rows={3} defaultValue={page?.description} placeholder="What’s this page about?" />
       </Field>
-      <div className="space-y-1.5">
-        <span className="text-sm font-medium">Icon</span>
-        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Page icon">
-          {EMOJIS.map((e) => (
-            <button
-              key={e}
-              type="button"
-              role="radio"
-              aria-checked={emoji === e}
-              onClick={() => setEmoji(e)}
-              className={clsx("grid size-10 place-items-center rounded-xl border text-xl transition", emoji === e ? "border-accent bg-accent-soft" : "border-line hover:bg-surface-2")}
-            >
-              {e}
-            </button>
-          ))}
-        </div>
-      </div>
       <ErrorLine msg={error} />
       <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
@@ -145,6 +126,7 @@ export function ShelfDialog({
 
 function ShelfForm({ pageId, shelf, onClose, onSaved }: { pageId: string; shelf: ShelfDTO | null; onClose: () => void; onSaved: (shelf: ShelfDTO, created: boolean) => void }) {
   const { busy, error, run } = useSubmit();
+  const [category, setCategory] = useState("books");
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
@@ -162,11 +144,7 @@ function ShelfForm({ pageId, shelf, onClose, onSaved }: { pageId: string; shelf:
       </Field>
       {!shelf && (
         <Field label="Category" htmlFor="shelf-cat" hint="everything on this shelf fits it">
-          <Select id="shelf-cat" name="category" defaultValue="books">
-            {CATEGORIES.map((c) => (
-              <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>
-            ))}
-          </Select>
+          <CategoryPicker id="shelf-cat" name="category" value={category} onChange={setCategory} />
         </Field>
       )}
       <ErrorLine msg={error} />
@@ -221,20 +199,22 @@ export function ProfileDialog({
   viewer,
   onClose,
   onSaved,
+  onAvatar,
 }: {
   open: boolean;
   viewer: ViewerDTO;
   onClose: () => void;
   onSaved: (u: ViewerDTO) => void;
+  onAvatar: (u: ViewerDTO) => void;
 }) {
   return (
     <Modal open={open} onClose={onClose} title="Edit profile">
-      <ProfileForm viewer={viewer} onClose={onClose} onSaved={onSaved} />
+      <ProfileForm viewer={viewer} onClose={onClose} onSaved={onSaved} onAvatar={onAvatar} />
     </Modal>
   );
 }
 
-function ProfileForm({ viewer, onClose, onSaved }: { viewer: ViewerDTO; onClose: () => void; onSaved: (u: ViewerDTO) => void }) {
+function ProfileForm({ viewer, onClose, onSaved, onAvatar }: { viewer: ViewerDTO; onClose: () => void; onSaved: (u: ViewerDTO) => void; onAvatar: (u: ViewerDTO) => void }) {
   const { busy, error, run } = useSubmit();
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -246,6 +226,7 @@ function ProfileForm({ viewer, onClose, onSaved }: { viewer: ViewerDTO; onClose:
   }
   return (
     <form onSubmit={submit} className="space-y-4">
+      <AvatarEditor viewer={viewer} onChange={onAvatar} />
       <Field label="Display name" htmlFor="pf-name">
         <Input id="pf-name" name="displayName" data-autofocus required maxLength={50} defaultValue={viewer.displayName} />
       </Field>
@@ -294,23 +275,23 @@ function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: { strip
         return;
       }
       await api("/api/billing/demo-upgrade", { method: "POST", json: {} });
-      toast.success("Shelfie Plus unlocked (demo mode) 🎉");
+      toast.success("Shelfie Plus unlocked (demo mode)");
       onUpgraded();
     });
   }
 
-  const perks = [
-    ["📄", "Unlimited extra pages", "Music, travel, sneakers… give every collection its own page."],
-    ["⚡", "Switch pages instantly", "Your page switcher shows everything you curate."],
-    ["💛", "Support an indie product", "Plus keeps Shelfie ad-free and tracker-free."],
+  const perks: Array<[LucideIcon, string, string]> = [
+    [FileStack, "Unlimited extra pages", "Music, travel, sneakers… give every collection its own page."],
+    [Zap, "Switch pages instantly", "Your page switcher shows everything you curate."],
+    [Heart, "Support an indie product", "Plus keeps Shelfie ad-free and tracker-free."],
   ];
 
   return (
       <div data-testid="paywall" className="space-y-5">
         <ul className="space-y-3">
-          {perks.map(([icon, t, d]) => (
+          {perks.map(([Icon, t, d]) => (
             <li key={t} className="flex gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-lg">{icon}</span>
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent"><Icon className="size-5" aria-hidden /></span>
               <div>
                 <p className="font-medium leading-tight">{t}</p>
                 <p className="text-sm text-muted">{d}</p>

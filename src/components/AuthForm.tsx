@@ -79,7 +79,7 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
         </form>
         {!isSignup && demoHint && (
           <button onClick={demoLogin} disabled={busy} className="mt-3 w-full rounded-full border border-dashed border-line py-2.5 text-sm text-muted transition hover:border-accent hover:text-ink">
-            ✨ Try the demo account
+            Try the demo account
           </button>
         )}
         <p className="mt-6 text-center text-sm text-muted">

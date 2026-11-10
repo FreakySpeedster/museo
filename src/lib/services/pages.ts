@@ -36,7 +36,7 @@ export async function createPage(userId: string, input: z.infer<typeof pageSchem
       throw new AppError("UNPROCESSABLE", "You've reached the maximum number of pages");
     }
     return tx.page.create({
-      data: { userId, title: input.title, description: input.description, emoji: input.emoji, position: pageCount },
+      data: { userId, title: input.title, description: input.description, position: pageCount },
       include: { shelves: true },
     });
   });

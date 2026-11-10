@@ -114,11 +114,13 @@ async function main() {
   await settle(p, 1500);
   check("signup lands on own (empty) profile", await p.getByText("Build your first shelf").isVisible());
 
-  const cats = ["books", "music", "photography", "travel", "tech"];
+  const cats = ["Books", "Music", "Photography", "Travel", "Tech & Gadgets"];
   for (let i = 0; i < 5; i++) {
     await (i === 0 ? p.getByRole("button", { name: "Add a shelf" }) : p.getByTestId("add-shelf")).click();
     await p.fill("#shelf-name", `Shelf ${i + 1}`);
-    await p.selectOption("#shelf-cat", cats[i]);
+    await p.click("#shelf-cat");
+    await p.getByRole("searchbox", { name: "Search categories" }).fill(cats[i].split(" ")[0]);
+    await p.getByRole("option", { name: new RegExp(cats[i]) }).first().click();
     await p.getByRole("button", { name: "Create shelf" }).click();
     await p.getByRole("region", { name: `Shelf ${i + 1}` }).waitFor();
   }
@@ -200,7 +202,7 @@ async function main() {
   await browser.close();
   const real = errors.filter((e) => !/favicon|Failed to load resource.*(401|402|422)/i.test(e));
   check("no unexpected browser console errors", real.length === 0, real.slice(0, 3).join(" | "));
-  console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll UI checks passed ✅");
+  console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll UI checks passed");
   process.exit(failures ? 1 : 0);
 }
 

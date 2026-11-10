@@ -1,18 +1,28 @@
 "use client";
 
-import { Fragment, useRef } from "react";
+import { Check, Globe, History, SunMoon, type LucideIcon } from "lucide-react";
+import { Fragment, useRef, type ReactNode } from "react";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { LinkButton } from "@/components/ui/Button";
 import { ScrollTrigger, canHover, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 
+const Tick = ({ children }: { children: ReactNode }) => (
+  <li className="flex items-center gap-2"><Check className="size-4 shrink-0 text-accent" aria-hidden strokeWidth={2.6} />{children}</li>
+);
+
 const COLLAGE = [
-  { src: "/seed/05-kind-of-blue.svg", label: "Kind of Blue", shelf: "🎧 On repeat", cls: "left-[2%] top-[6%] w-[44%] -rotate-6", depth: 18 },
-  { src: "/seed/16-monstera.svg", label: "Monstera", shelf: "🪴 Leafy friends", cls: "right-[0%] top-[0%] w-[42%] rotate-6", depth: 28 },
-  { src: "/seed/23-patagonia.svg", label: "Patagonia", shelf: "🧭 Places I’ve been", cls: "left-[22%] top-[38%] w-[48%] rotate-2", depth: 40 },
-  { src: "/seed/09-next-js.svg", label: "next.js", shelf: "🧪 Open source", cls: "right-[2%] top-[56%] w-[36%] -rotate-3", depth: 24 },
-  { src: "/seed/01-dune.svg", label: "Dune", shelf: "📖 Reading", cls: "left-[0%] top-[62%] w-[34%] rotate-[8deg]", depth: 32 },
+  { src: "/seed/05-kind-of-blue.svg", label: "Kind of Blue", cat: "music", shelf: "On repeat", cls: "left-[2%] top-[6%] w-[44%] -rotate-6", depth: 18 },
+  { src: "/seed/16-monstera.svg", label: "Monstera", cat: "plants", shelf: "Leafy friends", cls: "right-[0%] top-[0%] w-[42%] rotate-6", depth: 28 },
+  { src: "/seed/23-patagonia.svg", label: "Patagonia", cat: "travel", shelf: "Places I’ve been", cls: "left-[22%] top-[38%] w-[48%] rotate-2", depth: 40 },
+  { src: "/seed/09-next-js.svg", label: "next.js", cat: "code", shelf: "Open source", cls: "right-[2%] top-[56%] w-[36%] -rotate-3", depth: 24 },
+  { src: "/seed/01-dune.svg", label: "Dune", cat: "books", shelf: "Reading", cls: "left-[0%] top-[62%] w-[34%] rotate-[8deg]", depth: 32 },
 ];
 
-const MARQUEE = ["📖 Books", "🎧 Records", "🎬 Films", "🎮 Games", "🎨 Art", "📷 Photos", "👟 Sneakers", "🍜 Recipes", "🧭 Travel", "💾 Gadgets", "🪴 Plants", "🧸 Figures", "🧪 Side projects", "📰 Reads"];
+const MARQUEE: Array<[string, string]> = [
+  ["books", "Books"], ["vinyl", "Records"], ["film-tv", "Films"], ["games", "Games"], ["art", "Art"], ["photography", "Photos"], ["sneakers", "Sneakers"],
+  ["food", "Recipes"], ["travel", "Travel"], ["tech", "Gadgets"], ["plants", "Plants"], ["toys", "Figures"], ["code", "Side projects"], ["reading", "Reads"],
+  ["fragrance", "Fragrance"], ["watches", "Watches"], ["lego", "LEGO"], ["tcg", "Trading cards"],
+];
 
 const STEPS = [
   ["01", "Create a page", "Pages are themed homes for related collections — “Music”, “Travel”, “Desk”. Your first one is free."],
@@ -126,7 +136,7 @@ export function Landing() {
                 <img src={c.src} alt="" className="aspect-[4/5] w-full rounded-xl object-cover" />
                 <div className="px-1.5 pb-1 pt-2">
                   <p className="truncate text-xs font-semibold">{c.label}</p>
-                  <p className="truncate text-[10px] text-muted">{c.shelf}</p>
+                  <p className="flex items-center gap-1 truncate text-[10px] text-muted"><CategoryIcon category={c.cat} className="size-3 shrink-0" />{c.shelf}</p>
                 </div>
               </div>
             </div>
@@ -138,7 +148,7 @@ export function Landing() {
       <div className="border-y border-line bg-surface/70 py-4" aria-hidden>
         <div className="flex w-max gap-3 whitespace-nowrap" data-marquee>
           {[...MARQUEE, ...MARQUEE].map((m, i) => (
-            <span key={i} className="rounded-full border border-line bg-bg px-4 py-1.5 text-sm font-medium text-muted">{m}</span>
+            <span key={i} className="inline-flex items-center gap-2 rounded-full border border-line bg-bg px-4 py-1.5 text-sm font-medium text-muted"><CategoryIcon category={m[0]} className="size-4 text-accent" />{m[1]}</span>
           ))}
         </div>
       </div>
@@ -179,13 +189,13 @@ export function Landing() {
 
       {/* FEATURES */}
       <section data-reveal-section className="mx-auto grid max-w-6xl gap-5 px-4 py-20 sm:px-6 md:grid-cols-3">
-        {[
-          ["🕰️", "A timeline that writes itself", "Every item you add shows up on your profile timeline — a living diary of your taste."],
-          ["🔗", "Public by default", "Every profile lives at /u/you. Share it anywhere; no account needed to browse."],
-          ["🌗", "Made to be lived in", "Dark mode, instant page switching, drag-to-reorder shelves and a design that stays out of the way."],
-        ].map(([i, t, d]) => (
+        {([
+          [History, "A timeline that writes itself", "Every item you add shows up on your profile timeline — a living diary of your taste."],
+          [Globe, "Public by default", "Every profile lives at /u/you. Share it anywhere; no account needed to browse."],
+          [SunMoon, "Made to be lived in", "Dark mode, instant page switching, drag-to-reorder shelves and a design that stays out of the way."],
+        ] as Array<[LucideIcon, string, string]>).map(([Icon, t, d]) => (
           <div key={t} data-reveal className="rounded-3xl border border-line bg-surface p-6">
-            <div className="text-3xl">{i}</div>
+            <span className="grid size-11 place-items-center rounded-2xl bg-accent-soft text-accent"><Icon className="size-6" aria-hidden strokeWidth={1.8} /></span>
             <h3 className="mt-4 text-lg font-semibold">{t}</h3>
             <p className="mt-1.5 text-sm leading-relaxed text-muted">{d}</p>
           </div>
@@ -198,13 +208,13 @@ export function Landing() {
           <div data-reveal className="rounded-3xl border border-line bg-surface p-7">
             <p className="text-sm font-medium text-muted">Free</p>
             <p className="mt-1 text-4xl font-semibold tracking-tight">$0</p>
-            <ul className="mt-5 space-y-2 text-sm"><li>✓ 1 page</li><li>✓ 5 shelves per page</li><li>✓ Unlimited links &amp; photos</li><li>✓ Public profile &amp; timeline</li></ul>
+            <ul className="mt-5 space-y-2 text-sm"><Tick>1 page</Tick><Tick>5 shelves per page</Tick><Tick>Unlimited links &amp; photos</Tick><Tick>Public profile &amp; timeline</Tick></ul>
           </div>
           <div data-reveal className="relative overflow-hidden rounded-3xl border-2 border-accent bg-surface p-7 shadow-[0_20px_60px_-20px_var(--accent)]">
             <span className="absolute right-5 top-5 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold uppercase text-accent-ink">Plus</span>
             <p className="text-sm font-medium text-muted">Shelfie Plus</p>
             <p className="mt-1 text-4xl font-semibold tracking-tight">$4<span className="text-base font-normal text-muted"> / month</span></p>
-            <ul className="mt-5 space-y-2 text-sm"><li>✓ Everything in Free</li><li>✓ <strong>Unlimited pages</strong> + page switcher</li><li>✓ Support an indie product</li></ul>
+            <ul className="mt-5 space-y-2 text-sm"><Tick>Everything in Free</Tick><Tick><strong>Unlimited pages</strong> + page switcher</Tick><Tick>Support an indie product</Tick></ul>
           </div>
         </div>
       </section>

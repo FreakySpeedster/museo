@@ -9,7 +9,8 @@ import { rateLimit } from "@/lib/rate-limit";
 const blob = vi.hoisted(() => ({ put: vi.fn(), del: vi.fn() }));
 vi.mock("@vercel/blob", () => blob);
 
-import { blobEnabled, storageDriver } from "@/lib/storage";
+import { sniffImage } from "@/lib/uploads";
+import { blobEnabled, storageDriver, storeRead } from "@/lib/storage";
 import { deleteUploadByUrl, saveUploadedImage } from "@/lib/uploads";
 
 describe("database-backed rate limiter", () => {
@@ -76,9 +77,20 @@ describe("storage adapter", () => {
     expect(blob.del).toHaveBeenCalledTimes(1);
   });
 
-  it("fails clearly on Vercel when no storage is configured", async () => {
+  it("keeps images in the database on Vercel when no Blob token is set, and serves/deletes them", async () => {
     delete process.env.BLOB_READ_WRITE_TOKEN;
     process.env.VERCEL = "1";
-    await expect(saveUploadedImage(await png())).rejects.toThrow(/BLOB_READ_WRITE_TOKEN/);
+    expect(storageDriver()).toBe("database");
+    const url = await saveUploadedImage(await png());
+    const name = url.split("/").pop()!;
+    expect(url).toMatch(/^\/api\/uploads\/[a-f0-9]{32}\.webp$/);
+    const row = await db.asset.findUnique({ where: { name } });
+    expect(row?.contentType).toBe("image/webp");
+    expect(row!.size).toBeGreaterThan(0);
+    const read = await storeRead(name);
+    expect(read?.contentType).toBe("image/webp");
+    expect(sniffImage(read!.data)).toBe("webp");
+    await deleteUploadByUrl(url);
+    expect(await db.asset.findUnique({ where: { name } })).toBeNull();
   });
 });

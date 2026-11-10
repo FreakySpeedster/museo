@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CATEGORY_IDS } from "./categories";
+import { isValidCategory } from "./categories";
 
 const trimmed = (min: number, max: number, label: string) =>
   z
@@ -51,13 +51,12 @@ export const profileSchema = z.object({
 export const pageSchema = z.object({
   title: trimmed(1, 60, "Page title"),
   description: optionalText(240, "Description"),
-  emoji: z.string().trim().min(1).max(8).optional().default("📚"),
 });
 export const pageUpdateSchema = pageSchema.partial();
 
 export const shelfSchema = z.object({
   name: trimmed(1, 40, "Shelf name"),
-  category: z.enum(CATEGORY_IDS, { error: "Choose a category" }),
+  category: z.string().trim().refine(isValidCategory, { error: "Choose a category" }),
 });
 export const shelfUpdateSchema = z.object({
   name: trimmed(1, 40, "Shelf name").optional(),

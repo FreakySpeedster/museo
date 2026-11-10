@@ -3,7 +3,8 @@
 import { useMemo, useRef, useState } from "react";
 import type { TimelineEntry } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
-import { categoryMeta } from "@/lib/categories";
+import { History, Image as ImageIcon, Link2 } from "lucide-react";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { ScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { dayLabel, timeAgo } from "@/lib/time";
 import { Button } from "@/components/ui/Button";
@@ -93,7 +94,7 @@ export function TimelineList({
   if (entries.length === 0) {
     return (
       <div className="grid place-items-center rounded-3xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center">
-        <div className="text-4xl">🕰️</div>
+        <History className="size-10 text-accent" aria-hidden strokeWidth={1.6} />
         <p className="mt-3 text-lg font-semibold">Nothing on the timeline yet</p>
         <p className="text-sm text-muted">{emptyOwner ? "Everything you add to a shelf shows up here, newest first." : "When they add items, they’ll appear here."}</p>
       </div>
@@ -113,7 +114,6 @@ export function TimelineList({
             </div>
             <ul className="space-y-4">
               {g.items.map((e) => {
-                const meta = categoryMeta(e.shelf.category);
                 return (
                   <li key={e.id} data-entry data-testid="timeline-entry">
                     <button
@@ -125,12 +125,12 @@ export function TimelineList({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-muted">
-                          Added to <span className="font-medium text-ink">{meta.emoji} {e.shelf.name}</span> · {timeAgo(e.createdAt)}
+                          Added to <span className="inline-flex items-center gap-1 align-middle font-medium text-ink"><CategoryIcon category={e.shelf.category} className="size-3.5" />{e.shelf.name}</span> · {timeAgo(e.createdAt)}
                         </p>
                         <h4 className="mt-1 line-clamp-2 text-base font-semibold leading-snug">{e.title}</h4>
                         {e.description && <p className="mt-1 line-clamp-2 text-sm text-muted">{e.description}</p>}
                         <p className="mt-2 text-xs text-muted">
-                          {e.type === "LINK" ? `🔗 ${e.siteName ?? "Link"}` : "🖼️ Photo"} · on <span className="font-medium">{e.page.emoji} {e.page.title}</span>
+                          <span className="inline-flex items-center gap-1 align-middle">{e.type === "LINK" ? <Link2 className="size-3.5" aria-hidden /> : <ImageIcon className="size-3.5" aria-hidden />}{e.type === "LINK" ? e.siteName ?? "Link" : "Photo"}</span> · on <span className="font-medium">{e.page.title}</span>
                         </p>
                       </div>
                     </button>

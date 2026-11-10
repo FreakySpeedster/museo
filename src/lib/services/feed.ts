@@ -4,7 +4,7 @@ import { toTimelineEntry } from "../mappers";
 export const FEED_PAGE_SIZE = 18;
 
 const include = {
-  user: { select: { id: true, username: true, displayName: true, bio: true } },
+  user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true } },
   shelf: { include: { page: true } },
 } as const;
 

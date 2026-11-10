@@ -7,7 +7,7 @@ import { api } from "@/lib/client";
 import { Avatar } from "./ui/Avatar";
 import { useToast } from "./ui/Toast";
 
-export function UserMenu({ username, displayName, plus }: { username: string; displayName: string; plus: boolean }) {
+export function UserMenu({ username, displayName, avatarUrl, plus }: { username: string; displayName: string; avatarUrl?: string | null; plus: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -46,7 +46,7 @@ export function UserMenu({ username, displayName, plus }: { username: string; di
         aria-label="Account menu"
         className="flex items-center gap-2 rounded-full border border-line bg-surface py-1 pl-1 pr-3 transition hover:bg-surface-2"
       >
-        <Avatar name={displayName} username={username} size={30} />
+        <Avatar name={displayName} username={username} avatarUrl={avatarUrl} size={30} />
         <span className="hidden max-w-28 truncate text-sm font-medium sm:block">{displayName}</span>
         {plus && <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold uppercase text-accent-ink">Plus</span>}
       </button>

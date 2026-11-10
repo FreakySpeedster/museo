@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ApiError, api } from "@/lib/client";
@@ -27,7 +29,7 @@ export function PricingActions({ signedIn, subscribed, stripeEnabled, status, ha
   if (subscribed) {
     return (
       <div className="space-y-2">
-        <Button size="lg" variant="secondary" className="w-full" disabled>✓ You’re on Plus {status === "demo" ? "(demo)" : ""}</Button>
+        <Button size="lg" variant="secondary" className="w-full" disabled><Check className="size-4" aria-hidden strokeWidth={2.6} /> You’re on Plus {status === "demo" ? "(demo)" : ""}</Button>
         {!stripeEnabled && status === "demo" && (
           <Button variant="ghost" className="w-full" loading={busy} onClick={() => act(async () => { await api("/api/billing/demo-upgrade", { method: "DELETE" }); toast.info("Demo subscription canceled"); router.refresh(); })}>
             Cancel demo subscription
@@ -55,7 +57,7 @@ export function PricingActions({ signedIn, subscribed, stripeEnabled, status, ha
             window.location.href = url;
           } else {
             await api("/api/billing/demo-upgrade", { method: "POST", json: {} });
-            toast.success("Shelfie Plus unlocked (demo mode) 🎉");
+            toast.success("Shelfie Plus unlocked (demo mode)");
             router.refresh();
           }
         })

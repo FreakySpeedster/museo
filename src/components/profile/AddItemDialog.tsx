@@ -1,9 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from "react";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
+import { Camera, Image as ImageIcon, Link2 } from "lucide-react";
 import { categoryMeta } from "@/lib/categories";
 import { MAX_REQUEST_BYTES, prepareImage } from "@/lib/client-image";
 import { Button } from "@/components/ui/Button";
@@ -29,7 +30,7 @@ export function AddItemDialog({
 }) {
   const meta = shelf ? categoryMeta(shelf.category) : null;
   return (
-    <Modal open={open} onClose={onClose} size="lg" title="Add to your shelf" description={shelf ? `${meta?.emoji} ${shelf.name}` : undefined}>
+    <Modal open={open} onClose={onClose} size="lg" title="Add to your shelf" description={shelf ? `${shelf.name} · ${meta?.label}` : undefined}>
       {shelf && <AddItemForm shelf={shelf} onClose={onClose} onAdded={onAdded} />}
     </Modal>
   );
@@ -118,7 +119,7 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
     }
   }
 
-  const tab = (m: "LINK" | "PHOTO", label: string) => (
+  const tab = (m: "LINK" | "PHOTO", label: ReactNode) => (
     <button
       type="button"
       role="tab"
@@ -127,7 +128,7 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
         setMode(m);
         setError("");
       }}
-      className={clsx("flex-1 rounded-full px-4 py-2 text-sm font-medium transition", mode === m ? "bg-ink text-bg shadow" : "text-muted hover:text-ink")}
+      className={clsx("flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition", mode === m ? "bg-ink text-bg shadow" : "text-muted hover:text-ink")}
     >
       {label}
     </button>
@@ -136,8 +137,8 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
   return (
       <form onSubmit={submit} className="space-y-5" data-testid="add-item-form">
         <div role="tablist" className="flex rounded-full border border-line bg-surface-2 p-1">
-          {tab("LINK", "🔗 Link")}
-          {tab("PHOTO", "🖼️ Photo")}
+          {tab("LINK", <><Link2 className="size-4" aria-hidden /> Link</>)}
+          {tab("PHOTO", <><ImageIcon className="size-4" aria-hidden /> Photo</>)}
         </div>
 
         {mode === "LINK" ? (
@@ -192,7 +193,7 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
                 <img src={filePreview} alt="Selected photo preview" className="max-h-64 w-full object-contain" />
               ) : (
                 <div>
-                  <div className="text-4xl">📸</div>
+                  <Camera className="mx-auto size-9 text-accent" aria-hidden strokeWidth={1.6} />
                   <p className="mt-2 font-medium">Drop a photo here, or click to browse</p>
                   <p className="text-xs text-muted">JPG, PNG, WebP or GIF · up to {MAX_MB}MB</p>
                 </div>

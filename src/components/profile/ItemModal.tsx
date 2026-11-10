@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { categoryMeta } from "@/lib/categories";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { timeAgo } from "@/lib/time";
 import { ItemThumb } from "./ItemThumb";
 
@@ -99,7 +101,7 @@ function ItemBody({
           <div className="flex min-w-0 flex-col">
             {meta && shelf && (
               <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                {meta.emoji} {shelf.name}
+                <span className="inline-flex items-center gap-1.5"><CategoryIcon category={shelf.category} className="size-3.5" />{shelf.name}</span>
               </p>
             )}
             {editing ? (
@@ -129,15 +131,15 @@ function ItemBody({
                     className="mt-5 inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-ink shadow-[0_6px_20px_-6px_var(--accent)] transition hover:brightness-110"
                   >
                     <span className="truncate">Visit {it.siteName ?? "link"}</span>
-                    <span aria-hidden>↗</span>
+                    <ArrowUpRight className="size-4 shrink-0" aria-hidden />
                   </a>
                 )}
                 {isOwner && (
                   <div className="mt-auto space-y-3 pt-6">
                     <div className="flex flex-wrap items-center gap-2">
                       <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>Edit</Button>
-                      <Button variant="secondary" size="sm" disabled={idx <= 0} onClick={() => onMove(it, -1)} aria-label="Move earlier on shelf">← Earlier</Button>
-                      <Button variant="secondary" size="sm" disabled={!shelf || idx >= shelf.items.length - 1} onClick={() => onMove(it, 1)} aria-label="Move later on shelf">Later →</Button>
+                      <Button variant="secondary" size="sm" disabled={idx <= 0} onClick={() => onMove(it, -1)} aria-label="Move earlier on shelf"><ArrowLeft className="size-4" aria-hidden /> Earlier</Button>
+                      <Button variant="secondary" size="sm" disabled={!shelf || idx >= shelf.items.length - 1} onClick={() => onMove(it, 1)} aria-label="Move later on shelf">Later <ArrowRight className="size-4" aria-hidden /></Button>
                       {!confirming && <Button variant="ghost" size="sm" className="ml-auto hover:text-red-600" onClick={() => setConfirming(true)}>Delete</Button>}
                     </div>
                     {confirming && (

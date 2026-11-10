@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import type { TimelineEntry } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
-import { categoryMeta } from "@/lib/categories";
+import { ArrowUpRight, Sprout } from "lucide-react";
 import { gsap, reducedMotion, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { timeAgo } from "@/lib/time";
 import { Avatar } from "@/components/ui/Avatar";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
@@ -81,7 +82,7 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
         </div>
       ) : feed.items.length === 0 ? (
         <div className="grid place-items-center rounded-3xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center">
-          <div className="text-4xl">🌱</div>
+          <Sprout className="size-10 text-accent" aria-hidden strokeWidth={1.6} />
           <p className="mt-3 text-lg font-semibold">{scope === "following" && !hasFollows ? "Your feed is quiet" : "Nothing here yet"}</p>
           <p className="mt-1 max-w-sm text-sm text-muted">Follow collectors to see what they add, or browse everyone’s latest finds.</p>
           <Button className="mt-4" variant="secondary" onClick={() => switchScope("global")}>Browse everyone</Button>
@@ -89,7 +90,6 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="feed">
           {feed.items.map((e) => {
-            const meta = categoryMeta(e.shelf.category);
             return (
               <article key={e.id} data-feed-card className="relative">
                 <Tilt className="relative overflow-hidden rounded-3xl border border-line bg-surface shadow-card" max={5}>
@@ -98,15 +98,15 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
                   </Link>
                   <div className="space-y-2 p-4">
                     <div className="flex items-center gap-2 text-xs text-muted">
-                      <Avatar name={e.user.displayName} username={e.user.username} size={22} />
+                      <Avatar name={e.user.displayName} username={e.user.username} avatarUrl={e.user.avatarUrl} size={22} />
                       <Link href={`/u/${e.user.username}`} className="font-medium text-ink hover:underline">{e.user.displayName}</Link>
                       <span>·</span><span>{timeAgo(e.createdAt)}</span>
                     </div>
                     <h3 className="line-clamp-2 font-semibold leading-snug">{e.title}</h3>
                     {e.description && <p className="line-clamp-2 text-sm text-muted">{e.description}</p>}
                     <div className="flex items-center justify-between pt-1 text-xs text-muted">
-                      <span className="rounded-full bg-surface-2 px-2.5 py-1">{meta.emoji} {e.shelf.name}</span>
-                      {e.url && <a href={e.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="font-medium text-accent hover:underline">{e.siteName ?? "Visit"} ↗</a>}
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1"><CategoryIcon category={e.shelf.category} className="size-3.5" />{e.shelf.name}</span>
+                      {e.url && <a href={e.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="font-medium text-accent hover:underline"><span className="inline-flex items-center gap-1">{e.siteName ?? "Visit"}<ArrowUpRight className="size-3.5" aria-hidden /></span></a>}
                     </div>
                   </div>
                 </Tilt>

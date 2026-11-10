@@ -17,6 +17,7 @@ model User {
   username             String    @unique
   displayName          String
   bio                  String    @default("")
+  avatarUrl            String?
   passwordHash         String
   // Billing
   subscribed           Boolean   @default(false)
@@ -49,7 +50,6 @@ model Page {
   userId      String
   title       String
   description String   @default("")
-  emoji       String   @default("📚")
   position    Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -112,4 +112,13 @@ model RateLimit {
   windowStart DateTime @default(now())
 
   @@index([windowStart])
+}
+
+/// Image bytes kept in the database when no Blob store is configured (compact WebP/GIF/ICO only).
+model Asset {
+  name        String   @id
+  contentType String
+  data        Bytes
+  size        Int
+  createdAt   DateTime @default(now())
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import clsx from "clsx";
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
+import { AlertCircle, Check, Info, X, type LucideIcon } from "lucide-react";
+import { createContext, createElement, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { gsap, reducedMotion } from "@/lib/gsap";
 
 type Kind = "success" | "error" | "info";
@@ -20,7 +21,7 @@ export function useToast(): ToastApi {
   return v;
 }
 
-const ICON: Record<Kind, string> = { success: "✓", error: "!", info: "i" };
+const ICON: Record<Kind, LucideIcon> = { success: Check, error: AlertCircle, info: Info };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
@@ -70,11 +71,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 t.kind === "info" && "bg-sky-500",
               )}
             >
-              {ICON[t.kind]}
+              {createElement(ICON[t.kind], { className: "size-3.5", "aria-hidden": true, strokeWidth: 3 })}
             </span>
             <span className="flex-1">{t.message}</span>
             <button onClick={() => dismiss(t.id)} aria-label="Dismiss" className="text-muted hover:text-ink">
-              ×
+              <X className="size-4" aria-hidden />
             </button>
           </div>
         ))}

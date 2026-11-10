@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { AppError } from "../errors";
-import { getLinkPreview, resolveThumbnail } from "../link-preview";
+import { getLinkPreview, refreshLinkThumbnail, resolveThumbnail } from "../link-preview";
 import { deleteUploadByUrl, saveUploadedImage } from "../uploads";
 import { itemCreateLinkSchema, itemTextSchema, itemUpdateSchema, reorderSchema } from "../validation";
 import { assertShelfOwner } from "./shelves";
@@ -91,4 +91,35 @@ export async function reorderItems(userId: string, shelfId: string, input: z.inf
     throw new AppError("BAD_REQUEST", "The item list doesn't match this shelf");
   }
   await db.$transaction(input.itemIds.map((id, position) => db.item.update({ where: { id }, data: { position } })));
+}
+
+/** Fill in a missing thumbnail/favicon for a link item (owner-triggered or admin backfill). */
+export async function refreshItemThumbnail(itemId: string, opts: { userId?: string } = {}) {
+  const item = opts.userId ? await assertItemOwner(opts.userId, itemId) : await db.item.findUnique({ where: { id: itemId } });
+  if (!item) throw new AppError("NOT_FOUND", "Item not found");
+  if (item.type !== "LINK" || !item.url) return item;
+  if (item.imageUrl) return item;
+  const { imageUrl, faviconUrl } = await refreshLinkThumbnail(item.url);
+  if (!imageUrl && !faviconUrl) return item;
+  return db.item.update({
+    where: { id: item.id },
+    data: { imageUrl: imageUrl ?? item.imageUrl, faviconUrl: item.faviconUrl ?? faviconUrl },
+  });
+}
+
+/** Backfill up to `limit` link items that have no thumbnail. Returns counts. */
+export async function backfillThumbnails(limit = 10) {
+  const items = await db.item.findMany({ where: { type: "LINK", imageUrl: null, url: { not: null } }, orderBy: { createdAt: "asc" }, take: limit });
+  let fixed = 0;
+  const failed: string[] = [];
+  for (const it of items) {
+    try {
+      const after = await refreshItemThumbnail(it.id);
+      if (after.imageUrl) fixed++;
+      else failed.push(it.id);
+    } catch {
+      failed.push(it.id);
+    }
+  }
+  return { checked: items.length, fixed, failed };
 }

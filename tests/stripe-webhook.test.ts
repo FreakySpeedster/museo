@@ -19,7 +19,7 @@ describe("Stripe webhook handling", () => {
     );
     let fresh = await db.user.findUniqueOrThrow({ where: { id: u.id } });
     expect(fresh).toMatchObject({ subscribed: true, subscriptionStatus: "active", stripeCustomerId: "cus_123", stripeSubscriptionId: "sub_123" });
-    await expect(createPage(u.id, { title: "Two", description: "", emoji: "📚" })).resolves.toBeTruthy();
+    await expect(createPage(u.id, { title: "Two", description: "" })).resolves.toBeTruthy();
 
     await handleStripeEvent(ev("customer.subscription.updated", { id: "sub_123", customer: "cus_123", status: "past_due", metadata: { userId: u.id } }));
     fresh = await db.user.findUniqueOrThrow({ where: { id: u.id } });

@@ -1,4 +1,4 @@
-# Shelfie 🗄️
+# Shelfie
 
 **Show off what you collect.** Shelfie is a social showcase app: build *pages*, stock them with *shelves*
 (each shelf holds one category), and drop in links or photos. Everything you add also lands on your public
@@ -22,7 +22,7 @@ Built with **Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Prisma +
 - **Paywall:** the first page is free; extra pages need **Shelfie Plus**. Stripe Checkout + webhook when configured,
   otherwise a clearly-labelled **demo mode** upgrade.
 - **Public profiles** at `/u/[username]`, follow/unfollow, edit profile, edit/delete items, shelves and pages,
-  drag-to-reorder items (plus ← / → buttons for touch & keyboard).
+  drag-to-reorder items (plus ← to buttons for touch & keyboard).
 - Dark mode, responsive/mobile-first, empty states, loading skeletons, toasts, error & 404 pages, accessible dialogs.
 - **GSAP animation** (all respecting `prefers-reduced-motion`): hero text/collage with mouse parallax, page transitions,
   ScrollTrigger reveals for shelves/items/timeline (scrubbed timeline line), **Flip** for reorder/add/remove,
@@ -63,7 +63,9 @@ See [`.env.example`](.env.example) (every variable is documented there). Nothing
 |---|---|---|
 | `DATABASE_URL` | **yes** | Postgres runtime connection (use the *pooled* URL on serverless). |
 | `DIRECT_URL` | **yes** | Direct (non-pooled) URL for `prisma migrate`. Same value as `DATABASE_URL` if you have no pooler. |
-| `BLOB_READ_WRITE_TOKEN` | **yes on Vercel** | Enables Vercel Blob storage for photos and cached link thumbnails. Empty → local disk. |
+| `BLOB_READ_WRITE_TOKEN` | **yes on Vercel** | Optional on Vercel: enables Vercel Blob for photos, avatars and cached link thumbnails. Empty → local disk (dev) or the database (Vercel). |
+| `CRON_SECRET` | optional | 16+ char secret that enables `POST /api/admin/backfill-thumbnails` (send `Authorization: Bearer <secret>`) to fill in missing link thumbnails. |
+| `STORAGE_DRIVER` | optional | Set to `db` to keep images in the database (Asset table) even off Vercel. |
 | `APP_URL` | recommended | Public base URL (Stripe redirects, cookie `Secure` flag). Falls back to `VERCEL_PROJECT_PRODUCTION_URL`. |
 | `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` | optional | Real subscriptions. All empty → clearly-labelled demo-mode upgrade. |
 | `PLUS_PRICE_LABEL` | optional | Display text for the price (default `$4 / month`). |
@@ -123,7 +125,7 @@ are race-free thanks to **Postgres advisory transaction locks** — both are saf
 1. **Database:** create a Postgres database (Vercel Marketplace → Neon, or any Postgres). Set `DATABASE_URL` (pooled) and
    `DIRECT_URL` (direct). With the Vercel↔Neon integration map: `DATABASE_URL` ← `POSTGRES_PRISMA_URL`/`POSTGRES_URL`, `DIRECT_URL` ← `POSTGRES_URL_NON_POOLING`.
 2. **Storage:** Project → Storage → create a **Blob** store and connect it; `BLOB_READ_WRITE_TOKEN` is added automatically.
-   (Without it, uploads fail with a clear error on Vercel because serverless disk is read-only.) Seed images ship in `public/seed/`.
+   (Optional: without it, Shelfie stores re-encoded images in the database `Asset` table, so uploads, avatars and thumbnails still work.) Seed images ship in `public/seed/`.
 3. **Import the repo** in Vercel (framework: Next.js). The `vercel-build` script runs `prisma migrate deploy` on every deploy, so the schema
    is migrated automatically using `DIRECT_URL`. No `vercel.json` is needed. `postinstall` runs `prisma generate`.
 4. Set `APP_URL` to your production URL/custom domain (optional on `*.vercel.app`).

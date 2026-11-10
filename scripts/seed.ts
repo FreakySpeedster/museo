@@ -26,7 +26,7 @@ function image(motif: Motif, pal: keyof typeof PAL, label: string): string {
 
 interface SeedItem { title: string; description?: string; url?: string; site?: string; img: string }
 interface SeedShelf { name: string; category: string; items: SeedItem[] }
-interface SeedPage { title: string; emoji: string; description: string; shelves: SeedShelf[] }
+interface SeedPage { title: string; description: string; shelves: SeedShelf[] }
 interface SeedUser { email: string; username: string; displayName: string; bio: string; password: string; subscribed: boolean; pages: SeedPage[]; follows: string[] }
 
 const wiki = (t: string) => `https://en.wikipedia.org/wiki/${t}`;
@@ -39,7 +39,7 @@ const USERS: SeedUser[] = [
     bio: "Good books, better records, and open-source gems I keep coming back to.",
     follows: ["maya", "kenji"],
     pages: [{
-      title: "My Collections", emoji: "📚", description: "The things I can't stop collecting.",
+      title: "My Collections", description: "The things I can't stop collecting.",
       shelves: [
         { name: "Currently reading", category: "books", items: [
           link("Dune", wiki("Dune_(novel)"), "Wikipedia", image("book", "ember", "Dune"), "Sand, spice and politics. Third read-through."),
@@ -69,10 +69,10 @@ const USERS: SeedUser[] = [
   },
   {
     email: "maya@shelfie.app", username: "maya", displayName: "Maya Ortiz", password: "maya1234", subscribed: true,
-    bio: "Plant parent, trail snack connoisseur, amateur photographer 🌿",
+    bio: "Plant parent, trail snack connoisseur, amateur photographer",
     follows: ["demo"],
     pages: [
-      { title: "Plant Parent", emoji: "🪴", description: "34 plants and counting. Send help.", shelves: [
+      { title: "Plant Parent", description: "34 plants and counting. Send help.", shelves: [
         { name: "Leafy friends", category: "plants", items: [
           photo("Monstera deliciosa", image("plant", "forest", "Monstera"), "Grew three new leaves this month!"),
           photo("String of pearls", image("plant", "lime", "String of Pearls")),
@@ -84,7 +84,7 @@ const USERS: SeedUser[] = [
           link("Self-watering planters", wiki("Self-watering_container"), "Wikipedia", image("bowl", "ocean", "Self-watering")),
         ] },
       ] },
-      { title: "Travel Log", emoji: "🧭", description: "Places, plates and photos from the road.", shelves: [
+      { title: "Travel Log", description: "Places, plates and photos from the road.", shelves: [
         { name: "Places I've been", category: "travel", items: [
           photo("Lisbon rooftops", image("polaroid", "sand", "Lisbon"), "Golden hour from Alfama."),
           photo("Patagonia", image("mountain", "ocean", "Patagonia")),
@@ -106,7 +106,7 @@ const USERS: SeedUser[] = [
   {
     email: "kenji@shelfie.app", username: "kenji", displayName: "Kenji Watanabe", password: "kenji1234", subscribed: false,
     bio: "Retro games, midnight movies, pixel everything.", follows: ["demo"],
-    pages: [{ title: "Pixel Vault", emoji: "🎮", description: "Games and films that shaped me.", shelves: [
+    pages: [{ title: "Pixel Vault", description: "Games and films that shaped me.", shelves: [
       { name: "Retro favourites", category: "games", items: [
         link("Super Metroid", wiki("Super_Metroid"), "Wikipedia", image("pixel", "plum", "Super Metroid")),
         link("Celeste", wiki("Celeste_(video_game)"), "Wikipedia", image("mountain", "fuchsia", "Celeste")),
@@ -143,7 +143,7 @@ async function main() {
     ids.set(u.username, user.id);
     let pagePos = 0;
     for (const p of u.pages) {
-      const page = await db.page.create({ data: { userId: user.id, title: p.title, emoji: p.emoji, description: p.description, position: pagePos++ } });
+      const page = await db.page.create({ data: { userId: user.id, title: p.title, description: p.description, position: pagePos++ } });
       let shelfPos = 0;
       for (const s of p.shelves) {
         const shelf = await db.shelf.create({ data: { pageId: page.id, name: s.name, category: s.category, position: shelfPos++ } });

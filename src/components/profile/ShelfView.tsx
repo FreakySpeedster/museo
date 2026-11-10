@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
+import { Plus } from "lucide-react";
 import { categoryMeta } from "@/lib/categories";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Flip, ScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Button } from "@/components/ui/Button";
 import { ItemCard } from "./ItemCard";
@@ -121,7 +123,7 @@ export function ShelfView({
       <div data-shelf-head className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h3 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
-            <span aria-hidden>{meta.emoji}</span>
+            <CategoryIcon category={shelf.category} className="size-5 shrink-0 text-accent" />
             <span className="truncate">{shelf.name}</span>
           </h3>
           <p className="text-xs text-muted">
@@ -131,7 +133,7 @@ export function ShelfView({
         {isOwner && (
           <div className="flex shrink-0 items-center gap-1">
             <Button size="sm" onClick={() => onAddItem(shelf)} aria-label={`Add item to ${shelf.name}`}>
-              <span aria-hidden className="text-base leading-none">＋</span> Add item
+              <Plus className="size-4" aria-hidden strokeWidth={2.4} /> Add item
             </Button>
             <Button size="sm" variant="ghost" onClick={() => onEditShelf(shelf)} aria-label={`Rename ${shelf.name}`}>Rename</Button>
             <Button size="sm" variant="ghost" onClick={() => onDeleteShelf(shelf)} aria-label={`Delete ${shelf.name}`} className="hover:text-red-600">Delete</Button>
@@ -141,7 +143,7 @@ export function ShelfView({
 
       {shelf.items.length === 0 ? (
         <div className="grid place-items-center rounded-2xl border border-dashed border-line bg-surface/60 px-6 py-10 text-center">
-          <div className="text-3xl">{meta.emoji}</div>
+          <CategoryIcon category={shelf.category} className="size-8 text-accent" />
           <p className="mt-2 font-medium">This shelf is empty</p>
           <p className="text-sm text-muted">{isOwner ? "Add a link or a photo to start your collection." : "Nothing here yet."}</p>
           {isOwner && (

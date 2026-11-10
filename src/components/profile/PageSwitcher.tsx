@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { Lock, Plus } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 import type { PageDTO } from "@/lib/dto";
 import { gsap, reducedMotion } from "@/lib/gsap";
@@ -59,7 +60,6 @@ export function PageSwitcher({
                 active ? "text-bg" : "text-muted hover:text-ink",
               )}
             >
-              <span aria-hidden>{p.emoji}</span>
               {p.title}
             </button>
           );
@@ -72,9 +72,9 @@ export function PageSwitcher({
             aria-label={locked ? "New page (requires Plus)" : "New page"}
           >
             {locked ? (
-              <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+              <Lock className="size-3.5" aria-hidden strokeWidth={2.2} />
             ) : (
-              <span aria-hidden>＋</span>
+              <Plus className="size-3.5" aria-hidden strokeWidth={2.4} />
             )}
             New page
             {locked && <span className="rounded-full bg-accent px-1.5 text-[10px] font-bold uppercase text-accent-ink">Plus</span>}

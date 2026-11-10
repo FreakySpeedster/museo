@@ -28,16 +28,16 @@ export const toPageDTO = (p: Page & { shelves?: Array<Shelf & { items?: Item[] }
   id: p.id,
   title: p.title,
   description: p.description,
-  emoji: p.emoji,
   position: p.position,
   shelves: (p.shelves ?? []).map(toShelfDTO),
 });
 
-export const toPublicUser = (u: Pick<User, "id" | "username" | "displayName" | "bio">): PublicUser => ({
+export const toPublicUser = (u: Pick<User, "id" | "username" | "displayName" | "bio" | "avatarUrl">): PublicUser => ({
   id: u.id,
   username: u.username,
   displayName: u.displayName,
   bio: u.bio,
+  avatarUrl: u.avatarUrl,
 });
 
 export const toViewerDTO = (u: User): ViewerDTO => ({
@@ -48,12 +48,12 @@ export const toViewerDTO = (u: User): ViewerDTO => ({
 });
 
 type EntryRow = Item & {
-  user: Pick<User, "id" | "username" | "displayName" | "bio">;
+  user: Pick<User, "id" | "username" | "displayName" | "bio" | "avatarUrl">;
   shelf: Shelf & { page: Page };
 };
 export const toTimelineEntry = (i: EntryRow): TimelineEntry => ({
   ...toItemDTO(i),
   user: toPublicUser(i.user),
   shelf: { id: i.shelf.id, name: i.shelf.name, category: i.shelf.category },
-  page: { id: i.shelf.page.id, title: i.shelf.page.title, emoji: i.shelf.page.emoji },
+  page: { id: i.shelf.page.id, title: i.shelf.page.title },
 });

@@ -16,6 +16,8 @@ export interface SafeFetchOptions {
   maxBytes?: number;
   maxRedirects?: number;
   accept?: string;
+  /** Extra request headers (e.g. referer). */
+  headers?: Record<string, string>;
   /** Override DNS resolution (used in tests). */
   resolve?: (hostname: string) => Promise<string[]>;
   /** Only allow responses whose content-type matches (e.g. /^image\//). */
@@ -30,7 +32,8 @@ export interface SafeFetchResult {
   truncated: boolean;
 }
 
-const USER_AGENT = "Mozilla/5.0 (compatible; ShelfieBot/1.0; +link-preview)";
+// Many shops and CDNs reject unknown bots; a mainstream browser identity gets the same HTML a visitor sees.
+const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 
 export function parsePublicUrl(raw: string): URL {
   let input = raw.trim();
@@ -79,7 +82,8 @@ function requestOnce(url: URL, ip: string, opts: Required<Pick<SafeFetchOptions,
           headers: {
             "user-agent": USER_AGENT,
             accept: opts.accept ?? "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
-            "accept-language": "en",
+            "accept-language": "en-US,en;q=0.9",
+            ...(opts.headers ?? {}),
           },
           // DNS pinning: connect to the IP we already validated (defeats DNS rebinding).
           lookup: ((_host: string, options: unknown, cb: (...a: unknown[]) => void) => {

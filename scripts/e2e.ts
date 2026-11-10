@@ -46,7 +46,7 @@ async function main() {
   r = await new Client().req("/api/auth/login", { json: { email: `a_${id}@test.dev`, password: "wrongpass" } });
   check("bad login rejected", r.status === 401);
   r = await new Client().req("/api/pages");
-  check("unauthenticated API call → 401", r.status === 401);
+  check("unauthenticated API call is 401", r.status === 401);
   r = await a.req("/api/pages", { json: { title: "x" }, headers: { origin: "https://evil.example" } });
   check("cross-origin POST blocked (CSRF)", r.status === 403);
 
@@ -54,7 +54,7 @@ async function main() {
   r = await a.req("/api/pages");
   const page1 = r.body.pages[0];
   check("first page exists from signup", r.body.pages.length === 1, page1?.title);
-  r = await a.req("/api/pages", { json: { title: "Second page", emoji: "🎧" } });
+  r = await a.req("/api/pages", { json: { title: "Second page" } });
   check("second page blocked by paywall (402)", r.status === 402 && r.body.error.code === "PAYWALL");
 
   // --- shelves & limit
@@ -164,7 +164,7 @@ async function main() {
   check("stripe checkout unavailable in demo mode (400)", r.status === 400);
   r = await a.req("/api/billing/demo-upgrade", { method: "POST", json: {} });
   check("demo upgrade marks user subscribed", r.status === 200 && r.body.user.subscribed === true);
-  r = await a.req("/api/pages", { json: { title: "Second page", emoji: "🎧" } });
+  r = await a.req("/api/pages", { json: { title: "Second page" } });
   check("second page allowed after upgrade", r.status === 201);
   const page2 = r.body.page;
   r = await a.req(`/api/pages/${page2.id}/shelves`, { json: { name: "P2 shelf", category: "music" } });
@@ -187,7 +187,7 @@ async function main() {
   r = await a.req("/api/pages");
   check("logout invalidates session", r.status === 401);
 
-  console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll checks passed ✅");
+  console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll checks passed");
   process.exit(failures ? 1 : 0);
 }
 

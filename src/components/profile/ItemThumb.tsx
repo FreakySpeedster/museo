@@ -18,7 +18,7 @@ export function gradientFor(seed: string) {
 
 type ThumbItem = Pick<ItemDTO, "imageUrl" | "faviconUrl" | "title" | "siteName" | "type" | "id">;
 
-/** Thumbnail with graceful fallbacks: image → favicon on gradient → initial on gradient. */
+/** Thumbnail with graceful fallbacks: image -> favicon on gradient -> initial on gradient. */
 export function ItemThumb({ item, className, eager }: { item: ThumbItem; className?: string; eager?: boolean }) {
   const [imgFailed, setImgFailed] = useState(false);
   const [favFailed, setFavFailed] = useState(false);
@@ -34,6 +34,7 @@ export function ItemThumb({ item, className, eager }: { item: ThumbItem; classNa
           decoding="async"
           draggable={false}
           onError={() => setImgFailed(true)}
+          referrerPolicy="no-referrer"
           className="h-full w-full object-cover"
         />
       ) : (

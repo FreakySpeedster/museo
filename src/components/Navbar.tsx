@@ -26,7 +26,7 @@ export async function Navbar() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {user ? (
-            <UserMenu username={user.username} displayName={user.displayName} plus={user.subscribed} />
+            <UserMenu username={user.username} displayName={user.displayName} avatarUrl={user.avatarUrl} plus={user.subscribed} />
           ) : (
             <>
               <LinkButton href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">

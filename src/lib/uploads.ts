@@ -66,13 +66,34 @@ export async function saveRemoteImage(buf: Buffer): Promise<string | null> {
   try {
     const out = await sharp(buf, { limitInputPixels: 60e6 })
       .rotate()
-      .resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 80 })
+      .resize({ width: 900, height: 900, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 78 })
       .toBuffer();
     return await write(`${rand()}.webp`, out);
   } catch {
     if (sniffImage(buf) === "ico") return write(`${rand()}.ico`, buf);
     return null;
+  }
+}
+
+/** Validate an avatar upload and store it as a 512x512 square WebP (centre-cropped, metadata stripped). */
+export async function saveAvatar(buf: Buffer): Promise<string> {
+  if (buf.length === 0) throw new AppError("UPLOAD_INVALID", "That file is empty");
+  if (buf.length > maxUploadBytes()) {
+    throw new AppError("UPLOAD_INVALID", `Image is too large (max ${Math.round(maxUploadBytes() / 1024 / 1024)}MB)`);
+  }
+  const kind = sniffImage(buf);
+  if (!kind || kind === "ico") throw new AppError("UPLOAD_INVALID", "Only JPG, PNG, WebP or GIF images are allowed");
+  try {
+    const out = await sharp(buf, { limitInputPixels: 60e6 })
+      .rotate()
+      .resize({ width: 512, height: 512, fit: "cover", position: "attention" })
+      .webp({ quality: 82 })
+      .toBuffer();
+    return await write(`${rand()}.webp`, out);
+  } catch (e) {
+    if (e instanceof AppError) throw e;
+    throw new AppError("UPLOAD_INVALID", "That image looks corrupted or unsupported");
   }
 }
 
