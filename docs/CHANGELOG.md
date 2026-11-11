@@ -1,9 +1,10 @@
 # Changelog
 
-All notable work on Nook, summarized from `git log`. Dates are Asia/Calcutta (UTC+5:30). Newest first. There are no release tags yet; history lives on local `master` only.
+All notable work on nook, summarized from `git log`. Dates are Asia/Calcutta (UTC+5:30). Newest first. There are no release tags yet; history lives on local `master` only.
 
 ## Unreleased
 
+- Brand mark: house/alcove outline (`currentColor`, black in light / white in dark) with a fixed brown dot (`#875F44`); lowercase wordmark “nook” everywhere the name appears.
 - Sticky profile chrome: shelves/timeline tabs and the page switcher pin just below the app navbar. Once the profile header leaves the viewport, a compact identity (avatar, display name, @handle) slides in on the same row with no height change. Opaque frosted background, horizontal tab scroll on small screens, IntersectionObserver-driven reveal.
 
 ## 2026-11-11 — a2b4204
@@ -68,6 +69,6 @@ Production-ready for Vercel: Postgres, Blob storage adapter, DB-backed rate limi
 
 ## 2026-11-10 — 1cd264f
 
-Nook: collection showcase app (Next.js, Prisma, GSAP).
+nook: collection showcase app (Next.js, Prisma, GSAP).
 
 - Initial app: App Router pages, Prisma schema, auth, pages/shelves/items, follow/feed/timeline, link preview, uploads, Stripe + demo billing, seed data, Vitest tests, screenshot and e2e scripts, README.

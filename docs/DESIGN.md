@@ -1,4 +1,4 @@
-# Nook design system
+# nook design system
 
 Use these tokens and primitives for every new screen and component. Do not invent one-off colours, type sizes, or control heights.
 
@@ -10,6 +10,11 @@ Use these tokens and primitives for every new screen and component. Do not inven
 - No emojis. Icons come from `lucide-react` at 16, 20 or 24px (`size-4`, `size-5`, `size-6`). Decorative empty-state marks may be 40px (`size-10`).
 - No native-looking form controls. Inputs, the category combobox and tabs all share the same chrome.
 - Colour contrast meets WCAG AA (4.5:1) for text, including muted copy and accent-as-text, in light and dark.
+
+
+## Brand
+
+The mark is a thick, rounded house/alcove outline with an opening at the bottom-right. The house uses `fill="currentColor"` so it is black in light and white in dark. The brown dot (`#875F44`) stays that colour in both themes. The wordmark is lowercase **nook**, including in titles and metadata.
 
 ## Tokens
 

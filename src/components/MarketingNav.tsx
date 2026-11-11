@@ -20,11 +20,11 @@ export function MarketingNav() {
         <Link
           href="/"
           className="flex items-center gap-2 font-semibold tracking-tight"
-          aria-label="Nook home"
+          aria-label="nook home"
           onClick={() => setOpen(false)}
         >
           <LogoMark className="size-7" />
-          <span className="text-[15px]">Nook</span>
+          <span className="text-[15px]">nook</span>
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
           {links.map((l) => (

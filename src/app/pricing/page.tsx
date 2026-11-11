@@ -33,7 +33,7 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
         </div>
         <div className="relative rounded-3xl border border-border bg-surface p-8 ring-1 ring-accent/30">
           <span className="absolute right-6 top-6 rounded-full bg-accent-subtle px-2.5 py-1 text-micro font-semibold uppercase tracking-wide text-accent">Plus</span>
-          <p className="text-meta font-medium text-muted">Nook Plus</p>
+          <p className="text-meta font-medium text-muted">nook Plus</p>
           <p className="mt-1 text-title font-semibold tracking-tight">{price}</p>
           <ul className="my-6 space-y-2.5 text-body"><Tick>Everything in Free</Tick><Tick><strong>Unlimited pages</strong></Tick><Tick>Instant page switcher</Tick><Tick>Cancel anytime</Tick></ul>
           <PricingActions signedIn={Boolean(user)} subscribed={Boolean(user?.subscribed)} stripeEnabled={stripe} status={user?.subscriptionStatus ?? "none"} hasCustomer={Boolean(user?.stripeCustomerId)} />

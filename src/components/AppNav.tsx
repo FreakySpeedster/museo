@@ -137,11 +137,11 @@ export function AppNav({ user }: { user: NavUser | null }) {
         className="app-nav-side fixed inset-y-0 left-0 z-nav hidden flex-col overflow-hidden border-r border-border bg-[color-mix(in_srgb,var(--background)_94%,var(--surface))] pb-3 pt-4 md:flex"
       >
         <div className="mb-3 flex h-12 items-center px-[var(--nav-inset)]" data-nav-item>
-          <Link href="/" aria-label="Nook home" className="flex min-w-0 items-center rounded-lg">
+          <Link href="/" aria-label="nook home" className="flex min-w-0 items-center rounded-lg">
             <span className="nav-icon-slot">
               <LogoMark className="size-7" />
             </span>
-            <span className="nav-label whitespace-nowrap pr-3 text-heading font-semibold tracking-tight">Nook</span>
+            <span className="nav-label whitespace-nowrap pr-3 text-heading font-semibold tracking-tight">nook</span>
           </Link>
         </div>
         <nav className="flex flex-col gap-1" aria-label="Primary">
@@ -182,9 +182,9 @@ export function AppNav({ user }: { user: NavUser | null }) {
       </aside>
 
       <header className="glass sticky top-0 z-nav flex h-12 items-center justify-between border-b border-border/70 px-4 md:hidden">
-        <Link href="/" aria-label="Nook home" className="flex items-center gap-2 font-semibold tracking-tight">
+        <Link href="/" aria-label="nook home" className="flex items-center gap-2 font-semibold tracking-tight">
           <LogoMark className="size-7" />
-          <span className="text-heading">Nook</span>
+          <span className="text-heading">nook</span>
         </Link>
         <ThemeToggle />
       </header>

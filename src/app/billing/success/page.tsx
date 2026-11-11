@@ -14,7 +14,7 @@ export default async function Success() {
       <h1 className="mt-4 text-title font-semibold tracking-tight">{user.subscribed ? "You’re on Plus!" : "Almost there…"}</h1>
       <p className="mt-2 text-body text-muted">
         {user.subscribed
-          ? "Thanks for supporting Nook. You can now create as many pages as you like."
+          ? "Thanks for supporting nook. You can now create as many pages as you like."
           : "We’re waiting for Stripe to confirm your payment. This usually takes a few seconds — refresh in a moment."}
       </p>
       <LinkButton href={`/u/${user.username}`} className="mt-6">Go to my shelves</LinkButton>

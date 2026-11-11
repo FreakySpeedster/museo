@@ -1,6 +1,6 @@
 # Architecture
 
-Nook is a collection-showcase web app: people sign up, build pages of shelves, and fill those shelves with links (auto-previewed) or photos. Public profiles live at `/u/[username]`.
+nook is a collection-showcase web app: people sign up, build pages of shelves, and fill those shelves with links (auto-previewed) or photos. Public profiles live at `/u/[username]`.
 
 ## Stack
 
