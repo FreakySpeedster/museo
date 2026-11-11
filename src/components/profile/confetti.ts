@@ -4,7 +4,7 @@ import { gsap, reducedMotion } from "@/lib/gsap";
 export function burst(from: HTMLElement | null, count = 18) {
   if (!from || reducedMotion()) return;
   const r = from.getBoundingClientRect();
-  const colors = ["#ff5a2c", "#ffb020", "#22c55e", "#0ea5e9", "#a855f7", "#ec4899"];
+  const colors = ["#171717", "#525252", "#22c55e", "#0ea5e9", "#a855f7", "#ec4899"];
   const layer = document.createElement("div");
   layer.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden";
   document.body.appendChild(layer);

@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { ItemDTO } from "@/lib/dto";
 
 const PALETTES = [
-  ["#ff5a2c", "#ffb020"], ["#7c3aed", "#ec4899"], ["#0ea5e9", "#22c55e"], ["#f43f5e", "#f59e0b"],
+  ["#171717", "#525252"], ["#7c3aed", "#ec4899"], ["#0ea5e9", "#22c55e"], ["#f43f5e", "#f59e0b"],
   ["#14b8a6", "#6366f1"], ["#84cc16", "#06b6d4"], ["#d946ef", "#3b82f6"], ["#ef4444", "#f97316"],
 ];
 

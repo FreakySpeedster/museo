@@ -98,7 +98,7 @@ export function AppNav({ user }: { user: NavUser | null }) {
       title={it.label}
       className={clsx(
         "flex h-12 items-center rounded-xl transition-colors",
-        it.primary ? "bg-accent text-accent-contrast hover:brightness-110" : it.active ? "bg-surface-hover font-semibold text-foreground" : "text-muted hover:bg-surface-hover hover:text-foreground",
+        it.primary ? "bg-accent text-accent-contrast hover:bg-accent-hover active:bg-accent-pressed" : it.active ? "bg-surface-hover font-semibold text-foreground" : "text-muted hover:bg-surface-hover hover:text-foreground",
       )}
     >
       <span className="grid w-[4.5rem] shrink-0 place-items-center">

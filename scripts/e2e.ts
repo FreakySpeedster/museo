@@ -108,7 +108,7 @@ async function main() {
   check("SSRF blocked when adding an item", r.status === 400);
 
   // --- photo item
-  const png = await sharp({ create: { width: 640, height: 480, channels: 3, background: "#ff5a2c" } }).png().toBuffer();
+  const png = await sharp({ create: { width: 640, height: 480, channels: 3, background: "#171717" } }).png().toBuffer();
   form = new FormData();
   form.set("type", "PHOTO");
   form.set("title", "Orange square");

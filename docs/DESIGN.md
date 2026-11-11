@@ -5,7 +5,7 @@ Use these tokens and primitives for every new screen and component. Do not inven
 ## Principles
 
 - Collections are the product. Chrome stays quiet. Motion is short opacity and small-Y fades — no bounce, elastic, tilt, or confetti.
-- The public website (landing, pricing, log in, sign up, and logged-out profiles) is minimal and professional: a simple top bar, generous whitespace, typographic hierarchy, and a single restrained accent. The signed-in app keeps the sidebar.
+- The public website (landing, pricing, log in, sign up, and logged-out profiles) is minimal and professional: a simple top bar, generous whitespace, typographic hierarchy, and a monochrome accent. The signed-in app keeps the sidebar.
 - One token language on every surface — marketing, app, dialogs, empty states — so a later feature (search, notifications, create, likes) can drop in without a redesign.
 - No emojis. Icons come from `lucide-react` at 16, 20 or 24px (`size-4`, `size-5`, `size-6`). Decorative empty-state marks may be 40px (`size-10`).
 - No native-looking form controls. Inputs, the category combobox and tabs all share the same chrome.
@@ -26,13 +26,15 @@ Source of truth: `src/app/globals.css`. Roles are CSS variables, wired into Tail
 | border | `--border` | `border-border` | Dividers and strokes |
 | text | `--foreground` | `text-foreground` | Primary copy |
 | text-muted | `--muted` | `text-muted` | Meta, hints, placeholders |
-| accent | `--accent` | `bg-accent` `text-accent` | Brand, primary actions, links |
+| accent | `--accent` | `bg-accent` `text-accent` | Brand, primary actions, links, logo mark |
+| accent-hover | `--accent-hover` | `bg-accent-hover` | Hover fill for accent buttons and primary nav |
+| accent-pressed | `--accent-pressed` | `bg-accent-pressed` | Pressed fill for accent controls |
 | accent-contrast | `--accent-contrast` | `text-accent-contrast` | Text/icons on accent fills |
 | accent-subtle | `--accent-subtle` | `bg-accent-subtle` | Soft accent tints |
 | danger / success / warning / info | `--danger` etc. | `text-danger` `bg-danger-subtle` … | Status |
 | focus | `--focus` | `outline-focus` `ring-focus` | Focus rings |
 
-The canvas is a warm off-white (`#FAFAF8`) in light and near-black (`#0C0C0B`) in dark, with a single restrained coral accent. Light accent (`#C83819`) stays AA on the canvas and as white-on-fill. Dark accent is a brighter coral (`#FF7A52`) with dark ink as contrast. Decorative gold (`--gold`) is reserved for rare highlights, never body text. Do not add background blobs, confetti, or candy gradients.
+The canvas is a warm off-white (`#FAFAF8`) in light and near-black (`#0C0C0B`) in dark. The brand accent is monochrome: black (`#000000`) in light with white contrast, and white (`#FFFFFF`) in dark with black contrast. Hover is near-black (`#171717`) in light and neutral-200 (`#E5E5E5`) in dark; pressed is `#262626` / `#D4D4D4`. Focus rings, text selection, links, active nav, badges and the logo mark all use these tokens. Accent-as-text and white-or-black-on-fill meet WCAG AA. Danger stays red and success stays green. Decorative gold (`--gold`) is reserved for rare highlights, never body text or brand chrome. Do not add background blobs, confetti, or candy gradients.
 
 ### Type
 

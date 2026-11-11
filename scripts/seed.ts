@@ -11,7 +11,7 @@ fs.mkdirSync(seedDir, { recursive: true });
 
 type Pal = [string, string, string];
 const PAL: Record<string, Pal> = {
-  ember: ["#ff5a2c", "#ffb020", "#7c2d12"], plum: ["#7c3aed", "#ec4899", "#fde047"], ocean: ["#0ea5e9", "#22c55e", "#fef08a"],
+  ember: ["#171717", "#525252", "#262626"], plum: ["#7c3aed", "#ec4899", "#fde047"], ocean: ["#0ea5e9", "#22c55e", "#fef08a"],
   rose: ["#f43f5e", "#f59e0b", "#1e1b4b"], teal: ["#14b8a6", "#6366f1", "#fde68a"], lime: ["#84cc16", "#06b6d4", "#14532d"],
   fuchsia: ["#d946ef", "#3b82f6", "#fde047"], crimson: ["#ef4444", "#f97316", "#fff7ed"], night: ["#1e293b", "#475569", "#38bdf8"],
   forest: ["#166534", "#4d7c0f", "#bbf7d0"], sand: ["#d97706", "#fbbf24", "#78350f"], sky: ["#38bdf8", "#818cf8", "#fff"],
