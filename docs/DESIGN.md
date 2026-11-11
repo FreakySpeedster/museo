@@ -14,7 +14,7 @@ Use these tokens and primitives for every new screen and component. Do not inven
 
 ## Brand
 
-The mark is a thick, rounded house/alcove outline with an opening at the bottom-right. The house uses `fill="currentColor"` so it is black in light and white in dark. The brown dot (`#875F44`) stays that colour in both themes. The wordmark is lowercase **nook**, including in titles and metadata.
+The official mark is a peaked house outline, open at the bottom-right, plus a brown dot. The house uses `fill="currentColor"` so it is black in light and white in dark. The dot (`#855E42`) stays that colour in both themes. The wordmark is lowercase **nook**, including in titles and metadata. Source: `public/logo.svg`.
 
 ## Tokens
 

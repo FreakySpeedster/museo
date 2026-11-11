@@ -4,7 +4,7 @@ All notable work on nook, summarized from `git log`. Dates are Asia/Calcutta (UT
 
 ## Unreleased
 
-- Brand mark: house/alcove outline (`currentColor`, black in light / white in dark) with a fixed brown dot (`#875F44`); lowercase wordmark “nook” everywhere the name appears.
+- Official nook mark (exact SVG paths, viewBox 0 0 294 287): house `currentColor`, brown dot `#855E42`; lowercase wordmark “nook”. Favicon, apple icon, and OG mark regenerated from `public/logo.svg`.
 - Sticky profile chrome: shelves/timeline tabs and the page switcher pin just below the app navbar. Once the profile header leaves the viewport, a compact identity (avatar, display name, @handle) slides in on the same row with no height change. Opaque frosted background, horizontal tab scroll on small screens, IntersectionObserver-driven reveal.
 
 ## 2026-11-11 — a2b4204
