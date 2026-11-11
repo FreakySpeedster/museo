@@ -18,7 +18,6 @@ import { ItemModal } from "./ItemModal";
 import { PageSwitcher } from "./PageSwitcher";
 import { ProfileStickyBar } from "./ProfileStickyBar";
 import { ShelfView } from "./ShelfView";
-import { burst } from "./confetti";
 
 interface Props {
   profile: {
@@ -89,7 +88,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     else delete captureFns.current[id];
   }, []);
   const dragSnapshot = useRef<ItemDTO[] | null>(null);
-  const dirRef = useRef(1);
   const header = useRef<HTMLDivElement>(null);
   const wide = useSyncExternalStore(subscribeSm, () => window.matchMedia("(min-width: 640px)").matches, () => false);
   const content = useRef<HTMLDivElement>(null);
@@ -103,9 +101,9 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   useGSAP(
     () => {
       if (reducedMotion()) return;
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-      tl.from("[data-avatar]", { scale: 0, rotation: -25, duration: 0.8, ease: "back.out(2)" })
-        .from("[data-head]", { y: 18, opacity: 0, stagger: 0.07, duration: 0.55 }, "-=0.5");
+      const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+      tl.from("[data-avatar]", { opacity: 0, duration: 0.35, ease: "power2.out" })
+        .from("[data-head]", { y: 8, opacity: 0, stagger: 0.05, duration: 0.35 }, "-=0.2");
     },
     { scope: header },
   );
@@ -113,23 +111,17 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   useGSAP(
     () => {
       if (reducedMotion() || !content.current) return;
-      gsap.from(content.current, { opacity: 0, x: 36 * dirRef.current, duration: 0.5, ease: "power3.out", clearProps: "all" });
+      gsap.from(content.current, { opacity: 0, duration: 0.3, ease: "power2.out", clearProps: "all" });
     },
     { scope: content, dependencies: [activeId] },
   );
 
-  const selectPage = useCallback(
-    (id: string) => {
-      const from = pages.findIndex((p) => p.id === activeId);
-      const to = pages.findIndex((p) => p.id === id);
-      dirRef.current = to >= from ? 1 : -1;
-      setActiveId(id);
-      const url = new URL(window.location.href);
-      url.searchParams.set("page", id);
-      window.history.replaceState(null, "", url);
-    },
-    [pages, activeId],
-  );
+  const selectPage = useCallback((id: string) => {
+    setActiveId(id);
+    const url = new URL(window.location.href);
+    url.searchParams.set("page", id);
+    window.history.replaceState(null, "", url);
+  }, []);
 
   const patchShelf = (shelfId: string, fn: (s: ShelfDTO) => ShelfDTO) =>
     setPages((ps) => ps.map((p) => ({ ...p, shelves: p.shelves.map((s) => (s.id === shelfId ? fn(s) : s)) })));
@@ -143,7 +135,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     setPageDialog(null);
     if (created) {
       setPages((ps) => [...ps, saved]);
-      dirRef.current = 1;
       setActiveId(saved.id);
       const url = new URL(window.location.href);
       url.searchParams.set("page", saved.id);
@@ -252,12 +243,11 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   }
 
   /* ---------- follow ---------- */
-  async function toggleFollow(e: React.MouseEvent<HTMLButtonElement>) {
+  async function toggleFollow() {
     if (!viewer) return router.push(`/login`);
     const next = !following;
     setFollowing(next);
     setStats((s) => ({ ...s, followers: s.followers + (next ? 1 : -1) }));
-    if (next) burst(e.currentTarget, 10);
     try {
       await api(`/api/users/${user.username}/follow`, { method: next ? "POST" : "DELETE" });
     } catch (err) {
@@ -433,7 +423,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
               setPaywall(false);
               router.refresh();
               setTimeout(() => {
-                burst(document.querySelector("[data-testid=new-page]"), 24);
                 setPageDialog({ page: null });
               }, 350);
             }}

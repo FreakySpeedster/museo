@@ -46,7 +46,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       setItems((xs) => [...xs.slice(-3), { id, kind, message }]);
       requestAnimationFrame(() => {
         const el = document.querySelector<HTMLElement>(`[data-toast="${id}"]`);
-        if (el && !reducedMotion()) gsap.fromTo(el, { y: 30, opacity: 0, scale: 0.9 }, { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" });
+        if (el && !reducedMotion()) gsap.fromTo(el, { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25, ease: "power2.out" });
       });
       setTimeout(() => dismiss(id), kind === "error" ? 6000 : 3800);
     },

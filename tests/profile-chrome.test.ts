@@ -10,11 +10,13 @@ describe("profile sticky chrome", () => {
     expect(isCompactIdentityShown(false)).toBe(true);
   });
 
-  it("insets the observer by the phone top bar only; desktop has no top header", () => {
+  it("insets the observer by the chrome sitting above the sticky bar", () => {
     expect(MOBILE_TOPBAR_HEIGHT_PX).toBe(48);
-    expect(STICKY_TOP_CLASS).toBe("top-12 md:top-0");
+    expect(STICKY_TOP_CLASS).toBe("top-[var(--chrome-top)]");
     expect(stickyObserverOptions(false)).toEqual({ threshold: 0, rootMargin: "-48px 0px 0px 0px" });
     expect(stickyObserverOptions(true)).toEqual({ threshold: 0, rootMargin: "-0px 0px 0px 0px" });
+    expect(stickyObserverOptions(false, "marketing")).toEqual({ threshold: 0, rootMargin: "-64px 0px 0px 0px" });
+    expect(stickyObserverOptions(true, "marketing")).toEqual({ threshold: 0, rootMargin: "-64px 0px 0px 0px" });
   });
 
   it("renders only avatar, display name and @handle when visible", () => {

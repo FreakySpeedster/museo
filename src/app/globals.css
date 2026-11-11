@@ -9,16 +9,16 @@
 
 :root {
   /* Colour — light */
-  --background: #f3eee4;
-  --surface: #fffdf8;
+  --background: #fafaf8;
+  --surface: #ffffff;
   --surface-raised: #ffffff;
-  --surface-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
-  --border: #e2d8c8;
-  --foreground: #1a1714;
-  --muted: #5c574f;
+  --surface-hover: color-mix(in srgb, var(--foreground) 5%, transparent);
+  --border: #e6e3de;
+  --foreground: #171513;
+  --muted: #5c5852;
   --accent: #c83819;
   --accent-contrast: #ffffff;
-  --accent-subtle: #fbe4dc;
+  --accent-subtle: #f8ebe7;
   --danger: #b91c1c;
   --danger-contrast: #ffffff;
   --danger-subtle: #fce8e8;
@@ -90,19 +90,22 @@
   --nav-rail: 4.5rem;      /* 72px icon rail */
   --nav-expanded: 15rem;   /* 240px labelled */
   --nav-offset: 0px;
-  --topbar-height: 3rem;   /* 48px phone top bar */
+  --topbar-height: 3rem;       /* 48px app phone top bar */
+  --marketing-topbar: 4rem;    /* 64px public top bar */
+  --chrome-top: var(--marketing-topbar);
+  --chrome-top-px: 64;
 
   color-scheme: light;
 }
 
 .dark {
-  --background: #10100e;
-  --surface: #191714;
-  --surface-raised: #23201c;
+  --background: #0c0c0b;
+  --surface: #161514;
+  --surface-raised: #1e1d1b;
   --surface-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
-  --border: #3a342c;
-  --foreground: #f3eee6;
-  --muted: #b4ada3;
+  --border: #2e2c29;
+  --foreground: #f4f1ec;
+  --muted: #b4afa8;
   --accent: #ff7a52;
   --accent-contrast: #1a0c08;
   --accent-subtle: #3a1e14;
@@ -128,9 +131,23 @@
   color-scheme: dark;
 }
 
+/* Public site uses a top bar. The signed-in app shell owns the left rail offset. */
+[data-shell="marketing"] {
+  --chrome-top: var(--marketing-topbar);
+  --chrome-top-px: 64;
+  --nav-offset: 0px;
+}
+[data-shell="app"] {
+  --chrome-top: var(--topbar-height);
+  --chrome-top-px: 48;
+}
 @media (min-width: 768px) {
-  :root { --nav-offset: var(--nav-rail); }
-  :root[data-nav-pinned] { --nav-offset: var(--nav-expanded); }
+  [data-shell="app"] {
+    --chrome-top: 0px;
+    --chrome-top-px: 0;
+    --nav-offset: var(--nav-rail);
+  }
+  :root[data-nav-pinned] [data-shell="app"] { --nav-offset: var(--nav-expanded); }
 }
 
 @theme inline {
@@ -222,22 +239,20 @@ body {
   min-height: 100dvh;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: var(--z-base);
-  opacity: 0.35;
-  background-image: radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 42%);
-}
-
-body > header { z-index: var(--z-nav); }
-body > main {
+[data-shell="app"] main {
   position: relative;
   z-index: 1;
   transition: padding-left var(--duration-base) var(--ease-out);
 }
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.fade-up { animation: fade-up 500ms var(--ease-out) both; }
+.fade-up-d1 { animation-delay: 80ms; }
+.fade-up-d2 { animation-delay: 160ms; }
+.fade-up-d3 { animation-delay: 240ms; }
 
 ::selection { background: var(--accent); color: var(--accent-contrast); }
 

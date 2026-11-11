@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode, type RefObject } from "react";
-import { STICKY_TOP_CLASS, isCompactIdentityShown, stickyObserverOptions } from "@/lib/profile-chrome";
+import { STICKY_TOP_CLASS, isCompactIdentityShown, stickyObserverOptions, type ShellKind } from "@/lib/profile-chrome";
 import { CompactIdentity } from "./CompactIdentity";
 
 interface Props {
@@ -19,9 +19,10 @@ function useCompactWhenAway(target: RefObject<HTMLDivElement | null>): boolean {
     if (!el || typeof IntersectionObserver === "undefined") return;
     let io: IntersectionObserver | null = null;
     const mq = window.matchMedia("(min-width: 768px)");
+    const shell = (document.querySelector("[data-shell]")?.getAttribute("data-shell") as ShellKind | null) ?? "marketing";
     const attach = () => {
       io?.disconnect();
-      io = new IntersectionObserver(([entry]) => entry && setCompact(isCompactIdentityShown(entry.isIntersecting)), stickyObserverOptions(mq.matches));
+      io = new IntersectionObserver(([entry]) => entry && setCompact(isCompactIdentityShown(entry.isIntersecting)), stickyObserverOptions(mq.matches, shell));
       io.observe(el);
     };
     attach();

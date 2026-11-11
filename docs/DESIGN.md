@@ -4,8 +4,9 @@ Use these tokens and primitives for every new screen and component. Do not inven
 
 ## Principles
 
-- Collections are the product. Chrome stays quiet: a 72px icon rail, type that recedes, motion that is short and easing-out.
-- One visual language on every surface — landing, app, dialogs, empty states — so a later feature (search, notifications, create, likes) can drop in without a redesign.
+- Collections are the product. Chrome stays quiet. Motion is short opacity and small-Y fades — no bounce, elastic, tilt, or confetti.
+- The public website (landing, pricing, log in, sign up, and logged-out profiles) is minimal and professional: a simple top bar, generous whitespace, typographic hierarchy, and a single restrained accent. The signed-in app keeps the sidebar.
+- One token language on every surface — marketing, app, dialogs, empty states — so a later feature (search, notifications, create, likes) can drop in without a redesign.
 - No emojis. Icons come from `lucide-react` at 16, 20 or 24px (`size-4`, `size-5`, `size-6`). Decorative empty-state marks may be 40px (`size-10`).
 - No native-looking form controls. Inputs, the category combobox and tabs all share the same chrome.
 - Colour contrast meets WCAG AA (4.5:1) for text, including muted copy and accent-as-text, in light and dark.
@@ -31,7 +32,7 @@ Source of truth: `src/app/globals.css`. Roles are CSS variables, wired into Tail
 | danger / success / warning / info | `--danger` etc. | `text-danger` `bg-danger-subtle` … | Status |
 | focus | `--focus` | `outline-focus` `ring-focus` | Focus rings |
 
-Light accent is a deep coral (`#C83819`) so it stays AA on paper and as white-on-fill. Dark accent is a brighter coral (`#FF7A52`) with dark ink as contrast. Decorative gold (`--gold`, `text-gold` / `to-gold`) is for gradients only, never body text.
+The canvas is a warm off-white (`#FAFAF8`) in light and near-black (`#0C0C0B`) in dark, with a single restrained coral accent. Light accent (`#C83819`) stays AA on the canvas and as white-on-fill. Dark accent is a brighter coral (`#FF7A52`) with dark ink as contrast. Decorative gold (`--gold`) is reserved for rare highlights, never body text. Do not add background blobs, confetti, or candy gradients.
 
 ### Type
 
@@ -66,7 +67,7 @@ Spacing follows a 4/8pt grid (Tailwind’s default scale: 1 = 4px). Prefer 2, 3,
 
 Elevation: `shadow-sm`, `shadow-md` (cards), `shadow-lg` (modals and menus), `shadow-overlay` (unpinned sidebar).
 
-Motion: `--duration-fast` 120ms, `--duration-base` 200ms, `--duration-slow` 320ms, with `--ease-out` / `--ease-in-out`. Respect `prefers-reduced-motion` (already global).
+Motion: `--duration-fast` 120ms, `--duration-base` 200ms, `--duration-slow` 320ms, with `--ease-out` / `--ease-in-out`. Prefer opacity and a slight `translateY` (8px). Do not use `back.out`, elastic eases, rotation, or scale bounces. Respect `prefers-reduced-motion` (already global).
 
 Z-index layers — never invent a new one:
 
@@ -100,11 +101,15 @@ All live in `src/components/ui/`. Import these instead of restyling a raw elemen
 
 ## Navigation
 
-Desktop (`md` and up): a 72px (`--nav-rail`) icon-only sidebar. Hover or focus-within expands it to 240px (`--nav-expanded`) as an overlay after a 100ms intent delay (200ms close delay), without shifting the page. A pin control persists `shelfie.nav-pinned` in `localStorage`; when pinned, `--nav-offset` becomes 240px and the main column eases over.
+There are two shells. `--nav-offset` and `--chrome-top` are set on `[data-shell]`, not globally.
+
+**Public website** (`data-shell="marketing"`): landing, pricing, log in, sign up, and any other logged-out page (including public profiles). A 64px (`--marketing-topbar`) sticky top bar — logo on the left; Pricing, Log in and Sign up on the right. On a phone the links collapse into a compact menu. There is no left sidebar and no bottom tab bar. Sticky profile chrome uses `--chrome-top` (64px).
+
+**Signed-in app** (`data-shell="app"`): the existing sidebar and phone bars. Desktop (`md` and up): a 72px (`--nav-rail`) icon-only sidebar. Hover or focus-within expands it to 240px (`--nav-expanded`) as an overlay after a 100ms intent delay (200ms close delay), without shifting the page. A pin control persists `shelfie.nav-pinned` in `localStorage`; when pinned, `--nav-offset` becomes 240px and the main column eases over.
 
 Icons stay in a fixed 72px slot so they do not slide when the rail opens. Labels fade in. Primary items (Home, My shelves) sit above a utility group (Pricing). Search, Notifications and Create should be added to those groups when they exist — do not show placeholders.
 
-Phones: 48px top bar and a 56px bottom tab bar, plus safe-area padding. Do not use the desktop rail below `md`. The bottom tab bar is hidden while a modal or sheet is open.
+Phones: 48px top bar and a 56px bottom tab bar, plus safe-area padding. Do not use the desktop rail below `md`. The bottom tab bar is hidden while a modal or sheet is open. `--chrome-top` is 48px on a phone and 0 on desktop.
 
 ## Usage for future work
 

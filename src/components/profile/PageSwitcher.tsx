@@ -33,7 +33,7 @@ export function PageSwitcher({
       if (!btn || !indicator.current) return;
       const vars = { x: btn.offsetLeft, width: btn.offsetWidth, opacity: 1 };
       if (animate) btn.scrollIntoView?.({ inline: "center", block: "nearest", behavior: reducedMotion() ? "auto" : "smooth" });
-      if (animate && !reducedMotion()) gsap.to(indicator.current, { ...vars, duration: 0.55, ease: "elastic.out(1, 0.75)", overwrite: true });
+      if (animate && !reducedMotion()) gsap.to(indicator.current, { ...vars, duration: 0.25, ease: "power2.out", overwrite: true });
       else gsap.set(indicator.current, vars);
     };
     place(!first.current);

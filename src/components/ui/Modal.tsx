@@ -60,7 +60,7 @@ export function Modal({
     document.body.dataset.modal = "open";
     if (!reducedMotion() && panel.current) {
       gsap.fromTo(backdrop.current, { opacity: 0 }, { opacity: 1, duration: 0.25 });
-      gsap.fromTo(panel.current, { y: 40, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.4)" });
+      gsap.fromTo(panel.current, { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25, ease: "power2.out" });
     }
     const t = setTimeout(() => {
       const first = panel.current?.querySelector<HTMLElement>("[data-autofocus]") ?? panel.current?.querySelector<HTMLElement>(FOCUSABLE);

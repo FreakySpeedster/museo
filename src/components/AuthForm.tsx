@@ -48,7 +48,7 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-3rem)] max-w-md flex-col justify-center px-4 py-10 md:min-h-dvh">
+    <div className="mx-auto flex min-h-[calc(100dvh-var(--chrome-top))] max-w-md flex-col justify-center px-4 py-10">
       <Card className="p-6 sm:p-8">
         <h1 className="text-title font-semibold tracking-tight">{isSignup ? "Create your Shelfie" : "Welcome back"}</h1>
         <p className="mt-1 text-meta text-muted">{isSignup ? "Your first page is free. No card needed." : "Log in to get back to your shelves."}</p>

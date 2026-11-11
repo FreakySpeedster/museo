@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
-import { Navbar } from "@/components/Navbar";
+import { Shell } from "@/components/Navbar";
 import { ToastProvider } from "@/components/ui/Toast";
 import { appUrl } from "@/lib/env";
 
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3eee4" },
-    { media: "(prefers-color-scheme: dark)", color: "#10100e" },
+    { media: "(prefers-color-scheme: light)", color: "#fafaf8" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0c0b" },
   ],
 };
 
@@ -30,8 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ToastProvider>
-          <Navbar />
-          <main className="pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pl-[var(--nav-offset)]">{children}</main>
+          <Shell>{children}</Shell>
         </ToastProvider>
       </body>
     </html>

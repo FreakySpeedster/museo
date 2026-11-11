@@ -3,12 +3,11 @@
 import clsx from "clsx";
 import { Image as ImageIcon, Link2 } from "lucide-react";
 import type { ItemDTO } from "@/lib/dto";
-import { Tilt } from "@/components/motion/Tilt";
 import { ItemThumb } from "./ItemThumb";
 
 export function ItemCard({ item, onOpen, dragging, grab }: { item: ItemDTO; onOpen: (item: ItemDTO) => void; dragging?: boolean; grab?: boolean }) {
   return (
-    <Tilt
+    <div
       className={clsx(
         "group relative rounded-2xl border border-border bg-surface shadow-md transition-opacity",
         grab && "cursor-grab active:cursor-grabbing",
@@ -17,7 +16,7 @@ export function ItemCard({ item, onOpen, dragging, grab }: { item: ItemDTO; onOp
     >
       <button onClick={() => onOpen(item)} className="block w-full overflow-hidden rounded-2xl text-left" aria-label={`Open ${item.title}`}>
         <div className="aspect-[4/5] w-full overflow-hidden">
-          <div className="h-full w-full transition duration-500 group-hover:scale-105">
+          <div className="h-full w-full transition-transform duration-300 group-hover:scale-[1.02]">
             <ItemThumb item={item} />
           </div>
         </div>
@@ -38,6 +37,6 @@ export function ItemCard({ item, onOpen, dragging, grab }: { item: ItemDTO; onOp
           </p>
         </div>
       </button>
-    </Tilt>
+    </div>
   );
 }

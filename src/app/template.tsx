@@ -9,7 +9,7 @@ export default function Template({ children }: { children: ReactNode }) {
   useGSAP(
     () => {
       if (reducedMotion()) return;
-      gsap.from(ref.current, { opacity: 0, y: 16, duration: 0.55, ease: "power3.out", clearProps: "all" });
+      gsap.from(ref.current, { opacity: 0, y: 8, duration: 0.35, ease: "power2.out", clearProps: "all" });
     },
     { scope: ref },
   );

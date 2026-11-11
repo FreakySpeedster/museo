@@ -84,7 +84,7 @@ export function AppNav({ user }: { user: NavUser | null }) {
   useGSAP(
     () => {
       if (reducedMotion()) return;
-      gsap.from("[data-nav-item]", { x: -14, opacity: 0, stagger: 0.05, duration: 0.5, ease: "power3.out", clearProps: "all" });
+      gsap.from("[data-nav-item]", { opacity: 0, stagger: 0.04, duration: 0.3, ease: "power2.out", clearProps: "all" });
     },
     { scope: side },
   );

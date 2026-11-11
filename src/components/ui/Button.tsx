@@ -6,10 +6,10 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex select-none items-center justify-center gap-2 rounded-full font-medium transition-[color,background-color,border-color,box-shadow,transform,filter] duration-[var(--duration-fast)] ease-[var(--ease-out)] active:translate-y-px disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex select-none items-center justify-center gap-2 rounded-full font-medium transition-[color,background-color,border-color,filter] duration-[var(--duration-fast)] ease-[var(--ease-out)] disabled:pointer-events-none disabled:opacity-50";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-accent text-accent-contrast shadow-[0_6px_20px_-8px_var(--accent)] hover:brightness-110",
+  primary: "bg-accent text-accent-contrast hover:brightness-110",
   secondary: "border border-border bg-surface text-foreground hover:bg-surface-hover",
   ghost: "text-muted hover:bg-surface-hover hover:text-foreground",
   danger: "bg-danger text-danger-contrast hover:brightness-110",
@@ -63,15 +63,17 @@ export function LinkButton({
   size = "md",
   className,
   children,
+  onClick,
 }: {
   href: string;
   variant?: Variant;
   size?: Size;
   className?: string;
   children: ReactNode;
+  onClick?: () => void;
 }) {
   return (
-    <Link href={href} className={buttonClass(variant, size, className)} data-hit={size !== "lg" ? "compact" : undefined}>
+    <Link href={href} onClick={onClick} className={buttonClass(variant, size, className)} data-hit={size !== "lg" ? "compact" : undefined}>
       {children}
     </Link>
   );

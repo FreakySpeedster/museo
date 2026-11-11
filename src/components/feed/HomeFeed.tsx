@@ -14,7 +14,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
-import { Tilt } from "@/components/motion/Tilt";
 import { ItemThumb } from "@/components/profile/ItemThumb";
 
 type Scope = "following" | "global";
@@ -90,7 +89,7 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
           {feed.items.map((e) => {
             return (
               <article key={e.id} data-feed-card className="relative">
-                <Tilt className="relative overflow-hidden rounded-3xl border border-border bg-surface shadow-md" max={5}>
+                <div className="relative overflow-hidden rounded-3xl border border-border bg-surface shadow-md">
                   <Link href={`/u/${e.user.username}?page=${e.page.id}`} className="block" aria-label={`${e.title} by ${e.user.displayName}`}>
                     <div className="aspect-[16/10] overflow-hidden"><ItemThumb item={e} /></div>
                   </Link>
@@ -107,7 +106,7 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
                       {e.url && <a href={e.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="font-medium text-accent hover:underline"><span className="inline-flex items-center gap-1">{e.siteName ?? "Visit"}<ArrowUpRight className="size-4" aria-hidden /></span></a>}
                     </div>
                   </div>
-                </Tilt>
+                </div>
               </article>
             );
           })}

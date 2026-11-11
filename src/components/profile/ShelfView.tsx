@@ -9,7 +9,6 @@ import { Flip, ScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ItemCard } from "./ItemCard";
-import { burst } from "./confetti";
 
 export function ShelfView({
   shelf,
@@ -53,14 +52,14 @@ export function ShelfView({
     () => {
       if (reducedMotion() || !grid.current) return;
       const cards = gsap.utils.toArray<HTMLElement>("[data-reveal]", grid.current);
-      gsap.from(root.current!.querySelectorAll("[data-shelf-head]"), { opacity: 0, x: -24, duration: 0.6, ease: "power3.out" });
-      gsap.set(cards, { opacity: 0, y: 36, scale: 0.94 });
+      gsap.from(root.current!.querySelectorAll("[data-shelf-head]"), { opacity: 0, duration: 0.3, ease: "power2.out" });
+      gsap.set(cards, { opacity: 0, y: 10 });
       ScrollTrigger.batch(cards, {
         start: "top 94%",
         once: true,
-        onEnter: (batch) => gsap.to(batch, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.5)", stagger: 0.07, overwrite: true }),
+        onEnter: (batch) => gsap.to(batch, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", stagger: 0.05, overwrite: true }),
       });
-      gsap.from(root.current!.querySelector("[data-plank]"), { scaleX: 0, transformOrigin: "left center", duration: 0.8, ease: "power3.out" });
+      gsap.from(root.current!.querySelector("[data-plank]"), { opacity: 0, duration: 0.3, ease: "power2.out" });
     },
     { scope: root },
   );
@@ -89,9 +88,7 @@ export function ShelfView({
       if (!justAddedId || !grid.current || reducedMotion()) return;
       const el = grid.current.querySelector<HTMLElement>(`[data-flip-id="${justAddedId}"]`);
       if (!el) return;
-      gsap.fromTo(el, { scale: 0.2, rotation: -14, y: -70, opacity: 0 }, { scale: 1, rotation: 0, y: 0, opacity: 1, duration: 0.9, ease: "elastic.out(1,0.6)", clearProps: "all", overwrite: true });
-      gsap.fromTo(el, { boxShadow: "0 0 0 0 rgba(255,90,44,0.8)" }, { boxShadow: "0 0 0 18px rgba(255,90,44,0)", duration: 0.9, ease: "power2.out", clearProps: "boxShadow" });
-      burst(el);
+      gsap.fromTo(el, { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power2.out", clearProps: "all", overwrite: true });
     },
     { scope: grid, dependencies: [justAddedId] },
   );
