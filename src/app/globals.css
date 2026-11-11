@@ -70,7 +70,10 @@ body::before {
   background-image: radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 40%),
     radial-gradient(circle at 100% 30%, color-mix(in srgb, #ffb020 8%, transparent), transparent 35%);
 }
-body > header, body > main { position: relative; z-index: 1; }
+/* Do not set position on the header — an unlayered `position: relative` would override Tailwind's `.sticky`.
+   z-index applies because the navbar is already `position: sticky`. Main is kept below so in-page chrome can't cover it. */
+body > header { z-index: 40; }
+body > main { position: relative; z-index: 1; }
 
 ::selection { background: var(--accent); color: var(--accent-ink); }
 
@@ -113,6 +116,29 @@ body > header, body > main { position: relative; z-index: 1; }
 .glass {
   background: color-mix(in srgb, var(--bg) 78%, transparent);
   backdrop-filter: saturate(1.4) blur(14px);
+}
+
+/* Profile tab chrome: frosted but opaque enough that shelf cards don't show through. */
+.profile-sticky-bg {
+  position: relative;
+  background: color-mix(in srgb, var(--bg) 94%, var(--surface));
+  backdrop-filter: saturate(1.2) blur(18px);
+  -webkit-backdrop-filter: saturate(1.2) blur(18px);
+}
+.profile-sticky-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--bg) 94%, var(--surface));
+  backdrop-filter: saturate(1.2) blur(18px);
+  -webkit-backdrop-filter: saturate(1.2) blur(18px);
+  border-bottom: 1px solid var(--line);
+  pointer-events: none;
+  z-index: -1;
 }
 
 dialog::backdrop { background: rgb(0 0 0 / 0.5); }

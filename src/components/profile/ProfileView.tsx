@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, History, LayoutGrid, Plus } from "lucide-react";
+import { Check, LayoutGrid, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, TimelineEntry, ViewerDTO } from "@/lib/dto";
@@ -15,6 +15,7 @@ import { AddItemDialog } from "./AddItemDialog";
 import { ConfirmDialog, PageDialog, PaywallDialog, ProfileDialog, ShelfDialog } from "./dialogs";
 import { ItemModal } from "./ItemModal";
 import { PageSwitcher } from "./PageSwitcher";
+import { ProfileStickyBar } from "./ProfileStickyBar";
 import { ShelfView } from "./ShelfView";
 import { TimelineList } from "./TimelineList";
 import { burst } from "./confetti";
@@ -289,7 +290,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   return (
     <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
       {/* ---------------------------------------------------------- header */}
-      <div ref={header} className="flex flex-col gap-6 py-8 sm:flex-row sm:items-center sm:justify-between">
+      <div ref={header} data-testid="profile-header" className="flex flex-col gap-6 py-8 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-5">
           <span data-avatar className="inline-block"><Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={84} className="shadow-xl ring-4 ring-surface" /></span>
           <div data-head className="min-w-0 space-y-1">
@@ -328,27 +329,19 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
         </div>
       </div>
 
-      {/* ------------------------------------------------------- tab bar */}
-      <div className="mb-1 flex items-center justify-between">
-        <div role="tablist" aria-label="Profile sections" className="inline-flex rounded-full border border-line bg-surface p-1">
-          {(["shelves", "timeline"] as const).map((t) => (
-            <button
-              key={t}
-              role="tab"
-              aria-selected={tab === t}
-              data-testid={`tab-${t}`}
-              onClick={() => selectTab(t)}
-              className={clsx("inline-flex items-center gap-2 rounded-full px-5 py-1.5 text-sm font-medium capitalize transition", tab === t ? "bg-ink text-bg shadow" : "text-muted hover:text-ink")}
-            >
-              {t === "shelves" ? <><LayoutGrid className="size-4" aria-hidden /> Shelves</> : <><History className="size-4" aria-hidden /> Timeline</>}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {tab === "shelves" && page && (
-        <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} />
-      )}
+      {/* ------------------------------------------ sticky tabs + compact identity */}
+      <ProfileStickyBar
+        headerRef={header}
+        displayName={user.displayName}
+        username={user.username}
+        avatarUrl={user.avatarUrl}
+        tab={tab}
+        onSelectTab={selectTab}
+      >
+        {tab === "shelves" && page && (
+          <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} />
+        )}
+      </ProfileStickyBar>
 
       {/* --------------------------------------------------------- body */}
       <div ref={content} className="mt-8" key={`${tab}-${tab === "shelves" ? activeId : ""}`}>

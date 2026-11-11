@@ -4,7 +4,11 @@ All notable work on Shelfie, summarized from `git log`. Dates are Asia/Calcutta 
 
 ## Unreleased
 
-- docs: add `docs/ARCHITECTURE.md` and this changelog.
+- Sticky profile chrome: shelves/timeline tabs and the page switcher pin just below the app navbar. Once the profile header leaves the viewport, a compact identity (avatar, display name, @handle) slides in on the same row with no height change. Opaque frosted background, horizontal tab scroll on small screens, IntersectionObserver-driven reveal.
+
+## 2026-11-11 — a2b4204
+
+docs: add `docs/ARCHITECTURE.md` and this changelog.
 
 ## 2026-11-11 — deaa2c3
 

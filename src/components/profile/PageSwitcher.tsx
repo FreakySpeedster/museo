@@ -6,7 +6,7 @@ import { useLayoutEffect, useRef } from "react";
 import type { PageDTO } from "@/lib/dto";
 import { gsap, reducedMotion } from "@/lib/gsap";
 
-/** Sticky pill switcher; a single indicator glides between pills. */
+/** Horizontally scrollable page pills; a single indicator glides between them. */
 export function PageSwitcher({
   pages,
   activeId,
@@ -43,7 +43,7 @@ export function PageSwitcher({
   }, [activeId, pages.length, pages]);
 
   return (
-    <div className="glass sticky top-16 z-30 -mx-4 border-b border-line/70 px-4 py-3 sm:-mx-6 sm:px-6" data-testid="page-switcher">
+    <div className="pb-2.5 pt-1" data-testid="page-switcher">
       <div ref={track} role="tablist" aria-label="Pages" className="no-scrollbar relative flex items-center gap-1 overflow-x-auto">
         <span ref={indicator} aria-hidden className="absolute left-0 top-0 h-full rounded-full bg-ink opacity-0 shadow-lg" />
         {pages.map((p) => {
