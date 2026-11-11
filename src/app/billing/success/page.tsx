@@ -10,9 +10,9 @@ export default async function Success() {
   if (!user) redirect("/login");
   return (
     <div className="mx-auto flex min-h-[60dvh] max-w-md flex-col items-center justify-center px-6 text-center">
-      <BadgeCheck className="size-14 text-accent" aria-hidden strokeWidth={1.4} />
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight">{user.subscribed ? "You’re on Plus!" : "Almost there…"}</h1>
-      <p className="mt-2 text-muted">
+      <BadgeCheck className="size-10 text-accent" aria-hidden strokeWidth={1.4} />
+      <h1 className="mt-4 text-title font-semibold tracking-tight">{user.subscribed ? "You’re on Plus!" : "Almost there…"}</h1>
+      <p className="mt-2 text-body text-muted">
         {user.subscribed
           ? "Thanks for supporting Shelfie. You can now create as many pages as you like."
           : "We’re waiting for Stripe to confirm your payment. This usually takes a few seconds — refresh in a moment."}

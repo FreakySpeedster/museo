@@ -4,7 +4,7 @@ export default function Loading() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6" aria-busy="true" aria-label="Loading profile">
       <div className="flex items-center gap-5">
-        <Skeleton className="size-[84px] !rounded-full" />
+        <Skeleton className="size-[88px] !rounded-full" />
         <div className="space-y-3"><Skeleton className="h-8 w-56" /><Skeleton className="h-4 w-32" /><Skeleton className="h-4 w-72" /></div>
       </div>
       <Skeleton className="mt-8 h-10 w-72 !rounded-full" />

@@ -6,17 +6,19 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex select-none items-center justify-center gap-2 rounded-full font-medium transition active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex select-none items-center justify-center gap-2 rounded-full font-medium transition-[color,background-color,border-color,box-shadow,transform,filter] duration-[var(--duration-fast)] ease-[var(--ease-out)] active:translate-y-px disabled:pointer-events-none disabled:opacity-50";
+
 const variants: Record<Variant, string> = {
-  primary: "bg-accent text-accent-ink shadow-[0_6px_20px_-6px_var(--accent)] hover:brightness-110",
-  secondary: "border border-line bg-surface text-ink hover:bg-surface-2",
-  ghost: "text-muted hover:bg-surface-2 hover:text-ink",
-  danger: "bg-red-600 text-white hover:bg-red-500",
+  primary: "bg-accent text-accent-contrast shadow-[0_6px_20px_-8px_var(--accent)] hover:brightness-110",
+  secondary: "border border-border bg-surface text-foreground hover:bg-surface-hover",
+  ghost: "text-muted hover:bg-surface-hover hover:text-foreground",
+  danger: "bg-danger text-danger-contrast hover:brightness-110",
 };
+
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-4 text-sm",
-  md: "h-11 px-5 text-sm",
-  lg: "h-13 px-7 text-base",
+  sm: "h-8 px-3.5 text-meta",
+  md: "h-10 px-4 text-meta",
+  lg: "h-12 px-6 text-body",
 };
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra?: string) {
@@ -42,7 +44,13 @@ export function Button({
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size; loading?: boolean; children?: ReactNode }) {
   return (
-    <button className={buttonClass(variant, size, className)} disabled={disabled || loading} {...rest}>
+    <button
+      className={buttonClass(variant, size, className)}
+      data-hit={size !== "lg" ? "compact" : undefined}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      {...rest}
+    >
       {loading && <Spinner />}
       {children}
     </button>
@@ -63,7 +71,7 @@ export function LinkButton({
   children: ReactNode;
 }) {
   return (
-    <Link href={href} className={buttonClass(variant, size, className)}>
+    <Link href={href} className={buttonClass(variant, size, className)} data-hit={size !== "lg" ? "compact" : undefined}>
       {children}
     </Link>
   );

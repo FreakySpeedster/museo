@@ -15,23 +15,23 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f2ea" },
-    { media: "(prefers-color-scheme: dark)", color: "#100f0d" },
+    { media: "(prefers-color-scheme: light)", color: "#f3eee4" },
+    { media: "(prefers-color-scheme: dark)", color: "#10100e" },
   ],
 };
 
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d)}catch(e){}})()`;
+const bootScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);if(localStorage.getItem('shelfie.nav-pinned')==='1')document.documentElement.setAttribute('data-nav-pinned','true')}catch(e){}})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
       <body>
         <ToastProvider>
           <Navbar />
-          <main className="pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pl-[72px] lg:pl-60">{children}</main>
+          <main className="pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pl-[var(--nav-offset)]">{children}</main>
         </ToastProvider>
       </body>
     </html>

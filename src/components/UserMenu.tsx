@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/client";
 import { Avatar } from "./ui/Avatar";
+import { Badge } from "./ui/Badge";
 import { useToast } from "./ui/Toast";
 
 /** Account menu. `sidebar` = bottom row of the left sidebar; `tab` = avatar tab in the phone bottom bar. */
@@ -17,6 +18,7 @@ export function UserMenu({
   plus,
   variant = "sidebar",
   active = false,
+  expanded = false,
 }: {
   username: string;
   displayName: string;
@@ -24,6 +26,7 @@ export function UserMenu({
   plus: boolean;
   variant?: "sidebar" | "tab";
   active?: boolean;
+  expanded?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -55,7 +58,7 @@ export function UserMenu({
     }
   }
 
-  const item = "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-surface-2";
+  const item = "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-meta transition-colors hover:bg-surface-hover";
   const close = () => setOpen(false);
   return (
     <div className={clsx("relative", variant === "tab" ? "flex flex-1 justify-center" : "w-full")} ref={ref}>
@@ -66,18 +69,26 @@ export function UserMenu({
         aria-label="Account menu"
         className={clsx(
           variant === "sidebar"
-            ? "flex h-14 w-full items-center justify-center gap-3 rounded-xl transition hover:bg-surface-2 lg:justify-start lg:px-3"
+            ? "flex h-14 w-full items-center rounded-xl transition-colors hover:bg-surface-hover"
             : "grid size-11 place-items-center rounded-full",
         )}
       >
-        <Avatar name={displayName} username={username} avatarUrl={avatarUrl} size={variant === "sidebar" ? 34 : 28} className={clsx(variant === "tab" && active && "ring-2 ring-ink ring-offset-2 ring-offset-surface")} />
+        <span className={clsx(variant === "sidebar" && "grid w-[4.5rem] shrink-0 place-items-center")}>
+          <Avatar
+            name={displayName}
+            username={username}
+            avatarUrl={avatarUrl}
+            size={variant === "sidebar" ? 32 : 28}
+            className={clsx(variant === "tab" && active && "ring-2 ring-foreground ring-offset-2 ring-offset-background")}
+          />
+        </span>
         {variant === "sidebar" && (
-          <span className="hidden min-w-0 text-left leading-tight lg:block">
+          <span className="nav-label min-w-0 pr-3 text-left leading-tight">
             <span className="flex items-center gap-1.5">
-              <span className="max-w-28 truncate text-sm font-semibold">{displayName}</span>
-              {plus && <span className="rounded-full bg-accent px-1.5 py-0.5 text-[9px] font-bold uppercase text-accent-ink">Plus</span>}
+              <span className="max-w-28 truncate text-meta font-semibold">{displayName}</span>
+              {plus && <Badge>Plus</Badge>}
             </span>
-            <span className="block max-w-36 truncate text-xs text-muted">@{username}</span>
+            <span className="block max-w-36 truncate text-caption text-muted">@{username}</span>
           </span>
         )}
       </button>
@@ -85,15 +96,15 @@ export function UserMenu({
         <div
           role="menu"
           className={clsx(
-            "absolute z-50 w-60 rounded-2xl border border-line bg-surface p-1.5 shadow-2xl",
-            variant === "sidebar" ? "bottom-full left-0 mb-2" : "bottom-full right-0 mb-3",
+            "absolute z-overlay w-60 rounded-2xl border border-border bg-surface-raised p-1.5 shadow-lg",
+            variant === "sidebar" ? (expanded ? "bottom-full left-0 mb-2" : "bottom-0 left-full ml-2") : "bottom-full right-0 mb-3",
           )}
         >
-          <div className="px-3 py-2 text-xs text-muted">@{username}</div>
+          <div className="px-3 py-2 text-caption text-muted">@{username}</div>
           <Link role="menuitem" href="/" className={item} onClick={close}><House className="size-4" aria-hidden /> Home feed</Link>
           <Link role="menuitem" href={`/u/${username}`} className={item} onClick={close}><LayoutGrid className="size-4" aria-hidden /> My shelves</Link>
           <Link role="menuitem" href="/pricing" className={item} onClick={close}><Gem className="size-4" aria-hidden /> {plus ? "Manage plan" : "Upgrade to Plus"}</Link>
-          <div className="my-1 border-t border-line" />
+          <div className="my-1 border-t border-border" />
           <button role="menuitem" className={item} onClick={logout}><LogOut className="size-4" aria-hidden /> Log out</button>
         </div>
       )}

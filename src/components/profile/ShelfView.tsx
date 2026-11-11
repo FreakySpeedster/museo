@@ -7,6 +7,7 @@ import { categoryMeta } from "@/lib/categories";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Flip, ScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ItemCard } from "./ItemCard";
 import { burst } from "./confetti";
 
@@ -122,11 +123,11 @@ export function ShelfView({
     <section ref={root} aria-label={shelf.name} data-shelf-id={shelf.id} className="space-y-3">
       <div data-shelf-head className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+          <h3 className="flex items-center gap-2 text-heading font-semibold tracking-tight">
             <CategoryIcon category={shelf.category} className="size-5 shrink-0 text-accent" />
             <span className="truncate">{shelf.name}</span>
           </h3>
-          <p className="text-xs text-muted">
+          <p className="text-caption text-muted">
             {meta.label} · {shelf.items.length} {shelf.items.length === 1 ? "item" : "items"}
           </p>
         </div>
@@ -136,20 +137,19 @@ export function ShelfView({
               <Plus className="size-4" aria-hidden strokeWidth={2.4} /> Add item
             </Button>
             <Button size="sm" variant="ghost" onClick={() => onEditShelf(shelf)} aria-label={`Rename ${shelf.name}`}>Rename</Button>
-            <Button size="sm" variant="ghost" onClick={() => onDeleteShelf(shelf)} aria-label={`Delete ${shelf.name}`} className="hover:text-red-600">Delete</Button>
+            <Button size="sm" variant="ghost" onClick={() => onDeleteShelf(shelf)} aria-label={`Delete ${shelf.name}`} className="hover:text-danger">Delete</Button>
           </div>
         )}
       </div>
 
       {shelf.items.length === 0 ? (
-        <div className="grid place-items-center rounded-2xl border border-dashed border-line bg-surface/60 px-6 py-10 text-center">
-          <CategoryIcon category={shelf.category} className="size-8 text-accent" />
-          <p className="mt-2 font-medium">This shelf is empty</p>
-          <p className="text-sm text-muted">{isOwner ? "Add a link or a photo to start your collection." : "Nothing here yet."}</p>
-          {isOwner && (
-            <Button className="mt-4" size="sm" onClick={() => onAddItem(shelf)}>Add the first item</Button>
-          )}
-        </div>
+        <EmptyState
+          className="py-10"
+          icon={<CategoryIcon category={shelf.category} className="size-10" />}
+          title="This shelf is empty"
+          description={isOwner ? "Add a link or a photo to start your collection." : "Nothing here yet."}
+          action={isOwner ? <Button size="sm" onClick={() => onAddItem(shelf)}>Add the first item</Button> : undefined}
+        />
       ) : (
         <div ref={grid} className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5" onDragOver={(e) => dragId && e.preventDefault()}>
           {shelf.items.map((item) => (

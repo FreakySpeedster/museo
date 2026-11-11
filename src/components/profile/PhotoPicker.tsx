@@ -128,15 +128,15 @@ export function PhotoPicker({
       }}
       onDragLeave={() => setDrag(false)}
       onDrop={onDrop}
-      className={clsx("rounded-2xl border border-dashed p-3 transition", drag ? "border-accent bg-accent-soft" : "border-line", className)}
+      className={clsx("rounded-2xl border border-dashed p-3 transition", drag ? "border-accent bg-accent-subtle" : "border-border", className)}
     >
-      <p className="mb-2 text-xs font-medium text-muted">{ownUrl ? "Using your own photo" : shown.length > 1 ? "Pick the photo to show" : "Photo"}</p>
+      <p className="mb-2 text-caption font-medium text-muted">{ownUrl ? "Using your own photo" : shown.length > 1 ? "Pick the photo to show" : "Photo"}</p>
       <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1">
         {ownUrl && (
           <div ref={ownTile} className="relative size-16 shrink-0 snap-start overflow-hidden rounded-xl ring-2 ring-accent sm:size-[72px]" data-testid="own-photo-tile">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={ownUrl} alt="Your photo" className="h-full w-full object-cover" />
-            <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full bg-accent text-accent-ink"><Check className="size-3" aria-hidden /></span>
+            <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-accent text-accent-contrast"><Check className="size-4" aria-hidden /></span>
           </div>
         )}
         {shown.map((c, i) => {
@@ -149,11 +149,11 @@ export function PhotoPicker({
               aria-pressed={on}
               aria-label={`Photo option ${i + 1}${c.width ? `, ${c.width} by ${c.height}` : ""}`}
               onClick={() => onSelect(c.url)}
-              className={clsx("relative size-16 shrink-0 snap-start overflow-hidden rounded-xl bg-surface-2 outline-none transition focus-visible:ring-2 focus-visible:ring-accent sm:size-[72px]", on ? "ring-2 ring-accent" : "opacity-80 ring-1 ring-line hover:opacity-100", ownUrl && "opacity-50")}
+              className={clsx("relative size-16 shrink-0 snap-start overflow-hidden rounded-xl bg-surface-hover outline-none transition focus-visible:ring-2 focus-visible:ring-accent sm:size-[72px]", on ? "ring-2 ring-accent" : "opacity-80 ring-1 ring-line hover:opacity-100", ownUrl && "opacity-50")}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={c.thumb ?? proxied(c.url)} alt="" loading="lazy" className="h-full w-full object-cover" onError={() => setBroken((b) => new Set(b).add(c.url))} />
-              {on && <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full bg-accent text-accent-ink"><Check className="size-3" aria-hidden /></span>}
+              {on && <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-accent text-accent-contrast"><Check className="size-4" aria-hidden /></span>}
             </button>
           );
         })}
@@ -161,7 +161,7 @@ export function PhotoPicker({
           type="button"
           data-testid="own-photo-button"
           onClick={() => fileInput.current?.click()}
-          className="grid size-16 shrink-0 snap-start place-items-center rounded-xl border border-line bg-surface-2 px-1 text-center text-[11px] font-medium leading-tight text-muted transition hover:border-accent/60 hover:text-ink sm:size-[72px]"
+          className="grid size-16 shrink-0 snap-start place-items-center rounded-xl border border-border bg-surface-hover px-1 text-center text-micro font-medium leading-tight text-muted transition hover:border-accent/60 hover:text-foreground sm:size-[72px]"
         >
           <span className="flex flex-col items-center gap-1"><ImagePlus className="size-5" aria-hidden />{ownUrl ? "Change" : "My photo"}</span>
         </button>
@@ -169,16 +169,16 @@ export function PhotoPicker({
           type="button"
           data-testid="camera-button"
           onClick={() => cameraInput.current?.click()}
-          className="grid size-16 shrink-0 snap-start place-items-center rounded-xl border border-line bg-surface-2 px-1 text-center text-[11px] font-medium leading-tight text-muted transition hover:border-accent/60 hover:text-ink sm:hidden"
+          className="grid size-16 shrink-0 snap-start place-items-center rounded-xl border border-border bg-surface-hover px-1 text-center text-micro font-medium leading-tight text-muted transition hover:border-accent/60 hover:text-foreground sm:hidden"
         >
           <span className="flex flex-col items-center gap-1"><Camera className="size-5" aria-hidden />Camera</span>
         </button>
       </div>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <p className="text-[11px] text-muted">Use my own photo: choose a file, take one, drop it here, or paste it.</p>
+        <p className="text-micro text-muted">Use my own photo: choose a file, take one, drop it here, or paste it.</p>
         {ownUrl && (
-          <button type="button" data-testid="revert-photo" onClick={onClearOwn} className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline">
-            <Undo2 className="size-3.5" aria-hidden /> {revertLabel}
+          <button type="button" data-testid="revert-photo" onClick={onClearOwn} className="inline-flex items-center gap-1 text-caption font-medium text-accent hover:underline">
+            <Undo2 className="size-4" aria-hidden /> {revertLabel}
           </button>
         )}
       </div>

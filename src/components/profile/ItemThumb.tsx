@@ -24,7 +24,7 @@ export function ItemThumb({ item, className, eager }: { item: ThumbItem; classNa
   const [favFailed, setFavFailed] = useState(false);
   const showImg = item.imageUrl && !imgFailed;
   return (
-    <div className={clsx("relative h-full w-full overflow-hidden bg-surface-2", className)}>
+    <div className={clsx("relative h-full w-full overflow-hidden bg-surface-hover", className)}>
       {showImg ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -43,9 +43,9 @@ export function ItemThumb({ item, className, eager }: { item: ThumbItem; classNa
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.faviconUrl} alt="" draggable={false} onError={() => setFavFailed(true)} className="size-14 rounded-2xl bg-white/90 object-contain p-2 shadow-lg" />
           ) : (
-            <span className="text-4xl font-semibold drop-shadow">{item.title.charAt(0).toUpperCase()}</span>
+            <span className="text-title font-semibold drop-shadow">{item.title.charAt(0).toUpperCase()}</span>
           )}
-          {item.siteName && <span className="line-clamp-1 text-xs font-medium opacity-90">{item.siteName}</span>}
+          {item.siteName && <span className="line-clamp-1 text-caption font-medium opacity-90">{item.siteName}</span>}
         </div>
       )}
     </div>

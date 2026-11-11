@@ -17,9 +17,9 @@ export default async function Home() {
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-10 sm:px-6">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm text-muted">Welcome back</p>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Hi {user.displayName.split(" ")[0]}</h1>
-          <p className="mt-1 text-muted">Here’s what’s new on the shelves.</p>
+          <p className="text-meta text-muted">Welcome back</p>
+          <h1 className="text-title font-semibold">Hi {user.displayName.split(" ")[0]}</h1>
+          <p className="mt-1 text-body text-muted">Here’s what’s new on the shelves.</p>
         </div>
         <div className="flex gap-2">
           <LinkButton href={`/u/${user.username}`}>My shelves</LinkButton>

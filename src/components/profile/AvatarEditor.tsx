@@ -7,6 +7,7 @@ import { ApiError, api } from "@/lib/client";
 import { squareCrop } from "@/lib/client-image";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { FormError } from "@/components/ui/Field";
 
 /** Upload / replace / remove the profile photo. Images are cropped to a square in the browser first. */
 export function AvatarEditor({ viewer, onChange }: { viewer: ViewerDTO; onChange: (u: ViewerDTO) => void }) {
@@ -58,13 +59,13 @@ export function AvatarEditor({ viewer, onChange }: { viewer: ViewerDTO; onChange
             <Camera className="size-4" aria-hidden /> {viewer.avatarUrl ? "Replace photo" : "Upload photo"}
           </Button>
           {viewer.avatarUrl && (
-            <Button type="button" size="sm" variant="ghost" loading={busy === "remove"} onClick={remove} className="hover:text-red-600">
+            <Button type="button" size="sm" variant="ghost" loading={busy === "remove"} onClick={remove} className="hover:text-danger">
               <Trash2 className="size-4" aria-hidden /> Remove
             </Button>
           )}
         </div>
-        <p className="text-xs text-muted">JPG, PNG, WebP or GIF. We crop it to a square.</p>
-        {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        <p className="text-caption text-muted">JPG, PNG, WebP or GIF. We crop it to a square.</p>
+        {error && <FormError>{error}</FormError>}
       </div>
       <input ref={input} type="file" accept="image/*" className="sr-only" aria-label="Profile photo" data-testid="avatar-input" onChange={(e) => pick(e.target.files?.[0])} />
     </div>

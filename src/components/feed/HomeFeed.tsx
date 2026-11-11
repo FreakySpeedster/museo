@@ -1,6 +1,5 @@
 "use client";
 
-import clsx from "clsx";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import type { TimelineEntry } from "@/lib/dto";
@@ -11,7 +10,9 @@ import { timeAgo } from "@/lib/time";
 import { Avatar } from "@/components/ui/Avatar";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
 import { Tilt } from "@/components/motion/Tilt";
 import { ItemThumb } from "@/components/profile/ItemThumb";
@@ -62,51 +63,48 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
 
   return (
     <div ref={root}>
-      <div role="tablist" aria-label="Feed" className="mb-6 inline-flex rounded-full border border-line bg-surface p-1">
-        {(["following", "global"] as const).map((s) => (
-          <button
-            key={s}
-            role="tab"
-            aria-selected={scope === s}
-            onClick={() => switchScope(s)}
-            className={clsx("rounded-full px-5 py-1.5 text-sm font-medium transition", scope === s ? "bg-ink text-bg shadow" : "text-muted hover:text-ink")}
-          >
-            {s === "following" ? "Following" : "Everyone"}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        label="Feed"
+        className="mb-6"
+        value={scope}
+        onChange={switchScope}
+        options={[
+          { value: "following", label: "Following" },
+          { value: "global", label: "Everyone" },
+        ]}
+      />
 
       {loading && feed.items.length === 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-72" />)}
         </div>
       ) : feed.items.length === 0 ? (
-        <div className="grid place-items-center rounded-3xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center">
-          <Sprout className="size-10 text-accent" aria-hidden strokeWidth={1.6} />
-          <p className="mt-3 text-lg font-semibold">{scope === "following" && !hasFollows ? "Your feed is quiet" : "Nothing here yet"}</p>
-          <p className="mt-1 max-w-sm text-sm text-muted">Follow collectors to see what they add, or browse everyone’s latest finds.</p>
-          <Button className="mt-4" variant="secondary" onClick={() => switchScope("global")}>Browse everyone</Button>
-        </div>
+        <EmptyState
+          icon={<Sprout className="size-10" aria-hidden strokeWidth={1.6} />}
+          title={scope === "following" && !hasFollows ? "Your feed is quiet" : "Nothing here yet"}
+          description="Follow collectors to see what they add, or browse everyone’s latest finds."
+          action={<Button variant="secondary" onClick={() => switchScope("global")}>Browse everyone</Button>}
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="feed">
           {feed.items.map((e) => {
             return (
               <article key={e.id} data-feed-card className="relative">
-                <Tilt className="relative overflow-hidden rounded-3xl border border-line bg-surface shadow-card" max={5}>
+                <Tilt className="relative overflow-hidden rounded-3xl border border-border bg-surface shadow-md" max={5}>
                   <Link href={`/u/${e.user.username}?page=${e.page.id}`} className="block" aria-label={`${e.title} by ${e.user.displayName}`}>
                     <div className="aspect-[16/10] overflow-hidden"><ItemThumb item={e} /></div>
                   </Link>
                   <div className="space-y-2 p-4">
-                    <div className="flex items-center gap-2 text-xs text-muted">
-                      <Avatar name={e.user.displayName} username={e.user.username} avatarUrl={e.user.avatarUrl} size={22} />
-                      <Link href={`/u/${e.user.username}`} className="font-medium text-ink hover:underline">{e.user.displayName}</Link>
+                    <div className="flex items-center gap-2 text-caption text-muted">
+                      <Avatar name={e.user.displayName} username={e.user.username} avatarUrl={e.user.avatarUrl} size="xs" />
+                      <Link href={`/u/${e.user.username}`} className="font-medium text-foreground hover:underline">{e.user.displayName}</Link>
                       <span>·</span><span>{timeAgo(e.createdAt)}</span>
                     </div>
-                    <h3 className="line-clamp-2 font-semibold leading-snug">{e.title}</h3>
-                    {e.description && <p className="line-clamp-2 text-sm text-muted">{e.description}</p>}
-                    <div className="flex items-center justify-between pt-1 text-xs text-muted">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1"><CategoryIcon category={e.shelf.category} className="size-3.5" />{e.shelf.name}</span>
-                      {e.url && <a href={e.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="font-medium text-accent hover:underline"><span className="inline-flex items-center gap-1">{e.siteName ?? "Visit"}<ArrowUpRight className="size-3.5" aria-hidden /></span></a>}
+                    <h3 className="line-clamp-2 text-heading font-semibold leading-snug">{e.title}</h3>
+                    {e.description && <p className="line-clamp-2 text-meta text-muted">{e.description}</p>}
+                    <div className="flex items-center justify-between pt-1 text-caption text-muted">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-hover px-2.5 py-1"><CategoryIcon category={e.shelf.category} className="size-4" />{e.shelf.name}</span>
+                      {e.url && <a href={e.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="font-medium text-accent hover:underline"><span className="inline-flex items-center gap-1">{e.siteName ?? "Visit"}<ArrowUpRight className="size-4" aria-hidden /></span></a>}
                     </div>
                   </div>
                 </Tilt>

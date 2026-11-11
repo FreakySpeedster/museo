@@ -5,6 +5,7 @@ import { Lock, Plus } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 import type { PageDTO } from "@/lib/dto";
 import { gsap, reducedMotion } from "@/lib/gsap";
+import { Badge } from "@/components/ui/Badge";
 
 /** Horizontally scrollable page pills; a single indicator glides between them. */
 export function PageSwitcher({
@@ -45,7 +46,7 @@ export function PageSwitcher({
   return (
     <div className="py-2" data-testid="page-switcher">
       <div ref={track} role="tablist" aria-label="Pages" className="no-scrollbar relative flex items-center gap-1 overflow-x-auto">
-        <span ref={indicator} aria-hidden className="absolute left-0 top-0 h-full rounded-full bg-ink opacity-0 shadow-lg" />
+        <span ref={indicator} aria-hidden className="absolute left-0 top-0 h-full rounded-full bg-foreground opacity-0 shadow-lg" />
         {pages.map((p) => {
           const active = p.id === activeId;
           return (
@@ -56,8 +57,8 @@ export function PageSwitcher({
               data-page-id={p.id}
               onClick={() => onSelect(p.id)}
               className={clsx(
-                "relative z-10 flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                active ? "text-bg" : "text-muted hover:text-ink",
+                "relative z-10 flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 text-meta font-medium transition-colors",
+                active ? "text-background" : "text-muted hover:text-foreground",
               )}
             >
               {p.title}
@@ -68,16 +69,16 @@ export function PageSwitcher({
           <button
             onClick={onCreate}
             data-testid="new-page"
-            className="relative z-10 ml-1 flex shrink-0 items-center gap-1.5 rounded-full border border-dashed border-line px-3.5 py-2 text-sm font-medium text-muted transition hover:border-accent hover:text-ink"
+            className="relative z-10 ml-1 flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-dashed border-border px-3.5 text-meta font-medium text-muted transition hover:border-accent hover:text-foreground"
             aria-label={locked ? "New page (requires Plus)" : "New page"}
           >
             {locked ? (
-              <Lock className="size-3.5" aria-hidden strokeWidth={2.2} />
+              <Lock className="size-4" aria-hidden strokeWidth={2.2} />
             ) : (
-              <Plus className="size-3.5" aria-hidden strokeWidth={2.4} />
+              <Plus className="size-4" aria-hidden strokeWidth={2.4} />
             )}
             New page
-            {locked && <span className="rounded-full bg-accent px-1.5 text-[10px] font-bold uppercase text-accent-ink">Plus</span>}
+            {locked && <Badge>Plus</Badge>}
           </button>
         )}
       </div>

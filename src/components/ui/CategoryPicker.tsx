@@ -172,9 +172,9 @@ export function CategoryPicker({
             openPicker();
           }
         }}
-        className="flex w-full items-center gap-2.5 rounded-xl border border-line bg-surface px-3.5 py-2.5 text-left text-[15px] text-ink transition hover:border-accent/50 focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/15 disabled:opacity-60"
+        className="control flex items-center gap-2.5 text-left"
       >
-        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent">
+        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-accent-subtle text-accent">
           <CategoryIcon category={value} className="size-4" />
         </span>
         <span className="min-w-0 flex-1 truncate">{meta.label}</span>
@@ -184,13 +184,13 @@ export function CategoryPicker({
       {open && rect && typeof document !== "undefined" &&
         createPortal(
           <>
-            <div className="fixed inset-0 z-[70]" onPointerDown={() => close(false)} aria-hidden />
+            <div className="fixed inset-0 z-popover" onPointerDown={() => close(false)} aria-hidden />
             <div
               ref={setPopup}
               onKeyDown={onKeyDown}
               data-testid="category-popup"
               className={clsx(
-                "fixed z-[71] flex flex-col overflow-hidden border border-line bg-surface shadow-2xl",
+                "fixed z-popover flex flex-col overflow-hidden border border-border bg-surface-raised shadow-lg",
                 rect.sheet ? "inset-x-0 bottom-0 max-h-[75dvh] rounded-t-3xl pb-[env(safe-area-inset-bottom)]" : "rounded-2xl",
               )}
               style={
@@ -199,7 +199,7 @@ export function CategoryPicker({
                   : { left: rect.left, width: rect.width, maxHeight: rect.maxH, ...(rect.above ? { bottom: window.innerHeight - rect.top } : { top: rect.top }) }
               }
             >
-              <div className="flex items-center gap-2 border-b border-line px-3 py-2.5">
+              <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
                 <Search className="size-4 shrink-0 text-muted" aria-hidden />
                 <input
                   ref={input}
@@ -216,13 +216,13 @@ export function CategoryPicker({
                   autoComplete="off"
                   spellCheck={false}
                   maxLength={CUSTOM_MAX}
-                  className="min-w-0 flex-1 bg-transparent text-[15px] text-ink placeholder:text-muted/70 outline-none focus:outline-none focus-visible:!outline-none"
+                  className="min-w-0 flex-1 bg-transparent text-body text-foreground placeholder:text-muted/70 outline-none focus:outline-none focus-visible:!outline-none"
                 />
               </div>
               <div ref={listRef} id={listId} role="listbox" aria-label="Categories" className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5">
                 {rows.map((r, i) =>
                   r.type === "group" ? (
-                    <div key={`g-${r.name}-${i}`} data-cat-row role="presentation" className="px-2.5 pb-1 pt-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted first:pt-1">
+                    <div key={`g-${r.name}-${i}`} data-cat-row role="presentation" className="px-2.5 pb-1 pt-2.5 text-micro font-semibold uppercase tracking-wider text-muted first:pt-1">
                       {r.name}
                     </div>
                   ) : (
@@ -236,11 +236,11 @@ export function CategoryPicker({
                       onPointerMove={() => r.index !== safeActive && setActive(r.index)}
                       onClick={() => choose(r.option)}
                       className={clsx(
-                        "flex cursor-pointer items-center gap-2.5 rounded-xl px-2.5 py-2 text-[15px] transition-colors",
-                        r.index === safeActive ? "bg-accent-soft text-ink" : "text-ink/90",
+                        "flex cursor-pointer items-center gap-2.5 rounded-xl px-2.5 py-2 text-body transition-colors",
+                        r.index === safeActive ? "bg-accent-subtle text-foreground" : "text-foreground/90",
                       )}
                     >
-                      <span className={clsx("grid size-7 shrink-0 place-items-center rounded-lg", r.index === safeActive ? "bg-accent text-accent-ink" : "bg-surface-2 text-muted")}>
+                      <span className={clsx("grid size-7 shrink-0 place-items-center rounded-lg", r.index === safeActive ? "bg-accent text-accent-contrast" : "bg-surface-hover text-muted")}>
                         {r.option.custom ? <Plus className="size-4" aria-hidden /> : <CategoryIcon category={r.option.id} className="size-4" />}
                       </span>
                       <span className="min-w-0 flex-1 truncate">{r.option.custom ? `Use “${r.option.label}”` : r.option.label}</span>
@@ -248,7 +248,7 @@ export function CategoryPicker({
                     </div>
                   ),
                 )}
-                {!options.length && <p className="px-3 py-6 text-center text-sm text-muted">No matches. Type a name to create your own category.</p>}
+                {!options.length && <p className="px-3 py-6 text-center text-meta text-muted">No matches. Type a name to create your own category.</p>}
               </div>
             </div>
           </>,

@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { AlertCircle, Check, Info, X, type LucideIcon } from "lucide-react";
 import { createContext, createElement, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { gsap, reducedMotion } from "@/lib/gsap";
+import { IconButton } from "./IconButton";
 
 type Kind = "success" | "error" | "info";
 interface ToastItem { id: number; kind: Kind; message: string }
@@ -22,6 +23,11 @@ export function useToast(): ToastApi {
 }
 
 const ICON: Record<Kind, LucideIcon> = { success: Check, error: AlertCircle, info: Info };
+const TONE: Record<Kind, string> = {
+  success: "bg-success-subtle text-success",
+  error: "bg-danger-subtle text-danger",
+  info: "bg-info-subtle text-info",
+};
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
@@ -55,28 +61,24 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={api}>
       {children}
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 top-[4.5rem] z-[60] flex flex-col items-center sm:bottom-4 sm:top-auto gap-2 px-4">
+      <div
+        aria-live="polite"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+0.75rem)] z-toast flex flex-col items-center gap-2 px-4 md:bottom-6"
+      >
         {items.map((t) => (
           <div
             key={t.id}
             data-toast={t.id}
             role={t.kind === "error" ? "alert" : "status"}
-            className="pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3 text-sm shadow-2xl"
+            className="pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl border border-border bg-surface-raised px-4 py-3 text-meta shadow-lg"
           >
-            <span
-              className={clsx(
-                "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white",
-                t.kind === "success" && "bg-emerald-500",
-                t.kind === "error" && "bg-red-500",
-                t.kind === "info" && "bg-sky-500",
-              )}
-            >
-              {createElement(ICON[t.kind], { className: "size-3.5", "aria-hidden": true, strokeWidth: 3 })}
+            <span className={clsx("flex size-6 shrink-0 items-center justify-center rounded-full", TONE[t.kind])}>
+              {createElement(ICON[t.kind], { className: "size-4", "aria-hidden": true, strokeWidth: 3 })}
             </span>
-            <span className="flex-1">{t.message}</span>
-            <button onClick={() => dismiss(t.id)} aria-label="Dismiss" className="text-muted hover:text-ink">
+            <span className="flex-1 text-foreground">{t.message}</span>
+            <IconButton label="Dismiss" size="sm" className="size-8" onClick={() => dismiss(t.id)}>
               <X className="size-4" aria-hidden />
-            </button>
+            </IconButton>
           </div>
         ))}
       </div>

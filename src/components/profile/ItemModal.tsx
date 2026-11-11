@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
-import { Button } from "@/components/ui/Button";
-import { Field, Input, Textarea } from "@/components/ui/Field";
+import { Button, buttonClass } from "@/components/ui/Button";
+import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Clock, ImagePlus, RefreshCw } from "lucide-react";
@@ -100,20 +100,20 @@ function ItemBody({
 
   return (
         <div className="grid gap-5 md:grid-cols-[1.1fr_1fr]">
-          <div className="aspect-square overflow-hidden rounded-2xl border border-line bg-surface-2 md:aspect-[4/5]">
+          <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-surface-hover md:aspect-[4/5]">
             <ItemThumb item={it} eager />
           </div>
           <div className="flex min-w-0 flex-col">
             {meta && shelf && (
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">
-                <span className="inline-flex items-center gap-1.5"><CategoryIcon category={shelf.category} className="size-3.5" />{shelf.name}</span>
+              <p className="text-micro font-medium uppercase tracking-wide text-muted">
+                <span className="inline-flex items-center gap-1.5"><CategoryIcon category={shelf.category} className="size-4" />{shelf.name}</span>
               </p>
             )}
             {editing ? (
               <div className="mt-3 space-y-3">
                 <Field label="Title" htmlFor="edit-title"><Input id="edit-title" data-autofocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} /></Field>
                 <Field label="Description" htmlFor="edit-desc"><Textarea id="edit-desc" rows={5} value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} /></Field>
-                {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+                {error && <FormError>{error}</FormError>}
                 <div className="flex gap-2">
                   <Button onClick={save} loading={busy} size="sm">Save</Button>
                   <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setTitle(it.title); setDescription(it.description); }}>Cancel</Button>
@@ -121,23 +121,23 @@ function ItemBody({
               </div>
             ) : (
               <>
-                <h3 className="mt-1 text-2xl font-semibold leading-tight tracking-tight">{it.title}</h3>
-                <p className="mt-1 flex items-center gap-1.5 text-xs text-muted" data-testid="item-added">
-                  <Clock className="size-3.5" aria-hidden />
-                  <time dateTime={it.createdAt} title={fullDate(it.createdAt)} className="cursor-help underline decoration-dotted decoration-line underline-offset-4">Added {timeAgo(it.createdAt)}</time>
+                <h3 className="mt-1 text-heading font-semibold leading-tight tracking-tight sm:text-title">{it.title}</h3>
+                <p className="mt-1 flex items-center gap-1.5 text-caption text-muted" data-testid="item-added">
+                  <Clock className="size-4" aria-hidden />
+                  <time dateTime={it.createdAt} title={fullDate(it.createdAt)} className="cursor-help underline decoration-dotted decoration-border underline-offset-4">Added {timeAgo(it.createdAt)}</time>
                   <span className="sr-only">{fullDate(it.createdAt)}</span>
                 </p>
                 {it.description ? (
-                  <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink/90">{it.description}</p>
+                  <p className="mt-4 whitespace-pre-line text-body leading-relaxed text-foreground/90">{it.description}</p>
                 ) : (
-                  <p className="mt-4 text-sm italic text-muted">No description.</p>
+                  <p className="mt-4 text-meta italic text-muted">No description.</p>
                 )}
                 {it.url && (
                   <a
                     href={it.url}
                     target="_blank"
                     rel="noopener noreferrer nofollow ugc"
-                    className="mt-5 inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-ink shadow-[0_6px_20px_-6px_var(--accent)] transition hover:brightness-110"
+                    className={buttonClass("primary", "md", "mt-5 w-fit max-w-full")}
                   >
                     <span className="truncate">Visit {it.siteName ?? "link"}</span>
                     <ArrowUpRight className="size-4 shrink-0" aria-hidden />
@@ -150,19 +150,19 @@ function ItemBody({
                       <Button variant="secondary" size="sm" data-testid="change-photo" aria-expanded={photoOpen} onClick={() => setPhotoOpen((v) => !v)}><ImagePlus className="size-4" aria-hidden /> Photo</Button>
                       <Button variant="secondary" size="sm" disabled={idx <= 0} onClick={() => onMove(it, -1)} aria-label="Move earlier on shelf"><ArrowLeft className="size-4" aria-hidden /> Earlier</Button>
                       <Button variant="secondary" size="sm" disabled={!shelf || idx >= shelf.items.length - 1} onClick={() => onMove(it, 1)} aria-label="Move later on shelf">Later <ArrowRight className="size-4" aria-hidden /></Button>
-                      {!confirming && <Button variant="ghost" size="sm" className="ml-auto hover:text-red-600" onClick={() => setConfirming(true)}>Delete</Button>}
+                      {!confirming && <Button variant="ghost" size="sm" className="ml-auto hover:text-danger" onClick={() => setConfirming(true)}>Delete</Button>}
                     </div>
                     {photoOpen && <ItemPhotoEditor it={it} onUpdated={(u) => { onUpdated(u); setPhotoOpen(false); }} onCancel={() => setPhotoOpen(false)} />}
                     {confirming && (
-                      <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-3">
-                        <p className="text-sm">Delete this item for good?</p>
+                      <div className="flex items-center justify-between gap-3 rounded-2xl border border-danger/40 bg-danger-subtle p-3">
+                        <p className="text-meta">Delete this item for good?</p>
                         <div className="flex gap-2">
                           <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>Keep</Button>
                           <Button variant="danger" size="sm" loading={busy} onClick={remove}>Delete</Button>
                         </div>
                       </div>
                     )}
-                    {error && !editing && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+                    {error && !editing && <FormError>{error}</FormError>}
                   </div>
                 )}
               </>
@@ -233,13 +233,13 @@ function ItemPhotoEditor({ it, onUpdated, onCancel }: { it: ItemDTO; onUpdated: 
   }
 
   return (
-    <div data-testid="photo-editor" className="space-y-3 rounded-2xl border border-line bg-surface-2 p-3">
+    <div data-testid="photo-editor" className="space-y-3 rounded-2xl border border-border bg-surface-hover p-3">
       {candidates === null ? (
         <div aria-busy="true" className="flex gap-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="size-16 shrink-0 sm:size-[72px]" />)}</div>
       ) : (
         <PhotoPicker candidates={candidates} selected={pick} onSelect={(u) => { setPick(u); setOwn(null); }} ownUrl={ownUrl} onOwn={setOwn} onClearOwn={() => setOwn(null)} onError={setError} />
       )}
-      {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <FormError>{error}</FormError>}
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={apply} loading={busy === "apply"} disabled={!own && !pick} data-testid="apply-photo">Use this photo</Button>
         {isLink && (

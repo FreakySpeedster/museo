@@ -11,7 +11,7 @@ function subscribe(cb: () => void) {
 }
 const getDark = () => document.documentElement.classList.contains("dark");
 
-/** `icon` = round icon button; `row` = sidebar row (icon + label at lg, icon only on the rail). */
+/** `icon` = round icon button; `row` = sidebar row (icon in a fixed slot, label revealed when the rail is open). */
 export function ThemeToggle({ variant = "icon", className }: { variant?: "icon" | "row"; className?: string }) {
   const dark = useSyncExternalStore(subscribe, getDark, () => false);
   function toggle() {
@@ -24,20 +24,31 @@ export function ThemeToggle({ variant = "icon", className }: { variant?: "icon" 
     }
   }
   const Icon = dark ? Sun : Moon;
+  const label = dark ? "Light mode" : "Dark mode";
+  if (variant === "row") {
+    return (
+      <button
+        onClick={toggle}
+        aria-label={label}
+        title={label}
+        className={clsx("flex h-12 w-full items-center rounded-xl text-muted transition-colors hover:bg-surface-hover hover:text-foreground", className)}
+      >
+        <span className="grid w-[4.5rem] shrink-0 place-items-center">
+          <Icon className="size-6" aria-hidden strokeWidth={1.8} />
+        </span>
+        <span className="nav-label whitespace-nowrap pr-3 text-meta">{label}</span>
+      </button>
+    );
+  }
   return (
     <button
       onClick={toggle}
-      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-      title={dark ? "Light mode" : "Dark mode"}
-      className={clsx(
-        variant === "row"
-          ? "flex h-12 w-full items-center justify-center gap-4 rounded-xl text-muted transition hover:bg-surface-2 hover:text-ink lg:justify-start lg:px-3"
-          : "grid size-10 place-items-center rounded-full text-muted transition hover:bg-surface-2 hover:text-ink",
-        className,
-      )}
+      aria-label={label}
+      title={label}
+      data-hit="compact"
+      className={clsx("grid size-10 place-items-center rounded-full text-muted transition-colors hover:bg-surface-hover hover:text-foreground", className)}
     >
-      <Icon className="size-6 shrink-0" aria-hidden strokeWidth={1.8} />
-      {variant === "row" && <span className="hidden text-[15px] lg:inline">{dark ? "Light mode" : "Dark mode"}</span>}
+      <Icon className="size-5" aria-hidden strokeWidth={1.8} />
     </button>
   );
 }

@@ -1,13 +1,14 @@
 "use client";
 
 import clsx from "clsx";
-import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from "react";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { Camera, Image as ImageIcon, Link2 } from "lucide-react";
 import { categoryMeta } from "@/lib/categories";
 import { Button } from "@/components/ui/Button";
-import { Field, Input, Textarea } from "@/components/ui/Field";
+import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
+import { Tabs } from "@/components/ui/Tabs";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PhotoPicker, proxied, readPhotoFile, type PhotoCandidate } from "./PhotoPicker";
@@ -154,27 +155,19 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
     }
   }
 
-  const tab = (m: "LINK" | "PHOTO", label: ReactNode) => (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={mode === m}
-      onClick={() => {
-        setMode(m);
-        setError("");
-      }}
-      className={clsx("flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition", mode === m ? "bg-ink text-bg shadow" : "text-muted hover:text-ink")}
-    >
-      {label}
-    </button>
-  );
-
   return (
       <form onSubmit={submit} className="space-y-5" data-testid="add-item-form">
-        <div role="tablist" className="flex rounded-full border border-line bg-surface-2 p-1">
-          {tab("LINK", <><Link2 className="size-4" aria-hidden /> Link</>)}
-          {tab("PHOTO", <><ImageIcon className="size-4" aria-hidden /> Photo</>)}
-        </div>
+        <Tabs
+          label="Item type"
+          spread
+          className="bg-surface-hover"
+          value={mode}
+          onChange={(m) => { setMode(m); setError(""); }}
+          options={[
+            { value: "LINK", label: <><Link2 className="size-4" aria-hidden /> Link</> },
+            { value: "PHOTO", label: <><ImageIcon className="size-4" aria-hidden /> Photo</> },
+          ]}
+        />
 
         {mode === "LINK" ? (
           <div className="space-y-4">
@@ -182,16 +175,16 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
               <Input id="item-url" name="url" data-autofocus type="url" inputMode="url" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Paste a link" value={url} onChange={(e) => { setUrl(e.target.value); titleTouched.current = false; }} onPaste={() => { instant.current = true; }} />
             </Field>
             {previewState === "loading" && (
-              <div data-testid="preview-skeleton" aria-busy="true" aria-label="Fetching preview" className="overflow-hidden rounded-2xl border border-line">
+              <div data-testid="preview-skeleton" aria-busy="true" aria-label="Fetching preview" className="overflow-hidden rounded-2xl border border-border">
                 <Skeleton className="aspect-[16/10] w-full rounded-none sm:aspect-[16/7]" />
                 <div className="space-y-2 p-3"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-1/3" /></div>
               </div>
             )}
-            {previewState === "error" && <p className="text-sm text-muted">Couldn’t read that page. You can still add it, and pick your own photo below.</p>}
+            {previewState === "error" && <p className="text-meta text-muted">Couldn’t read that page. You can still add it, and pick your own photo below.</p>}
             {(preview || previewState === "error") && previewState !== "loading" && (
               <>
                 {preview && (
-                  <div data-testid="link-preview" className="overflow-hidden rounded-2xl border border-line bg-surface-2">
+                  <div data-testid="link-preview" className="overflow-hidden rounded-2xl border border-border bg-surface-hover">
                     <div className="grid aspect-[16/10] place-items-center overflow-hidden bg-surface sm:aspect-[16/7]">
                       {ownUrl || pick || preview.image || preview.favicon ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -206,9 +199,9 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
                       )}
                     </div>
                     <div className="min-w-0 p-3">
-                      <p className="line-clamp-2 text-sm font-semibold">{preview.title || preview.siteName}</p>
-                      <p className="mt-0.5 line-clamp-2 text-xs text-muted">{preview.description || "No description found"}</p>
-                      <p className="mt-1 text-[11px] text-muted">{preview.siteName}</p>
+                      <p className="line-clamp-2 text-meta font-semibold">{preview.title || preview.siteName}</p>
+                      <p className="mt-0.5 line-clamp-2 text-caption text-muted">{preview.description || "No description found"}</p>
+                      <p className="mt-1 text-micro text-muted">{preview.siteName}</p>
                     </div>
                   </div>
                 )}
@@ -239,7 +232,7 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
               onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), fileInput.current?.click())}
               className={clsx(
                 "grid cursor-pointer place-items-center overflow-hidden rounded-2xl border-2 border-dashed text-center transition",
-                dragOver ? "border-accent bg-accent-soft" : "border-line hover:border-accent/60 hover:bg-surface-2",
+                dragOver ? "border-accent bg-accent-subtle" : "border-border hover:border-accent/60 hover:bg-surface-hover",
                 filePreview ? "p-0" : "px-6 py-10",
               )}
             >
@@ -250,13 +243,13 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
                 <div>
                   <Camera className="mx-auto size-9 text-accent" aria-hidden strokeWidth={1.6} />
                   <p className="mt-2 font-medium">Drop, paste or choose a photo</p>
-                  <p className="text-xs text-muted">JPG, PNG, WebP or GIF · up to {MAX_MB}MB</p>
+                  <p className="text-caption text-muted">JPG, PNG, WebP or GIF · up to {MAX_MB}MB</p>
                 </div>
               )}
             </div>
             <input ref={fileInput} data-testid="photo-input" type="file" accept="image/*" className="sr-only" onChange={(e) => pickFile(e.target.files?.[0])} />
             {file && (
-              <button type="button" className="mt-2 text-xs text-muted underline" onClick={() => setFile(null)}>
+              <button type="button" className="mt-2 text-caption text-muted underline" onClick={() => setFile(null)}>
                 Remove photo
               </button>
             )}
@@ -273,9 +266,7 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
         </div>
 
         {error && (
-          <p role="alert" className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
-            {error}
-          </p>
+          <FormError>{error}</FormError>
         )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>

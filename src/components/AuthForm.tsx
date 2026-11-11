@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { ApiError, api } from "@/lib/client";
 import { Button } from "./ui/Button";
-import { Field, Input } from "./ui/Field";
+import { Card } from "./ui/Card";
+import { Field, FormError, Input } from "./ui/Field";
 import { useToast } from "./ui/Toast";
 
 export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHint?: boolean }) {
@@ -47,10 +48,10 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-3rem)] md:min-h-dvh max-w-md flex-col justify-center px-4 py-10">
-      <div className="rounded-3xl border border-line bg-surface p-6 shadow-card sm:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight">{isSignup ? "Create your Shelfie" : "Welcome back"}</h1>
-        <p className="mt-1 text-sm text-muted">{isSignup ? "Your first page is free. No card needed." : "Log in to get back to your shelves."}</p>
+    <div className="mx-auto flex min-h-[calc(100dvh-3rem)] max-w-md flex-col justify-center px-4 py-10 md:min-h-dvh">
+      <Card className="p-6 sm:p-8">
+        <h1 className="text-title font-semibold tracking-tight">{isSignup ? "Create your Shelfie" : "Welcome back"}</h1>
+        <p className="mt-1 text-meta text-muted">{isSignup ? "Your first page is free. No card needed." : "Log in to get back to your shelves."}</p>
         <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
           {isSignup && (
             <Field label="Display name" htmlFor="displayName" hint="optional">
@@ -68,27 +69,23 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
           <Field label="Password" htmlFor="password" hint={isSignup ? "min. 8 characters" : undefined}>
             <Input id="password" name="password" type="password" autoComplete={isSignup ? "new-password" : "current-password"} required minLength={isSignup ? 8 : 1} />
           </Field>
-          {error && (
-            <p role="alert" className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
-              {error}
-            </p>
-          )}
+          {error && <FormError>{error}</FormError>}
           <Button type="submit" loading={busy} className="w-full" size="lg">
             {isSignup ? "Create account" : "Log in"}
           </Button>
         </form>
         {!isSignup && demoHint && (
-          <button onClick={demoLogin} disabled={busy} className="mt-3 w-full rounded-full border border-dashed border-line py-2.5 text-sm text-muted transition hover:border-accent hover:text-ink">
+          <Button variant="ghost" onClick={demoLogin} disabled={busy} className="mt-3 w-full border border-dashed border-border">
             Try the demo account
-          </button>
+          </Button>
         )}
-        <p className="mt-6 text-center text-sm text-muted">
+        <p className="mt-6 text-center text-meta text-muted">
           {isSignup ? "Already have an account?" : "New here?"}{" "}
-          <Link href={isSignup ? "/login" : "/signup"} className="font-medium text-ink underline decoration-accent decoration-2 underline-offset-4">
+          <Link href={isSignup ? "/login" : "/signup"} className="font-medium text-foreground underline decoration-accent decoration-2 underline-offset-4">
             {isSignup ? "Log in" : "Create an account"}
           </Link>
         </p>
-      </div>
+      </Card>
     </div>
   );
 }

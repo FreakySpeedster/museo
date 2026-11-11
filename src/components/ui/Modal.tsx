@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { gsap, reducedMotion } from "@/lib/gsap";
+import { IconButton } from "./IconButton";
 
 const FOCUSABLE = 'a[href],button:not([disabled]),textarea,input:not([type="hidden"]),select,[tabindex]:not([tabindex="-1"])';
 
@@ -25,14 +26,13 @@ export function Modal({
   size?: "sm" | "md" | "lg" | "xl";
   dismissible?: boolean;
 }) {
-  // `visible` keeps the dialog mounted while its exit animation plays.
   const [visible, setVisible] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
   const backdrop = useRef<HTMLDivElement>(null);
   const lastFocus = useRef<HTMLElement | null>(null);
   const openRef = useRef(open);
 
-  if (open && !visible) setVisible(true); // adjust state during render (React-approved pattern)
+  if (open && !visible) setVisible(true);
 
   useEffect(() => {
     openRef.current = open;
@@ -71,7 +71,6 @@ export function Modal({
     };
   }, [visible, open]);
 
-  // If focus was lost (e.g. a focused button just unmounted), Escape should still dismiss the dialog.
   useEffect(() => {
     if (!visible || !open || !dismissible) return;
     const onDoc = (e: KeyboardEvent) => {
@@ -108,7 +107,7 @@ export function Modal({
 
   const widths = { sm: "sm:max-w-md", md: "sm:max-w-lg", lg: "sm:max-w-2xl", xl: "sm:max-w-4xl" };
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6" onKeyDown={onKey} role="presentation">
+    <div className="fixed inset-0 z-modal flex items-end justify-center sm:items-center sm:p-6" onKeyDown={onKey} role="presentation">
       <div ref={backdrop} className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={() => dismissible && onClose()} />
       <div
         ref={panel}
@@ -116,19 +115,19 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         className={clsx(
-          "relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl border border-line bg-surface shadow-2xl sm:rounded-3xl",
+          "relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-border bg-surface-raised shadow-lg sm:rounded-3xl",
           widths[size],
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4 sm:px-6">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-            {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
+            <h2 className="text-heading font-semibold tracking-tight">{title}</h2>
+            {description && <p className="mt-1 text-meta text-muted">{description}</p>}
           </div>
           {dismissible && (
-            <button onClick={onClose} aria-label="Close" className="-mr-2 rounded-full p-2 text-muted transition hover:bg-surface-2 hover:text-ink">
+            <IconButton label="Close" size="sm" onClick={onClose} className="-mr-1">
               <X className="size-5" aria-hidden />
-            </button>
+            </IconButton>
           )}
         </div>
         <div className="overflow-y-auto px-5 py-5 sm:px-6">{children}</div>

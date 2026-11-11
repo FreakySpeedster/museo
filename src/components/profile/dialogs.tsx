@@ -7,7 +7,7 @@ import { ApiError, api } from "@/lib/client";
 import { Button } from "@/components/ui/Button";
 import { AvatarEditor } from "./AvatarEditor";
 import { CategoryPicker } from "@/components/ui/CategoryPicker";
-import { Field, Input, Textarea } from "@/components/ui/Field";
+import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { MAX_SHELVES_PER_PAGE } from "@/lib/limits";
@@ -29,12 +29,7 @@ function useSubmit() {
   return { busy, error, run };
 }
 
-const ErrorLine = ({ msg }: { msg: string }) =>
-  msg ? (
-    <p role="alert" className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-400">
-      {msg}
-    </p>
-  ) : null;
+const ErrorLine = ({ msg }: { msg: string }) => (msg ? <FormError>{msg}</FormError> : null);
 
 /* ------------------------------------------------------------------ Page */
 export function PageDialog({
@@ -183,7 +178,7 @@ function ConfirmBody({ body, confirmLabel, onClose, onConfirm }: { body: string;
   const { busy, error, run } = useSubmit();
   return (
     <>
-      <p className="text-sm text-muted">{body}</p>
+      <p className="text-meta text-muted">{body}</p>
       <div className="mt-4"><ErrorLine msg={error} /></div>
       <div className="mt-5 flex justify-end gap-2">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -291,23 +286,23 @@ function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: { strip
         <ul className="space-y-3">
           {perks.map(([Icon, t, d]) => (
             <li key={t} className="flex gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent"><Icon className="size-5" aria-hidden /></span>
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-subtle text-accent"><Icon className="size-5" aria-hidden /></span>
               <div>
                 <p className="font-medium leading-tight">{t}</p>
-                <p className="text-sm text-muted">{d}</p>
+                <p className="text-meta text-muted">{d}</p>
               </div>
             </li>
           ))}
         </ul>
-        <div className="flex items-end justify-between rounded-2xl border border-line bg-surface-2 p-4">
+        <div className="flex items-end justify-between rounded-2xl border border-border bg-surface-hover p-4">
           <div>
-            <p className="text-sm text-muted">Shelfie Plus</p>
-            <p className="text-3xl font-semibold tracking-tight">{priceLabel}</p>
+            <p className="text-meta text-muted">Shelfie Plus</p>
+            <p className="text-title font-semibold tracking-tight">{priceLabel}</p>
           </div>
-          <p className="text-xs text-muted">Cancel anytime</p>
+          <p className="text-caption text-muted">Cancel anytime</p>
         </div>
         {!stripeEnabled && (
-          <p className="rounded-xl border border-dashed border-amber-500/60 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+          <p className="rounded-md border border-dashed border-warning/40 bg-warning-subtle px-3 py-2 text-caption text-warning">
             <strong>Demo mode:</strong> Stripe isn’t configured, so upgrading just flags this account as subscribed. No payment is taken.
           </p>
         )}

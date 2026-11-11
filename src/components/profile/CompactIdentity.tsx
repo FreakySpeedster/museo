@@ -31,10 +31,10 @@ export function CompactIdentity({ visible, displayName, username, avatarUrl }: P
           aria-label={`Back to top of ${displayName}'s profile`}
           className="flex max-w-[9.5rem] items-center gap-2 pr-2 sm:max-w-[14rem] sm:pr-3"
         >
-          <Avatar name={displayName} username={username} avatarUrl={avatarUrl} size={28} className="ring-2 ring-surface" />
+          <Avatar name={displayName} username={username} avatarUrl={avatarUrl} size={32} className="ring-2 ring-background" />
           <span className="min-w-0 text-left leading-tight">
-            <span className="block truncate text-sm font-semibold tracking-tight">{displayName}</span>
-            <span className="block truncate text-xs text-muted">@{username}</span>
+            <span className="block truncate text-meta font-semibold tracking-tight">{displayName}</span>
+            <span className="block truncate text-caption text-muted">@{username}</span>
           </span>
         </button>
       </div>

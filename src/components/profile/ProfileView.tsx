@@ -10,6 +10,7 @@ import { MAX_SHELVES_PER_PAGE, pageCreationGate } from "@/lib/limits";
 import { gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { AddItemDialog } from "./AddItemDialog";
 import { ConfirmDialog, PageDialog, PaywallDialog, ProfileDialog, ShelfDialog } from "./dialogs";
@@ -282,10 +283,10 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
         </span>
         <div data-head className="min-w-0 space-y-3 sm:self-end">
           <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold tracking-tight sm:text-3xl">{user.displayName}</h1>
-            <p className="truncate text-sm text-muted">@{user.username}</p>
+            <h1 className="truncate text-heading font-semibold tracking-tight sm:text-title">{user.displayName}</h1>
+            <p className="truncate text-meta text-muted">@{user.username}</p>
           </div>
-          <div className="flex gap-5 text-sm sm:gap-8">
+          <div className="flex gap-5 text-meta sm:gap-8">
             <span data-stat><strong className="font-semibold">{stats.items}</strong> <span className="text-muted">items</span></span>
             <span data-stat><strong className="font-semibold">{stats.followers}</strong> <span className="text-muted">followers</span></span>
             <span data-stat><strong className="font-semibold">{stats.following}</strong> <span className="text-muted">following</span></span>
@@ -317,12 +318,12 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
           </Button>
         </div>
         {user.bio && (
-          <p data-head className="col-span-2 max-w-lg whitespace-pre-line text-[15px] text-ink/85 sm:col-span-1 sm:col-start-2 sm:self-start">{user.bio}</p>
+          <p data-head className="col-span-2 max-w-lg whitespace-pre-line text-body text-foreground/85 sm:col-span-1 sm:col-start-2 sm:self-start">{user.bio}</p>
         )}
       </div>
 
       {/* ------------------------------------------ collections label + sticky page switcher */}
-      <div className="border-t border-line" />
+      <div className="border-t border-border" />
       <ProfileStickyBar headerRef={header} displayName={user.displayName} username={user.username} avatarUrl={user.avatarUrl}>
         {page && <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} />}
       </ProfileStickyBar>
@@ -333,31 +334,29 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
           <div className="space-y-10">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="flex items-center gap-3 text-2xl font-semibold tracking-tight sm:text-3xl" data-testid="page-title">
+                <h2 className="flex items-center gap-3 text-title font-semibold tracking-tight" data-testid="page-title">
                   {page.title}
                 </h2>
                 {page.description && <p className="mt-1 max-w-2xl text-muted">{page.description}</p>}
               </div>
               {isOwner && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted" data-testid="shelf-count">{shelfCount}/{MAX_SHELVES_PER_PAGE} shelves</span>
+                  <span className="text-caption text-muted" data-testid="shelf-count">{shelfCount}/{MAX_SHELVES_PER_PAGE} shelves</span>
                   <Button size="sm" variant="secondary" onClick={() => setPageDialog({ page })}>Edit page</Button>
                   {pages.length > 1 && (
-                    <Button size="sm" variant="ghost" className="hover:text-red-600" onClick={() => setConfirm({ kind: "page", id: page.id, name: page.title })}>Delete page</Button>
+                    <Button size="sm" variant="ghost" className="hover:text-danger" onClick={() => setConfirm({ kind: "page", id: page.id, name: page.title })}>Delete page</Button>
                   )}
                 </div>
               )}
             </div>
 
             {page.shelves.length === 0 && (
-              <div className="grid place-items-center rounded-3xl border border-dashed border-line bg-surface/60 px-6 py-16 text-center">
-                <LayoutGrid className="size-11 text-accent" aria-hidden strokeWidth={1.5} />
-                <h3 className="mt-3 text-xl font-semibold">{isOwner ? "Build your first shelf" : "No shelves yet"}</h3>
-                <p className="mt-1 max-w-sm text-sm text-muted">
-                  {isOwner ? "A shelf holds one category — books, records, sneakers, bookmarks. Start with something you love." : "This page doesn’t have any shelves yet."}
-                </p>
-                {isOwner && <Button className="mt-5" onClick={() => setShelfDialog({ shelf: null })}>Add a shelf</Button>}
-              </div>
+              <EmptyState
+                icon={<LayoutGrid className="size-10" aria-hidden strokeWidth={1.5} />}
+                title={isOwner ? "Build your first shelf" : "No shelves yet"}
+                description={isOwner ? "A shelf holds one category — books, records, sneakers, bookmarks. Start with something you love." : "This page doesn’t have any shelves yet."}
+                action={isOwner ? <Button onClick={() => setShelfDialog({ shelf: null })}>Add a shelf</Button> : undefined}
+              />
             )}
 
             {page.shelves.map((shelf) => (
@@ -381,11 +380,11 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
                 data-testid="add-shelf"
                 aria-disabled={atLimit}
                 className={clsx(
-                  "flex w-full items-center justify-center gap-2 rounded-3xl border-2 border-dashed py-8 text-sm font-medium transition",
-                  atLimit ? "cursor-not-allowed border-line text-muted" : "border-line text-muted hover:border-accent hover:bg-accent-soft/40 hover:text-ink",
+                  "flex w-full items-center justify-center gap-2 rounded-3xl border-2 border-dashed py-8 text-meta font-medium transition",
+                  atLimit ? "cursor-not-allowed border-border text-muted" : "border-border text-muted hover:border-accent hover:bg-accent-subtle/40 hover:text-foreground",
                 )}
               >
-                {atLimit ? `Shelf limit reached (${MAX_SHELVES_PER_PAGE}/${MAX_SHELVES_PER_PAGE})` : <><Plus className="size-4" aria-hidden /> Add a shelf <span className="text-xs">({shelfCount}/{MAX_SHELVES_PER_PAGE})</span></>}
+                {atLimit ? `Shelf limit reached (${MAX_SHELVES_PER_PAGE}/${MAX_SHELVES_PER_PAGE})` : <><Plus className="size-4" aria-hidden /> Add a shelf <span className="text-caption">({shelfCount}/{MAX_SHELVES_PER_PAGE})</span></>}
               </button>
             )}
           </div>
