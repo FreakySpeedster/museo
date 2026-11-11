@@ -57,6 +57,7 @@ export function Modal({
   useEffect(() => {
     if (!visible || !open) return;
     document.body.style.overflow = "hidden";
+    document.body.dataset.modal = "open";
     if (!reducedMotion() && panel.current) {
       gsap.fromTo(backdrop.current, { opacity: 0 }, { opacity: 1, duration: 0.25 });
       gsap.fromTo(panel.current, { y: 40, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.4)" });
@@ -68,6 +69,7 @@ export function Modal({
     return () => {
       clearTimeout(t);
       document.body.style.overflow = "";
+      delete document.body.dataset.modal;
     };
   }, [visible, open]);
 

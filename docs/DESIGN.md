@@ -104,7 +104,7 @@ Desktop (`md` and up): a 72px (`--nav-rail`) icon-only sidebar. Hover or focus-w
 
 Icons stay in a fixed 72px slot so they do not slide when the rail opens. Labels fade in. Primary items (Home, My shelves) sit above a utility group (Pricing). Search, Notifications and Create should be added to those groups when they exist — do not show placeholders.
 
-Phones: 48px top bar and a 56px bottom tab bar, plus safe-area padding. Do not use the desktop rail below `md`.
+Phones: 48px top bar and a 56px bottom tab bar, plus safe-area padding. Do not use the desktop rail below `md`. The bottom tab bar is hidden while a modal or sheet is open.
 
 ## Usage for future work
 

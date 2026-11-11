@@ -356,3 +356,6 @@ html:not([data-nav-pinned]) .app-nav-side[data-open="true"] {
 :root[data-nav-pinned] .app-nav-side .nav-label {
   opacity: 1;
 }
+
+/* A modal or sheet covers the phone tab bar so it cannot paint on top. */
+body[data-modal="open"] .app-phone-nav { visibility: hidden; pointer-events: none; }

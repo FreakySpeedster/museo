@@ -191,7 +191,7 @@ export function AppNav({ user }: { user: NavUser | null }) {
 
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-nav flex items-center border-t border-border bg-[color-mix(in_srgb,var(--background)_92%,var(--surface))] pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        className="app-phone-nav fixed inset-x-0 bottom-0 z-nav flex items-center border-t border-border bg-[color-mix(in_srgb,var(--background)_92%,var(--surface))] pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
         {tabs.map((it) => (
           <Link
