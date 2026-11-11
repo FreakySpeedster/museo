@@ -2,13 +2,7 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 import { CompactIdentity } from "@/components/profile/CompactIdentity";
-import {
-  APP_NAV_HEIGHT_PX,
-  APP_NAV_TOP_CLASS,
-  STICKY_OBSERVER_OPTIONS,
-  STICKY_OBSERVER_ROOT_MARGIN,
-  isCompactIdentityShown,
-} from "@/lib/profile-chrome";
+import { MOBILE_TOPBAR_HEIGHT_PX, STICKY_TOP_CLASS, isCompactIdentityShown, stickyObserverOptions } from "@/lib/profile-chrome";
 
 describe("profile sticky chrome", () => {
   it("shows compact identity only after the header has left the viewport", () => {
@@ -16,11 +10,11 @@ describe("profile sticky chrome", () => {
     expect(isCompactIdentityShown(false)).toBe(true);
   });
 
-  it("observes a root inset by the app navbar height so the bar can sit at top-16", () => {
-    expect(APP_NAV_HEIGHT_PX).toBe(64);
-    expect(APP_NAV_TOP_CLASS).toBe("top-16");
-    expect(STICKY_OBSERVER_ROOT_MARGIN).toBe("-64px 0px 0px 0px");
-    expect(STICKY_OBSERVER_OPTIONS).toEqual({ threshold: 0, rootMargin: "-64px 0px 0px 0px" });
+  it("insets the observer by the phone top bar only; desktop has no top header", () => {
+    expect(MOBILE_TOPBAR_HEIGHT_PX).toBe(48);
+    expect(STICKY_TOP_CLASS).toBe("top-12 md:top-0");
+    expect(stickyObserverOptions(false)).toEqual({ threshold: 0, rootMargin: "-48px 0px 0px 0px" });
+    expect(stickyObserverOptions(true)).toEqual({ threshold: 0, rootMargin: "-0px 0px 0px 0px" });
   });
 
   it("renders only avatar, display name and @handle when visible", () => {

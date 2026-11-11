@@ -1,9 +1,9 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, LayoutGrid, Plus } from "lucide-react";
+import { Check, LayoutGrid, Link2, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, TimelineEntry, ViewerDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { MAX_SHELVES_PER_PAGE, pageCreationGate } from "@/lib/limits";
@@ -17,7 +17,6 @@ import { ItemModal } from "./ItemModal";
 import { PageSwitcher } from "./PageSwitcher";
 import { ProfileStickyBar } from "./ProfileStickyBar";
 import { ShelfView } from "./ShelfView";
-import { TimelineList } from "./TimelineList";
 import { burst } from "./confetti";
 
 interface Props {
@@ -33,10 +32,15 @@ interface Props {
   stripeEnabled: boolean;
   priceLabel: string;
   initialPageId?: string;
-  initialTab: "shelves" | "timeline";
 }
 
-export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initialPageId, initialTab }: Props) {
+function subscribeSm(cb: () => void) {
+  const mq = window.matchMedia("(min-width: 640px)");
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+}
+
+export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initialPageId }: Props) {
   const router = useRouter();
   const toast = useToast();
   const { isOwner } = profile;
@@ -44,9 +48,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   const [user, setUser] = useState(profile.user);
   const [pages, setPages] = useState(profile.pages);
   const [activeId, setActiveId] = useState(() => (profile.pages.some((p) => p.id === initialPageId) ? initialPageId! : profile.pages[0]?.id));
-  const [tab, setTab] = useState(initialTab);
-  const [entries, setEntries] = useState(profile.timeline.items);
-  const [cursor, setCursor] = useState(profile.timeline.nextCursor);
   const [stats, setStats] = useState(profile.stats);
   const [following, setFollowing] = useState(profile.isFollowing);
   const [subscribed, setSubscribed] = useState(viewer?.subscribed ?? false);
@@ -74,7 +75,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
           const { item } = await api<{ item: ItemDTO }>(`/api/items/${it.id}/thumbnail`, { method: "POST", json: {} });
           if (!item.imageUrl && !item.faviconUrl) continue;
           setPages((ps) => ps.map((p) => ({ ...p, shelves: p.shelves.map((sh) => (sh.id === item.shelfId ? { ...sh, items: sh.items.map((i) => (i.id === item.id ? item : i)) } : sh)) })));
-          setEntries((es) => es.map((e) => (e.id === item.id ? { ...e, imageUrl: item.imageUrl, faviconUrl: item.faviconUrl } : e)));
         } catch {
           /* best effort */
         }
@@ -90,6 +90,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   const dragSnapshot = useRef<ItemDTO[] | null>(null);
   const dirRef = useRef(1);
   const header = useRef<HTMLDivElement>(null);
+  const wide = useSyncExternalStore(subscribeSm, () => window.matchMedia("(min-width: 640px)").matches, () => false);
   const content = useRef<HTMLDivElement>(null);
 
   const page = pages.find((p) => p.id === activeId) ?? pages[0];
@@ -103,8 +104,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       if (reducedMotion()) return;
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
       tl.from("[data-avatar]", { scale: 0, rotation: -25, duration: 0.8, ease: "back.out(2)" })
-        .from("[data-head] > *", { y: 20, opacity: 0, stagger: 0.08, duration: 0.6 }, "-=0.5")
-        .from("[data-stat]", { y: 14, opacity: 0, stagger: 0.06, duration: 0.5 }, "-=0.4");
+        .from("[data-head]", { y: 18, opacity: 0, stagger: 0.07, duration: 0.55 }, "-=0.5");
     },
     { scope: header },
   );
@@ -114,7 +114,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       if (reducedMotion() || !content.current) return;
       gsap.from(content.current, { opacity: 0, x: 36 * dirRef.current, duration: 0.5, ease: "power3.out", clearProps: "all" });
     },
-    { scope: content, dependencies: [activeId, tab] },
+    { scope: content, dependencies: [activeId] },
   );
 
   const selectPage = useCallback(
@@ -129,15 +129,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     },
     [pages, activeId],
   );
-
-  const selectTab = (t: "shelves" | "timeline") => {
-    dirRef.current = t === "timeline" ? 1 : -1;
-    setTab(t);
-    const url = new URL(window.location.href);
-    if (t === "timeline") url.searchParams.set("tab", "timeline");
-    else url.searchParams.delete("tab");
-    window.history.replaceState(null, "", url);
-  };
 
   const patchShelf = (shelfId: string, fn: (s: ShelfDTO) => ShelfDTO) =>
     setPages((ps) => ps.map((p) => ({ ...p, shelves: p.shelves.map((s) => (s.id === shelfId ? fn(s) : s)) })));
@@ -171,7 +162,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       toast.success(`Shelf “${saved.name}” added`);
     } else {
       patchShelf(saved.id, (s) => ({ ...s, name: saved.name }));
-      setEntries((es) => es.map((e) => (e.shelf.id === saved.id ? { ...e, shelf: { ...e.shelf, name: saved.name } } : e)));
       toast.success("Shelf renamed");
     }
   }
@@ -182,7 +172,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       await api(`/api/shelves/${confirm.id}`, { method: "DELETE" });
       const removed = allShelves.find((s) => s.id === confirm.id);
       setPages((ps) => ps.map((p) => ({ ...p, shelves: p.shelves.filter((s) => s.id !== confirm.id) })));
-      setEntries((es) => es.filter((e) => e.shelf.id !== confirm.id));
       setStats((s) => ({ ...s, items: Math.max(0, s.items - (removed?.items.length ?? 0)) }));
       toast.success("Shelf deleted");
     } else {
@@ -190,7 +179,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       const removed = pages.find((p) => p.id === confirm.id);
       const remaining = pages.filter((p) => p.id !== confirm.id);
       setPages(remaining);
-      setEntries((es) => es.filter((e) => e.page.id !== confirm.id));
       setStats((s) => ({ ...s, items: Math.max(0, s.items - (removed?.shelves.reduce((n, sh) => n + sh.items.length, 0) ?? 0)) }));
       if (activeId === confirm.id) selectPage(remaining[0].id);
       toast.success("Page deleted");
@@ -205,10 +193,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     if (!shelf || !owningPage) return;
     captureFns.current[shelf.id]?.();
     patchShelf(shelf.id, (s) => ({ ...s, items: [...s.items, item] }));
-    setEntries((es) => [
-      { ...item, user, shelf: { id: shelf.id, name: shelf.name, category: shelf.category }, page: { id: owningPage.id, title: owningPage.title } },
-      ...es,
-    ]);
     setStats((s) => ({ ...s, items: s.items + 1 }));
     setAddTo(null);
     setJustAdded(item.id);
@@ -220,13 +204,11 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
 
   function onItemUpdated(item: ItemDTO) {
     patchShelf(item.shelfId, (s) => ({ ...s, items: s.items.map((i) => (i.id === item.id ? item : i)) }));
-    setEntries((es) => es.map((e) => (e.id === item.id ? { ...e, title: item.title, description: item.description, imageUrl: item.imageUrl, faviconUrl: item.faviconUrl } : e)));
   }
 
   function onItemDeleted(item: ItemDTO) {
     captureFns.current[item.shelfId]?.();
     patchShelf(item.shelfId, (s) => ({ ...s, items: s.items.filter((i) => i.id !== item.id) }));
-    setEntries((es) => es.filter((e) => e.id !== item.id));
     setStats((s) => ({ ...s, items: Math.max(0, s.items - 1) }));
     setOpenItemId(null);
   }
@@ -289,31 +271,38 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
-      {/* ---------------------------------------------------------- header */}
-      <div ref={header} data-testid="profile-header" className="flex flex-col gap-6 py-8 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-5">
-          <span data-avatar className="inline-block"><Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={84} className="shadow-xl ring-4 ring-surface" /></span>
-          <div data-head className="min-w-0 space-y-1">
-            <h1 className="truncate text-3xl font-semibold tracking-tight sm:text-4xl">{user.displayName}</h1>
-            <p className="text-sm text-muted">@{user.username}</p>
-            {user.bio && <p className="max-w-lg text-[15px] text-ink/80">{user.bio}</p>}
-            <div className="flex gap-5 pt-2 text-sm">
-              <span data-stat><strong className="font-semibold">{stats.items}</strong> <span className="text-muted">items</span></span>
-              <span data-stat><strong className="font-semibold">{stats.followers}</strong> <span className="text-muted">followers</span></span>
-              <span data-stat><strong className="font-semibold">{stats.following}</strong> <span className="text-muted">following</span></span>
-            </div>
+      {/* ---------------------------------------------------------- header (Instagram layout) */}
+      <div
+        ref={header}
+        data-testid="profile-header"
+        className="grid grid-cols-[auto_1fr] items-center gap-x-5 gap-y-4 py-6 sm:gap-x-14 sm:gap-y-3 sm:py-10 md:mx-auto md:max-w-3xl"
+      >
+        <span data-avatar className="inline-block justify-self-center sm:row-span-3">
+          <Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={wide ? 160 : 88} className="shadow-xl ring-4 ring-surface" />
+        </span>
+        <div data-head className="min-w-0 space-y-3 sm:self-end">
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-semibold tracking-tight sm:text-3xl">{user.displayName}</h1>
+            <p className="truncate text-sm text-muted">@{user.username}</p>
+          </div>
+          <div className="flex gap-5 text-sm sm:gap-8">
+            <span data-stat><strong className="font-semibold">{stats.items}</strong> <span className="text-muted">items</span></span>
+            <span data-stat><strong className="font-semibold">{stats.followers}</strong> <span className="text-muted">followers</span></span>
+            <span data-stat><strong className="font-semibold">{stats.following}</strong> <span className="text-muted">following</span></span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div data-head className="col-span-2 flex items-center gap-2 sm:col-span-1 sm:col-start-2 sm:self-center">
           {isOwner ? (
-            <Button variant="secondary" onClick={() => setProfileDialog(true)}>Edit profile</Button>
+            <Button variant="secondary" size="sm" className="flex-1 sm:flex-none" onClick={() => setProfileDialog(true)}><Pencil className="size-4" aria-hidden /> Edit profile</Button>
           ) : (
-            <Button variant={following ? "secondary" : "primary"} onClick={toggleFollow} data-testid="follow-button">
+            <Button size="sm" variant={following ? "secondary" : "primary"} className="flex-1 sm:flex-none sm:min-w-28" onClick={toggleFollow} data-testid="follow-button">
               {following ? <><Check className="size-4" aria-hidden strokeWidth={2.4} /> Following</> : "Follow"}
             </Button>
           )}
           <Button
-            variant="ghost"
+            variant="secondary"
+            size="sm"
+            className="flex-1 sm:flex-none"
             onClick={async () => {
               const link = `${window.location.origin}/u/${user.username}`;
               try {
@@ -324,38 +313,23 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
               }
             }}
           >
-            Share
+            <Link2 className="size-4" aria-hidden /> Share
           </Button>
         </div>
+        {user.bio && (
+          <p data-head className="col-span-2 max-w-lg whitespace-pre-line text-[15px] text-ink/85 sm:col-span-1 sm:col-start-2 sm:self-start">{user.bio}</p>
+        )}
       </div>
 
-      {/* ------------------------------------------ sticky tabs + compact identity */}
-      <ProfileStickyBar
-        headerRef={header}
-        displayName={user.displayName}
-        username={user.username}
-        avatarUrl={user.avatarUrl}
-        tab={tab}
-        onSelectTab={selectTab}
-      >
-        {tab === "shelves" && page && (
-          <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} />
-        )}
+      {/* ------------------------------------------ collections label + sticky page switcher */}
+      <div className="border-t border-line" />
+      <ProfileStickyBar headerRef={header} displayName={user.displayName} username={user.username} avatarUrl={user.avatarUrl}>
+        {page && <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} />}
       </ProfileStickyBar>
 
       {/* --------------------------------------------------------- body */}
-      <div ref={content} className="mt-8" key={`${tab}-${tab === "shelves" ? activeId : ""}`}>
-        {tab === "timeline" ? (
-          <TimelineList
-            entries={entries}
-            setEntries={setEntries}
-            nextCursor={cursor}
-            setNextCursor={setCursor}
-            username={user.username}
-            emptyOwner={isOwner}
-            onOpen={(e) => setOpenItemId(e.id)}
-          />
-        ) : page ? (
+      <div ref={content} className="mt-6" key={activeId}>
+        {page ? (
           <div className="space-y-10">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">

@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ToastProvider>
           <Navbar />
-          <main>{children}</main>
+          <main className="pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pl-[72px] lg:pl-60">{children}</main>
         </ToastProvider>
       </body>
     </html>

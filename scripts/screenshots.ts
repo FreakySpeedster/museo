@@ -58,14 +58,6 @@ async function main() {
   await shot(page, "02b-profile-shelves-scrolled");
   await page.evaluate(() => window.scrollTo(0, 0));
 
-  await page.click("[data-testid=tab-timeline]");
-  await settle(page, 1500);
-  await page.mouse.wheel(0, 500);
-  await settle(page, 1500);
-  check("timeline entries render", (await page.locator("[data-testid=timeline-entry]").count()) > 3);
-  await shot(page, "03-timeline");
-  await page.click("[data-testid=tab-shelves]");
-  await settle(page, 1000);
 
   // Add-item dialog with a live link preview (nothing is submitted for the demo user)
   await page.getByRole("button", { name: /Add item to Currently reading/ }).click();
@@ -153,13 +145,6 @@ async function main() {
   check("photo item added", await p.locator('section[aria-label="Shelf 3"] img[alt="Purple wall"]').isVisible());
   await settle(p, 1200);
 
-  // timeline shows both
-  await p.getByTestId("tab-timeline").click();
-  await settle(p, 1500);
-  const entries = await p.locator("[data-testid=timeline-entry]").allTextContents();
-  check("timeline shows both new items", entries.length === 2 && entries.some((t) => t.includes("Purple wall")) && entries.some((t) => /next\.js/i.test(t)), `${entries.length} entries`);
-  await shot(p, "08-timeline-new-user");
-  await p.getByTestId("tab-shelves").click();
 
   // page switcher + paywall + demo upgrade
   check("no 2nd page yet: switcher shows one page", (await p.locator("[data-page-id]").count()) === 1);

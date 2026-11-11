@@ -118,27 +118,12 @@ body > main { position: relative; z-index: 1; }
   backdrop-filter: saturate(1.4) blur(14px);
 }
 
-/* Profile tab chrome: frosted but opaque enough that shelf cards don't show through. */
+/* Profile sticky chrome: frosted but opaque enough that shelf cards don't show through. */
 .profile-sticky-bg {
-  position: relative;
-  background: color-mix(in srgb, var(--bg) 94%, var(--surface));
-  backdrop-filter: saturate(1.2) blur(18px);
-  -webkit-backdrop-filter: saturate(1.2) blur(18px);
-}
-.profile-sticky-bg::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 100vw;
-  transform: translateX(-50%);
   background: color-mix(in srgb, var(--bg) 94%, var(--surface));
   backdrop-filter: saturate(1.2) blur(18px);
   -webkit-backdrop-filter: saturate(1.2) blur(18px);
   border-bottom: 1px solid var(--line);
-  pointer-events: none;
-  z-index: -1;
 }
 
 dialog::backdrop { background: rgb(0 0 0 / 0.5); }

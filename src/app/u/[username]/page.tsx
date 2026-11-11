@@ -7,7 +7,7 @@ import { toViewerDTO } from "@/lib/mappers";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { db } from "@/lib/db";
 
-type Props = { params: Promise<{ username: string }>; searchParams: Promise<{ page?: string; tab?: string }> };
+type Props = { params: Promise<{ username: string }>; searchParams: Promise<{ page?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
@@ -32,7 +32,6 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       stripeEnabled={stripeConfigured()}
       priceLabel={process.env.PLUS_PRICE_LABEL || "$4 / month"}
       initialPageId={sp.page}
-      initialTab={sp.tab === "timeline" ? "timeline" : "shelves"}
     />
   );
 }

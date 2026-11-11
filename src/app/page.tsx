@@ -22,7 +22,6 @@ export default async function Home() {
           <p className="mt-1 text-muted">Here’s what’s new on the shelves.</p>
         </div>
         <div className="flex gap-2">
-          <LinkButton href={`/u/${user.username}?tab=timeline`} variant="secondary">My timeline</LinkButton>
           <LinkButton href={`/u/${user.username}`}>My shelves</LinkButton>
         </div>
       </div>

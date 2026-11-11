@@ -43,7 +43,7 @@ export function PageSwitcher({
   }, [activeId, pages.length, pages]);
 
   return (
-    <div className="pb-2.5 pt-1" data-testid="page-switcher">
+    <div className="py-2" data-testid="page-switcher">
       <div ref={track} role="tablist" aria-label="Pages" className="no-scrollbar relative flex items-center gap-1 overflow-x-auto">
         <span ref={indicator} aria-hidden className="absolute left-0 top-0 h-full rounded-full bg-ink opacity-0 shadow-lg" />
         {pages.map((p) => {

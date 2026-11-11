@@ -7,13 +7,15 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { ArrowLeft, ArrowRight, ArrowUpRight, ImagePlus, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Clock, ImagePlus, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PhotoPicker, type PhotoCandidate } from "./PhotoPicker";
 import { categoryMeta } from "@/lib/categories";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { timeAgo } from "@/lib/time";
 import { ItemThumb } from "./ItemThumb";
+
+const fullDate = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" });
 
 export function ItemModal({
   item,
@@ -120,7 +122,11 @@ function ItemBody({
             ) : (
               <>
                 <h3 className="mt-1 text-2xl font-semibold leading-tight tracking-tight">{it.title}</h3>
-                <p className="mt-1 text-xs text-muted">Added {timeAgo(it.createdAt)}</p>
+                <p className="mt-1 flex items-center gap-1.5 text-xs text-muted" data-testid="item-added">
+                  <Clock className="size-3.5" aria-hidden />
+                  <time dateTime={it.createdAt} title={fullDate(it.createdAt)} className="cursor-help underline decoration-dotted decoration-line underline-offset-4">Added {timeAgo(it.createdAt)}</time>
+                  <span className="sr-only">{fullDate(it.createdAt)}</span>
+                </p>
                 {it.description ? (
                   <p className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-ink/90">{it.description}</p>
                 ) : (
