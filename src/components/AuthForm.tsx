@@ -26,7 +26,7 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
         ? { email: f.get("email"), username: f.get("username"), displayName: String(f.get("displayName") || "") || undefined, password: f.get("password") }
         : { email: f.get("email"), password: f.get("password") };
       const { user } = await api<{ user: { username: string } }>(`/api/auth/${mode}`, { json: body });
-      toast.success(isSignup ? "Welcome to Shelfie! Let’s stock your first shelf." : "Welcome back!");
+      toast.success(isSignup ? "Welcome to Nook! Let’s stock your first shelf." : "Welcome back!");
       router.push(`/u/${user.username}`);
       router.refresh();
     } catch (err) {
@@ -50,7 +50,7 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-var(--chrome-top))] max-w-md flex-col justify-center px-4 py-10">
       <Card className="p-6 sm:p-8">
-        <h1 className="text-title font-semibold tracking-tight">{isSignup ? "Create your Shelfie" : "Welcome back"}</h1>
+        <h1 className="text-title font-semibold tracking-tight">{isSignup ? "Create your Nook" : "Welcome back"}</h1>
         <p className="mt-1 text-meta text-muted">{isSignup ? "Your first page is free. No card needed." : "Log in to get back to your shelves."}</p>
         <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
           {isSignup && (

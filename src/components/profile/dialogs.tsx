@@ -270,7 +270,7 @@ function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: { strip
         return;
       }
       await api("/api/billing/demo-upgrade", { method: "POST", json: {} });
-      toast.success("Shelfie Plus unlocked (demo mode)");
+      toast.success("Nook Plus unlocked (demo mode)");
       onUpgraded();
     });
   }
@@ -278,7 +278,7 @@ function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: { strip
   const perks: Array<[LucideIcon, string, string]> = [
     [FileStack, "Unlimited extra pages", "Music, travel, sneakers… give every collection its own page."],
     [Zap, "Switch pages instantly", "Your page switcher shows everything you curate."],
-    [Heart, "Support an indie product", "Plus keeps Shelfie ad-free and tracker-free."],
+    [Heart, "Support an indie product", "Plus keeps Nook ad-free and tracker-free."],
   ];
 
   return (
@@ -296,7 +296,7 @@ function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: { strip
         </ul>
         <div className="flex items-end justify-between rounded-2xl border border-border bg-surface-hover p-4">
           <div>
-            <p className="text-meta text-muted">Shelfie Plus</p>
+            <p className="text-meta text-muted">Nook Plus</p>
             <p className="text-title font-semibold tracking-tight">{priceLabel}</p>
           </div>
           <p className="text-caption text-muted">Cancel anytime</p>

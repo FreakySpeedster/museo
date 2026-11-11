@@ -1,4 +1,4 @@
-# Shelfie design system
+# Nook design system
 
 Use these tokens and primitives for every new screen and component. Do not invent one-off colours, type sizes, or control heights.
 

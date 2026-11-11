@@ -1,6 +1,6 @@
 # Changelog
 
-All notable work on Shelfie, summarized from `git log`. Dates are Asia/Calcutta (UTC+5:30). Newest first. There are no release tags yet; history lives on local `master` only.
+All notable work on Nook, summarized from `git log`. Dates are Asia/Calcutta (UTC+5:30). Newest first. There are no release tags yet; history lives on local `master` only.
 
 ## Unreleased
 
@@ -68,6 +68,6 @@ Production-ready for Vercel: Postgres, Blob storage adapter, DB-backed rate limi
 
 ## 2026-11-10 — 1cd264f
 
-Shelfie: collection showcase app (Next.js, Prisma, GSAP).
+Nook: collection showcase app (Next.js, Prisma, GSAP).
 
 - Initial app: App Router pages, Prisma schema, auth, pages/shelves/items, follow/feed/timeline, link preview, uploads, Stripe + demo billing, seed data, Vitest tests, screenshot and e2e scripts, README.

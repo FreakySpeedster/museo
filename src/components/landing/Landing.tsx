@@ -6,7 +6,7 @@ import { CategoryMarquee } from "./CategoryMarquee";
 
 const STEPS = [
   { icon: Link2, title: "Create a page", body: "Start with one page. Add more when your collections grow." },
-  { icon: ImageIcon, title: "Stock your shelves", body: "Drop in a link or a photo. Shelfie finds the image for you." },
+  { icon: ImageIcon, title: "Stock your shelves", body: "Drop in a link or a photo. Nook finds the image for you." },
   { icon: Share2, title: "Share your profile", body: "Send one link. Friends can browse every shelf you choose to show." },
 ] as const;
 
@@ -17,7 +17,7 @@ export function Landing() {
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="fade-up text-balance text-display font-semibold tracking-tight">Show off what you collect.</h1>
           <p className="fade-up fade-up-d1 mx-auto mt-5 max-w-xl text-pretty text-lede text-muted">
-            Build a page, add shelves, and drop in links or photos. Shelfie pulls the image for you.
+            Build a page, add shelves, and drop in links or photos. Nook pulls the image for you.
           </p>
           <div className="fade-up fade-up-d2 mt-8 flex flex-wrap items-center justify-center gap-3">
             <LinkButton href="/signup" size="lg">

@@ -8,9 +8,9 @@ import { appUrl } from "@/lib/env";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl()),
-  title: { default: "Shelfie — show off what you collect", template: "%s · Shelfie" },
-  description: "Shelfie is a home for your collections. Build pages, stock shelves with links and photos, and share them with the world.",
-  openGraph: { title: "Shelfie", description: "Show off what you collect.", type: "website" },
+  title: { default: "Nook — show off what you collect", template: "%s · Nook" },
+  description: "Nook is a home for your collections. Build pages, stock shelves with links and photos, and share them with the world.",
+  openGraph: { title: "Nook", description: "Show off what you collect.", type: "website" },
 };
 
 export const viewport: Viewport = {

@@ -14,9 +14,9 @@ export function LogoMark({ className = "size-8" }: { className?: string }) {
 
 export function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="Shelfie home">
+    <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="Nook home">
       <LogoMark />
-      <span className="text-heading">Shelfie</span>
+      <span className="text-heading">Nook</span>
     </Link>
   );
 }
