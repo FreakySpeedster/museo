@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import type { TimelineEntry } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { ArrowUpRight, Sprout } from "lucide-react";
-import { gsap, reducedMotion, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { ensureScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { timeAgo } from "@/lib/time";
 import { Avatar } from "@/components/ui/Avatar";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
@@ -29,6 +29,7 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
   useGSAP(
     () => {
       if (reducedMotion() || !root.current) return;
+      const ScrollTrigger = ensureScrollTrigger();
       const cards = gsap.utils.toArray<HTMLElement>("[data-feed-card]:not([data-seen])", root.current);
       cards.forEach((c) => c.setAttribute("data-seen", "1"));
       gsap.set(cards, { opacity: 0, y: 40 });

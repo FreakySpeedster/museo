@@ -91,6 +91,9 @@
   /* Navigation */
   --nav-rail: 4.5rem;      /* 72px icon rail */
   --nav-expanded: 15rem;   /* 240px labelled */
+  --nav-inset: 0.75rem;    /* 12px padding so hover pills don't touch the rail edge */
+  --nav-icon: 1.25rem;     /* 20px rail icons */
+  --nav-icon-slot: calc(var(--nav-rail) - var(--nav-inset) * 2); /* 48px, keeps icons centred */
   --nav-offset: 0px;
   --topbar-height: 3rem;       /* 48px app phone top bar */
   --marketing-topbar: 4rem;    /* 64px public top bar */
@@ -377,6 +380,28 @@ html:not([data-nav-pinned]) .app-nav-side[data-open="true"] {
 :root[data-nav-pinned] .app-nav-side .nav-label {
   opacity: 1;
 }
+
+/* Contained hover/active pills: 12px inset, 48×48 rounded square when collapsed. */
+.nav-icon {
+  width: var(--nav-icon);
+  height: var(--nav-icon);
+}
+.nav-icon-slot {
+  display: grid;
+  width: var(--nav-icon-slot);
+  flex-shrink: 0;
+  place-items: center;
+}
+.nav-row {
+  display: flex;
+  margin-inline: var(--nav-inset);
+  height: 3rem;
+  width: calc(100% - var(--nav-inset) * 2);
+  align-items: center;
+  border-radius: var(--r-lg);
+  transition: color var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out);
+}
+.nav-row-account { height: 3.5rem; }
 
 /* A modal or sheet covers the phone tab bar so it cannot paint on top. */
 body[data-modal="open"] .app-phone-nav { visibility: hidden; pointer-events: none; }

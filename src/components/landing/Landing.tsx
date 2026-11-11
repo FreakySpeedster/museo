@@ -1,47 +1,14 @@
 import { Link2, ImageIcon, Share2 } from "lucide-react";
 import { LinkButton } from "@/components/ui/Button";
 import { SiteFooter } from "@/components/SiteFooter";
-
-const MOCK_ITEMS = [
-  { src: "/seed/01-dune.svg", title: "Dune" },
-  { src: "/seed/05-kind-of-blue.svg", title: "Kind of Blue" },
-  { src: "/seed/09-next-js.svg", title: "Next.js" },
-  { src: "/seed/16-monstera.svg", title: "Monstera" },
-  { src: "/seed/13-keyboard.svg", title: "Keyboard" },
-] as const;
+import { ProductDemo } from "./ProductDemo";
+import { CategoryMarquee } from "./CategoryMarquee";
 
 const STEPS = [
   { icon: Link2, title: "Create a page", body: "Start with one page. Add more when your collections grow." },
   { icon: ImageIcon, title: "Stock your shelves", body: "Drop in a link or a photo. Shelfie finds the image for you." },
   { icon: Share2, title: "Share your profile", body: "Send one link. Friends can browse every shelf you choose to show." },
 ] as const;
-
-function ProductMock() {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-md">
-      <div className="flex items-center gap-3 border-b border-border px-5 py-4">
-        <div className="size-10 rounded-full bg-surface-hover" aria-hidden />
-        <div>
-          <p className="text-meta font-semibold leading-tight">Alex Rivera</p>
-          <p className="text-caption text-muted">@alex</p>
-        </div>
-      </div>
-      <div className="px-5 py-5">
-        <p className="text-caption text-muted">Reading</p>
-        <h2 className="mt-0.5 text-heading font-semibold">On the shelf</h2>
-        <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-5">
-          {MOCK_ITEMS.map((item) => (
-            <figure key={item.title} className="min-w-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.src} alt="" className="aspect-square w-full rounded-lg border border-border bg-surface-hover object-cover" />
-              <figcaption className="mt-1.5 truncate text-caption text-muted">{item.title}</figcaption>
-            </figure>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function Landing() {
   return (
@@ -62,11 +29,13 @@ export function Landing() {
           </div>
         </div>
         <div className="fade-up fade-up-d3 mx-auto mt-16 max-w-3xl sm:mt-20">
-          <ProductMock />
+          <ProductDemo />
         </div>
       </section>
 
-      <section className="border-t border-border">
+      <CategoryMarquee />
+
+      <section className="border-t-0">
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 md:grid-cols-3 md:gap-10 lg:py-28">
           {STEPS.map(({ icon: Icon, title, body }) => (
             <div key={title}>

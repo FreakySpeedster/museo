@@ -4,7 +4,26 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Flip } from "gsap/Flip";
 import { useGSAP } from "@gsap/react";
 
-gsap.registerPlugin(ScrollTrigger, Flip, useGSAP);
+gsap.registerPlugin(useGSAP);
+
+const registered = { scrollTrigger: false, flip: false };
+
+/** Register ScrollTrigger on first use so marketing pages that only need a tween don't pay upfront. */
+export function ensureScrollTrigger() {
+  if (!registered.scrollTrigger) {
+    gsap.registerPlugin(ScrollTrigger);
+    registered.scrollTrigger = true;
+  }
+  return ScrollTrigger;
+}
+
+export function ensureFlip() {
+  if (!registered.flip) {
+    gsap.registerPlugin(Flip);
+    registered.flip = true;
+  }
+  return Flip;
+}
 
 export { gsap, ScrollTrigger, Flip, useGSAP };
 

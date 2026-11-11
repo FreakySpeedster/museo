@@ -5,7 +5,7 @@ import type { ItemDTO, ShelfDTO } from "@/lib/dto";
 import { Plus } from "lucide-react";
 import { categoryMeta } from "@/lib/categories";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
-import { Flip, ScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
+import { Flip, ensureFlip, ensureScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ItemCard } from "./ItemCard";
@@ -39,6 +39,7 @@ export function ShelfView({
   const orderKey = shelf.items.map((i) => i.id).join(",");
 
   const capture = useCallback(() => {
+    const Flip = ensureFlip();
     if (grid.current) flipState.current = Flip.getState(grid.current.querySelectorAll("[data-flip-id]"));
   }, []);
 
@@ -51,6 +52,7 @@ export function ShelfView({
   useGSAP(
     () => {
       if (reducedMotion() || !grid.current) return;
+      const ScrollTrigger = ensureScrollTrigger();
       const cards = gsap.utils.toArray<HTMLElement>("[data-reveal]", grid.current);
       gsap.from(root.current!.querySelectorAll("[data-shelf-head]"), { opacity: 0, duration: 0.3, ease: "power2.out" });
       gsap.set(cards, { opacity: 0, y: 10 });
@@ -69,6 +71,7 @@ export function ShelfView({
     () => {
       if (reducedMotion() || !grid.current) return;
       if (flipState.current) {
+        const Flip = ensureFlip();
         Flip.from(flipState.current, {
           targets: grid.current.querySelectorAll("[data-flip-id]"),
           duration: 0.5,

@@ -109,7 +109,7 @@ There are two shells. `--nav-offset` and `--chrome-top` are set on `[data-shell]
 
 **Signed-in app** (`data-shell="app"`): the existing sidebar and phone bars. Desktop (`md` and up): a 72px (`--nav-rail`) icon-only sidebar. Hover or focus-within expands it to 240px (`--nav-expanded`) as an overlay after a 100ms intent delay (200ms close delay), without shifting the page. A pin control persists `shelfie.nav-pinned` in `localStorage`; when pinned, `--nav-offset` becomes 240px and the main column eases over.
 
-Icons stay in a fixed 72px slot so they do not slide when the rail opens. Labels fade in. Primary items (Home, My shelves) sit above a utility group (Pricing). Search, Notifications and Create should be added to those groups when they exist — do not show placeholders.
+Rail icons are 20px (`--nav-icon`, class `nav-icon`) for nav items, the theme toggle and the pin control. Hover and active fills use `.nav-row`: a 12px inset (`--nav-inset`) from both rail edges, 48×48 (`--nav-icon-slot`) rounded square when collapsed, and a 48px-tall rounded pill when expanded. The same inset applies to the bottom account row. Icons stay in the icon slot so they do not slide when the rail opens. Labels fade in. Primary items (Home, My shelves) sit above a utility group (Pricing). Search, Notifications and Create should be added to those groups when they exist — do not show placeholders.
 
 Phones: 48px top bar and a 56px bottom tab bar, plus safe-area padding. Do not use the desktop rail below `md`. The bottom tab bar is hidden while a modal or sheet is open. `--chrome-top` is 48px on a phone and 0 on desktop.
 

@@ -31,10 +31,10 @@ export function ThemeToggle({ variant = "icon", className }: { variant?: "icon" 
         onClick={toggle}
         aria-label={label}
         title={label}
-        className={clsx("flex h-12 w-full items-center rounded-xl text-muted transition-colors hover:bg-surface-hover hover:text-foreground", className)}
+        className={clsx("nav-row text-muted hover:bg-surface-hover hover:text-foreground", className)}
       >
-        <span className="grid w-[4.5rem] shrink-0 place-items-center">
-          <Icon className="size-6" aria-hidden strokeWidth={1.8} />
+        <span className="nav-icon-slot">
+          <Icon className="nav-icon" aria-hidden strokeWidth={1.8} />
         </span>
         <span className="nav-label whitespace-nowrap pr-3 text-meta">{label}</span>
       </button>

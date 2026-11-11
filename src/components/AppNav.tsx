@@ -97,12 +97,12 @@ export function AppNav({ user }: { user: NavUser | null }) {
       aria-current={it.active ? "page" : undefined}
       title={it.label}
       className={clsx(
-        "flex h-12 items-center rounded-xl transition-colors",
+        "nav-row",
         it.primary ? "bg-accent text-accent-contrast hover:bg-accent-hover active:bg-accent-pressed" : it.active ? "bg-surface-hover font-semibold text-foreground" : "text-muted hover:bg-surface-hover hover:text-foreground",
       )}
     >
-      <span className="grid w-[4.5rem] shrink-0 place-items-center">
-        <it.icon className="size-6" aria-hidden strokeWidth={it.active ? 2.3 : 1.8} />
+      <span className="nav-icon-slot">
+        <it.icon className="nav-icon" aria-hidden strokeWidth={it.active ? 2.2 : 1.8} />
       </span>
       <span className="nav-label whitespace-nowrap pr-3 text-meta">{it.label}</span>
     </Link>
@@ -136,10 +136,10 @@ export function AppNav({ user }: { user: NavUser | null }) {
         }}
         className="app-nav-side fixed inset-y-0 left-0 z-nav hidden flex-col overflow-hidden border-r border-border bg-[color-mix(in_srgb,var(--background)_94%,var(--surface))] pb-3 pt-4 md:flex"
       >
-        <div className="mb-4 flex h-12 items-center" data-nav-item>
-          <Link href="/" aria-label="Shelfie home" className="flex min-w-0 items-center rounded-xl">
-            <span className="grid w-[4.5rem] shrink-0 place-items-center">
-              <LogoMark className="size-8" />
+        <div className="mb-3 flex h-12 items-center px-[var(--nav-inset)]" data-nav-item>
+          <Link href="/" aria-label="Shelfie home" className="flex min-w-0 items-center rounded-lg">
+            <span className="nav-icon-slot">
+              <LogoMark className="size-7" />
             </span>
             <span className="nav-label whitespace-nowrap pr-3 text-heading font-semibold tracking-tight">Shelfie</span>
           </Link>
@@ -159,10 +159,10 @@ export function AppNav({ user }: { user: NavUser | null }) {
             aria-pressed={pinned}
             aria-label={pinned ? "Collapse sidebar" : "Keep sidebar open"}
             title={pinned ? "Collapse sidebar" : "Keep sidebar open"}
-            className="flex h-12 w-full items-center rounded-xl text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+            className="nav-row text-muted hover:bg-surface-hover hover:text-foreground"
           >
-            <span className="grid w-[4.5rem] shrink-0 place-items-center">
-              {pinned ? <PinOff className="size-5" aria-hidden strokeWidth={1.8} /> : <Pin className="size-5" aria-hidden strokeWidth={1.8} />}
+            <span className="nav-icon-slot">
+              {pinned ? <PinOff className="nav-icon" aria-hidden strokeWidth={1.8} /> : <Pin className="nav-icon" aria-hidden strokeWidth={1.8} />}
             </span>
             <span className="nav-label whitespace-nowrap pr-3 text-meta">{pinned ? "Collapse" : "Keep open"}</span>
           </button>

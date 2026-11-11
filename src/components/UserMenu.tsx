@@ -69,11 +69,11 @@ export function UserMenu({
         aria-label="Account menu"
         className={clsx(
           variant === "sidebar"
-            ? "flex h-14 w-full items-center rounded-xl transition-colors hover:bg-surface-hover"
+            ? "nav-row nav-row-account hover:bg-surface-hover"
             : "grid size-11 place-items-center rounded-full",
         )}
       >
-        <span className={clsx(variant === "sidebar" && "grid w-[4.5rem] shrink-0 place-items-center")}>
+        <span className={clsx(variant === "sidebar" && "nav-icon-slot")}>
           <Avatar
             name={displayName}
             username={username}
