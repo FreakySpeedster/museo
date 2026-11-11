@@ -78,6 +78,7 @@ export function PhotoPicker({
   const fileInput = useRef<HTMLInputElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
+  const ownTile = useRef<HTMLDivElement>(null);
   const [broken, setBroken] = useState<Set<string>>(new Set());
 
   const take = useCallback(
@@ -104,6 +105,11 @@ export function PhotoPicker({
     return () => window.removeEventListener("paste", onPaste);
   }, [take]);
 
+  // Bring the freshly chosen own photo into view in the horizontal strip.
+  useEffect(() => {
+    if (ownUrl) ownTile.current?.scrollIntoView?.({ block: "nearest", inline: "start", behavior: "smooth" });
+  }, [ownUrl]);
+
   function onDrop(e: DragEvent) {
     e.preventDefault();
     setDrag(false);
@@ -127,7 +133,7 @@ export function PhotoPicker({
       <p className="mb-2 text-xs font-medium text-muted">{ownUrl ? "Using your own photo" : shown.length > 1 ? "Pick the photo to show" : "Photo"}</p>
       <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1">
         {ownUrl && (
-          <div className="relative size-16 shrink-0 snap-start overflow-hidden rounded-xl ring-2 ring-accent sm:size-[72px]" data-testid="own-photo-tile">
+          <div ref={ownTile} className="relative size-16 shrink-0 snap-start overflow-hidden rounded-xl ring-2 ring-accent sm:size-[72px]" data-testid="own-photo-tile">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={ownUrl} alt="Your photo" className="h-full w-full object-cover" />
             <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full bg-accent text-accent-ink"><Check className="size-3" aria-hidden /></span>
