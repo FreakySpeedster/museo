@@ -13,6 +13,9 @@ export const toItemDTO = (i: Item): ItemDTO => ({
   siteName: i.siteName,
   position: i.position,
   createdAt: i.createdAt.toISOString(),
+  likeCount: 0,
+  commentCount: 0,
+  likedByMe: false,
 });
 
 export const toShelfDTO = (s: Shelf & { items?: Item[] }): ShelfDTO => ({

@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
-import { Plus } from "lucide-react";
+import { MoreHorizontal, Plus } from "lucide-react";
 import { categoryMeta } from "@/lib/categories";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Flip, ensureFlip, ensureScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { Menu } from "@/components/ui/Menu";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ItemCard } from "./ItemCard";
 
@@ -121,11 +123,11 @@ export function ShelfView({
 
   return (
     <section ref={root} aria-label={shelf.name} data-shelf-id={shelf.id} className="space-y-3">
-      <div data-shelf-head className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="flex items-center gap-2 text-heading font-semibold tracking-tight">
-            <CategoryIcon category={shelf.category} className="size-5 shrink-0 text-accent" />
-            <span className="truncate">{shelf.name}</span>
+      <div data-shelf-head className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="flex items-start gap-2 text-heading font-semibold tracking-tight">
+            <CategoryIcon category={shelf.category} className="mt-0.5 size-5 shrink-0 text-accent" />
+            <span className="break-words">{shelf.name}</span>
           </h3>
           <p className="text-caption text-muted">
             {meta.label} · {shelf.items.length} {shelf.items.length === 1 ? "item" : "items"}
@@ -136,8 +138,18 @@ export function ShelfView({
             <Button size="sm" onClick={() => onAddItem(shelf)} aria-label={`Add item to ${shelf.name}`}>
               <Plus className="size-4" aria-hidden strokeWidth={2.4} /> Add item
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => onEditShelf(shelf)} aria-label={`Rename ${shelf.name}`}>Rename</Button>
-            <Button size="sm" variant="ghost" onClick={() => onDeleteShelf(shelf)} aria-label={`Delete ${shelf.name}`} className="hover:text-danger">Delete</Button>
+            <Menu
+              label={`Actions for ${shelf.name}`}
+              items={[
+                { label: "Rename", onSelect: () => onEditShelf(shelf) },
+                { label: "Delete", danger: true, onSelect: () => onDeleteShelf(shelf) },
+              ]}
+              trigger={({ props }) => (
+                <IconButton label={`More actions for ${shelf.name}`} size="sm" {...props}>
+                  <MoreHorizontal className="size-4" aria-hidden />
+                </IconButton>
+              )}
+            />
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Image as ImageIcon, Link2 } from "lucide-react";
+import { Heart, Image as ImageIcon, Link2, MessageCircle } from "lucide-react";
 import type { ItemDTO } from "@/lib/dto";
 import { ItemThumb } from "./ItemThumb";
 
@@ -22,6 +22,14 @@ export function ItemCard({ item, onOpen, dragging, grab }: { item: ItemDTO; onOp
         </div>
         <div className="space-y-0.5 p-3">
           <h4 className="line-clamp-2 text-meta font-semibold leading-snug">{item.title}</h4>
+          <p className="flex items-center gap-3 text-caption text-muted">
+            <span className="inline-flex items-center gap-1">
+              <Heart className="size-3.5" aria-hidden />{item.likeCount}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <MessageCircle className="size-3.5" aria-hidden />{item.commentCount}
+            </span>
+          </p>
           <p className="flex items-center gap-1 text-caption text-muted">
             {item.type === "LINK" ? (
               <>

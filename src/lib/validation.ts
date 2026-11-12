@@ -18,7 +18,7 @@ const optionalText = (max: number, label: string) =>
 
 export const RESERVED_USERNAMES = new Set([
   "admin", "api", "app", "login", "logout", "signup", "settings", "pricing", "billing",
-  "u", "about", "help", "support", "explore", "feed", "uploads", "shelfie", "nook", "static", "_next",
+  "u", "about", "help", "support", "explore", "feed", "search", "uploads", "shelfie", "nook", "static", "_next",
 ]);
 
 export const usernameSchema = z
@@ -88,6 +88,18 @@ export const previewQuerySchema = z.object({
 export const feedQuerySchema = z.object({
   scope: z.enum(["global", "following"]).default("global"),
   cursor: z.string().max(60).optional(),
+});
+
+export const commentSchema = z.object({
+  body: trimmed(1, 500, "Comment"),
+});
+
+export const searchQuerySchema = z.object({
+  q: z.string().trim().max(80),
+  type: z.enum(["all", "people", "items", "shelves"]).default("all"),
+  sort: z.enum(["relevance", "new", "top"]).default("relevance"),
+  limit: z.coerce.number().int().min(1).max(20).default(5),
+  cursor: z.string().max(80).optional(),
 });
 
 export function firstIssue(err: z.ZodError): string {

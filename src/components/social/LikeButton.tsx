@@ -1,0 +1,76 @@
+"use client";
+
+import clsx from "clsx";
+import { Heart } from "lucide-react";
+import { useState } from "react";
+import { ApiError, api } from "@/lib/client";
+import { useToast } from "@/components/ui/Toast";
+
+export function LikeButton({
+  itemId,
+  likeCount,
+  likedByMe,
+  onChange,
+  signedIn,
+  className,
+}: {
+  itemId: string;
+  likeCount: number;
+  likedByMe: boolean;
+  signedIn: boolean;
+  onChange?: (next: { likeCount: number; likedByMe: boolean }) => void;
+  className?: string;
+}) {
+  const toast = useToast();
+  const [count, setCount] = useState(likeCount);
+  const [liked, setLiked] = useState(likedByMe);
+  const [pending, setPending] = useState(false);
+  if (count !== likeCount && !pending) setCount(likeCount);
+  if (liked !== likedByMe && !pending) setLiked(likedByMe);
+
+  async function toggle(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!signedIn) {
+      toast.info("Sign in to like this.");
+      return;
+    }
+    if (pending) return;
+    const prev = { count, liked };
+    const next = { likeCount: liked ? count - 1 : count + 1, likedByMe: !liked };
+    setPending(true);
+    setCount(next.likeCount);
+    setLiked(next.likedByMe);
+    onChange?.(next);
+    try {
+      const res = await api<{ likeCount: number; likedByMe: boolean }>(`/api/items/${itemId}/like`, { method: "POST" });
+      setCount(res.likeCount);
+      setLiked(res.likedByMe);
+      onChange?.(res);
+    } catch (err) {
+      setCount(prev.count);
+      setLiked(prev.liked);
+      onChange?.({ likeCount: prev.count, likedByMe: prev.liked });
+      toast.error(err instanceof ApiError ? err.message : "Couldn't like that");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-pressed={liked}
+      aria-label={liked ? "Unlike" : "Like"}
+      className={clsx(
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-caption transition-colors duration-[var(--duration-fast)] hover:bg-surface-hover",
+        liked ? "text-danger" : "text-muted hover:text-foreground",
+        className,
+      )}
+    >
+      <Heart className="size-4" aria-hidden fill={liked ? "currentColor" : "none"} strokeWidth={1.8} />
+      <span>{count}</span>
+    </button>
+  );
+}

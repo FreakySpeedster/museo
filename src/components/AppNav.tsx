@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Gem, House, LayoutGrid, LogIn, Pin, PinOff, UserPlus, type LucideIcon } from "lucide-react";
+import { Gem, House, LayoutGrid, LogIn, Pin, PinOff, Search, UserPlus, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -10,6 +10,8 @@ import { gsap, reducedMotion } from "@/lib/gsap";
 import { LogoMark } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
+import { useSearch } from "./search/SearchProvider";
+import { IconButton } from "./ui/IconButton";
 
 export interface NavUser {
   username: string;
@@ -54,6 +56,7 @@ function writePinned(next: boolean) {
  */
 export function AppNav({ user }: { user: NavUser | null }) {
   const path = usePathname() ?? "/";
+  const search = useSearch();
   const side = useRef<HTMLElement>(null);
   const enterTimer = useRef<number>(0);
   const leaveTimer = useRef<number>(0);
@@ -145,7 +148,20 @@ export function AppNav({ user }: { user: NavUser | null }) {
           </Link>
         </div>
         <nav className="flex flex-col gap-1" aria-label="Primary">
-          {primary.map(row)}
+          {primary.slice(0, 1).map(row)}
+          <button
+            type="button"
+            data-nav-item
+            title="Search"
+            onClick={search.open}
+            className="nav-row text-muted hover:bg-surface-hover hover:text-foreground"
+          >
+            <span className="nav-icon-slot">
+              <Search className="nav-icon" aria-hidden strokeWidth={path.startsWith("/search") ? 2.2 : 1.8} />
+            </span>
+            <span className="nav-label whitespace-nowrap pr-3 text-meta">Search</span>
+          </button>
+          {primary.slice(1).map(row)}
         </nav>
         <nav className="mt-3 flex flex-col gap-1 border-t border-border pt-3" aria-label="More">
           {utility.map(row)}
@@ -186,14 +202,45 @@ export function AppNav({ user }: { user: NavUser | null }) {
           <LogoMark className="size-7" />
           <span className="text-heading">nook</span>
         </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-0.5">
+          <IconButton label="Search" size="sm" onClick={search.open}>
+            <Search className="size-5" aria-hidden />
+          </IconButton>
+          <ThemeToggle />
+        </div>
       </header>
 
       <nav
         aria-label="Primary"
         className="app-phone-nav fixed inset-x-0 bottom-0 z-nav flex items-center border-t border-border bg-[color-mix(in_srgb,var(--background)_92%,var(--surface))] pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
-        {tabs.map((it) => (
+        {tabs.slice(0, 1).map((it) => (
+          <Link
+            key={`tab-${it.href}`}
+            href={it.href}
+            aria-current={it.active ? "page" : undefined}
+            className={clsx(
+              "flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-micro font-medium",
+              it.active ? "text-foreground" : "text-muted",
+              it.primary && !it.active && "text-accent",
+            )}
+          >
+            <it.icon className="size-6" aria-hidden strokeWidth={it.active ? 2.3 : 1.8} />
+            <span>{it.label}</span>
+          </Link>
+        ))}
+        <button
+          type="button"
+          onClick={search.open}
+          className={clsx(
+            "flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-micro font-medium",
+            path.startsWith("/search") ? "text-foreground" : "text-muted",
+          )}
+        >
+          <Search className="size-6" aria-hidden strokeWidth={path.startsWith("/search") ? 2.3 : 1.8} />
+          <span>Search</span>
+        </button>
+        {tabs.slice(1).map((it) => (
           <Link
             key={`tab-${it.href}`}
             href={it.href}

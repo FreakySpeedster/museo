@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, LayoutGrid, Link2, Pencil, Plus } from "lucide-react";
+import { Check, LayoutGrid, Link2, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, TimelineEntry, ViewerDTO } from "@/lib/dto";
@@ -10,6 +10,8 @@ import { MAX_SHELVES_PER_PAGE, pageCreationGate } from "@/lib/limits";
 import { gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { Menu } from "@/components/ui/Menu";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { AddItemDialog } from "./AddItemDialog";
@@ -32,6 +34,7 @@ interface Props {
   stripeEnabled: boolean;
   priceLabel: string;
   initialPageId?: string;
+  initialItemId?: string;
 }
 
 function subscribeSm(cb: () => void) {
@@ -40,14 +43,20 @@ function subscribeSm(cb: () => void) {
   return () => mq.removeEventListener("change", cb);
 }
 
-export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initialPageId }: Props) {
+export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initialPageId, initialItemId }: Props) {
   const router = useRouter();
   const toast = useToast();
   const { isOwner } = profile;
 
   const [user, setUser] = useState(profile.user);
   const [pages, setPages] = useState(profile.pages);
-  const [activeId, setActiveId] = useState(() => (profile.pages.some((p) => p.id === initialPageId) ? initialPageId! : profile.pages[0]?.id));
+  const [activeId, setActiveId] = useState(() => {
+    if (initialItemId) {
+      const owner = profile.pages.find((p) => p.shelves.some((s) => s.items.some((i) => i.id === initialItemId)));
+      if (owner) return owner.id;
+    }
+    return profile.pages.some((p) => p.id === initialPageId) ? initialPageId! : profile.pages[0]?.id;
+  });
   const [stats, setStats] = useState(profile.stats);
   const [following, setFollowing] = useState(profile.isFollowing);
   const [subscribed, setSubscribed] = useState(viewer?.subscribed ?? false);
@@ -57,7 +66,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   const [pageDialog, setPageDialog] = useState<{ page: PageDTO | null } | null>(null);
   const [shelfDialog, setShelfDialog] = useState<{ shelf: ShelfDTO | null } | null>(null);
   const [addTo, setAddTo] = useState<ShelfDTO | null>(null);
-  const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const [openItemId, setOpenItemId] = useState<string | null>(initialItemId ?? null);
   const [paywall, setPaywall] = useState(false);
   const [profileDialog, setProfileDialog] = useState(false);
   const [confirm, setConfirm] = useState<null | { kind: "shelf" | "page"; id: string; name: string }>(null);
@@ -332,10 +341,18 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
               {isOwner && (
                 <div className="flex items-center gap-2">
                   <span className="text-caption text-muted" data-testid="shelf-count">{shelfCount}/{MAX_SHELVES_PER_PAGE} shelves</span>
-                  <Button size="sm" variant="secondary" onClick={() => setPageDialog({ page })}>Edit page</Button>
-                  {pages.length > 1 && (
-                    <Button size="sm" variant="ghost" className="hover:text-danger" onClick={() => setConfirm({ kind: "page", id: page.id, name: page.title })}>Delete page</Button>
-                  )}
+                  <Menu
+                    label="Page actions"
+                    items={[
+                      { label: "Edit page", onSelect: () => setPageDialog({ page }) },
+                      { label: "Delete page", danger: true, hidden: pages.length <= 1, onSelect: () => setConfirm({ kind: "page", id: page.id, name: page.title }) },
+                    ]}
+                    trigger={({ props }) => (
+                      <IconButton label="Page actions" size="sm" {...props}>
+                        <MoreHorizontal className="size-4" aria-hidden />
+                      </IconButton>
+                    )}
+                  />
                 </div>
               )}
             </div>
@@ -433,6 +450,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
         item={openItem}
         shelf={openShelf}
         isOwner={isOwner}
+        viewerId={viewer?.id}
         onClose={() => setOpenItemId(null)}
         onUpdated={onItemUpdated}
         onDeleted={onItemDeleted}

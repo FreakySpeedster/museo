@@ -10,5 +10,5 @@ export const GET = route(async ({ req, user }) => {
     if (!user) throw new AppError("UNAUTHORIZED", "Please sign in to see your following feed");
     return ok(await followingFeed(user.id, q.cursor));
   }
-  return ok(await globalFeed(q.cursor));
+  return ok(await globalFeed(q.cursor, user?.id));
 });

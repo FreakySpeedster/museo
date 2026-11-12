@@ -3,6 +3,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ProductDemo } from "./ProductDemo";
 import { CategoryMarquee } from "./CategoryMarquee";
+import { PageShowcase } from "./PageShowcase";
 
 const STEPS = [
   { icon: Link2, title: "Create a page", body: "Start with one page. Add more when your collections grow." },
@@ -35,6 +36,8 @@ export function Landing() {
 
       <CategoryMarquee />
 
+      <PageShowcase />
+
       <section className="border-t-0">
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 md:grid-cols-3 md:gap-10 lg:py-28">
           {STEPS.map(({ icon: Icon, title, body }) => (
@@ -54,7 +57,7 @@ export function Landing() {
           <h2 className="text-title font-semibold tracking-tight">One page is free. Add more with Plus.</h2>
           <p className="mx-auto mt-3 max-w-lg text-lede text-muted">Unlimited shelves, links, and photos on every plan. Upgrade only when you need another page.</p>
           <div className="mt-8">
-            <LinkButton href="/pricing" variant="secondary" size="lg">
+            <LinkButton href="/pricing" variant="secondary" size="lg" className="btn-shimmer">
               Compare plans
             </LinkButton>
           </div>

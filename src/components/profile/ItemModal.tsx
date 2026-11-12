@@ -8,6 +8,8 @@ import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Clock, ImagePlus, RefreshCw } from "lucide-react";
+import { LikeButton } from "@/components/social/LikeButton";
+import { CommentThread } from "@/components/social/CommentThread";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PhotoPicker, type PhotoCandidate } from "./PhotoPicker";
 import { categoryMeta } from "@/lib/categories";
@@ -21,6 +23,7 @@ export function ItemModal({
   item,
   shelf,
   isOwner,
+  viewerId,
   onClose,
   onUpdated,
   onDeleted,
@@ -29,10 +32,11 @@ export function ItemModal({
   item: ItemDTO | null;
   shelf: ShelfDTO | null;
   isOwner: boolean;
+  viewerId?: string | null;
   onClose: () => void;
   onUpdated: (item: ItemDTO) => void;
   onDeleted: (item: ItemDTO) => void;
-  onMove: (item: ItemDTO, dir: -1 | 1) => void;
+  onMove?: (item: ItemDTO, dir: -1 | 1) => void;
 }) {
   // Keep the last item around so content stays rendered while the close animation plays.
   const [shown, setShown] = useState<ItemDTO | null>(item);
@@ -40,7 +44,7 @@ export function ItemModal({
   const it = item ?? shown;
   return (
     <Modal open={Boolean(item)} onClose={onClose} title={it?.title ?? "Item"} size="xl">
-      {it && <ItemBody key={it.id} it={it} shelf={shelf} isOwner={isOwner} onUpdated={onUpdated} onDeleted={onDeleted} onMove={onMove} />}
+      {it && <ItemBody key={it.id} it={it} shelf={shelf} isOwner={isOwner} viewerId={viewerId} onUpdated={onUpdated} onDeleted={onDeleted} onMove={onMove} />}
     </Modal>
   );
 }
@@ -49,6 +53,7 @@ function ItemBody({
   it,
   shelf,
   isOwner,
+  viewerId,
   onUpdated,
   onDeleted,
   onMove,
@@ -56,9 +61,10 @@ function ItemBody({
   it: ItemDTO;
   shelf: ShelfDTO | null;
   isOwner: boolean;
+  viewerId?: string | null;
   onUpdated: (item: ItemDTO) => void;
   onDeleted: (item: ItemDTO) => void;
-  onMove: (item: ItemDTO, dir: -1 | 1) => void;
+  onMove?: (item: ItemDTO, dir: -1 | 1) => void;
 }) {
   const toast = useToast();
   const [editing, setEditing] = useState(false);
@@ -112,7 +118,7 @@ function ItemBody({
             {editing ? (
               <div className="mt-3 space-y-3">
                 <Field label="Title" htmlFor="edit-title"><Input id="edit-title" data-autofocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} /></Field>
-                <Field label="Description" htmlFor="edit-desc"><Textarea id="edit-desc" rows={5} value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} /></Field>
+                <Field label="Thoughts" htmlFor="edit-desc"><Textarea id="edit-desc" rows={5} value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} /></Field>
                 {error && <FormError>{error}</FormError>}
                 <div className="flex gap-2">
                   <Button onClick={save} loading={busy} size="sm">Save</Button>
@@ -130,7 +136,7 @@ function ItemBody({
                 {it.description ? (
                   <p className="mt-4 whitespace-pre-line text-body leading-relaxed text-foreground/90">{it.description}</p>
                 ) : (
-                  <p className="mt-4 text-meta italic text-muted">No description.</p>
+                  <p className="mt-4 text-meta italic text-muted">No thoughts yet.</p>
                 )}
                 {it.url && (
                   <a
@@ -143,13 +149,28 @@ function ItemBody({
                     <ArrowUpRight className="size-4 shrink-0" aria-hidden />
                   </a>
                 )}
+                <div className="mt-5 flex items-center gap-1">
+                  <LikeButton
+                    itemId={it.id}
+                    likeCount={it.likeCount}
+                    likedByMe={it.likedByMe}
+                    signedIn={Boolean(viewerId)}
+                    onChange={(s) => onUpdated({ ...it, ...s })}
+                  />
+                </div>
+                <CommentThread
+                  itemId={it.id}
+                  commentCount={it.commentCount}
+                  viewerId={viewerId}
+                  onCountChange={(n) => onUpdated({ ...it, commentCount: n })}
+                />
                 {isOwner && (
                   <div className="mt-auto space-y-3 pt-6">
                     <div className="flex flex-wrap items-center gap-2">
                       <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>Edit</Button>
                       <Button variant="secondary" size="sm" data-testid="change-photo" aria-expanded={photoOpen} onClick={() => setPhotoOpen((v) => !v)}><ImagePlus className="size-4" aria-hidden /> Photo</Button>
-                      <Button variant="secondary" size="sm" disabled={idx <= 0} onClick={() => onMove(it, -1)} aria-label="Move earlier on shelf"><ArrowLeft className="size-4" aria-hidden /> Earlier</Button>
-                      <Button variant="secondary" size="sm" disabled={!shelf || idx >= shelf.items.length - 1} onClick={() => onMove(it, 1)} aria-label="Move later on shelf">Later <ArrowRight className="size-4" aria-hidden /></Button>
+                      <Button variant="secondary" size="sm" disabled={!onMove || idx <= 0} onClick={() => onMove?.(it, -1)} aria-label="Move earlier on shelf"><ArrowLeft className="size-4" aria-hidden /> Earlier</Button>
+                      <Button variant="secondary" size="sm" disabled={!onMove || !shelf || idx >= shelf.items.length - 1} onClick={() => onMove?.(it, 1)} aria-label="Move later on shelf">Later <ArrowRight className="size-4" aria-hidden /></Button>
                       {!confirming && <Button variant="ghost" size="sm" className="ml-auto hover:text-danger" onClick={() => setConfirming(true)}>Delete</Button>}
                     </div>
                     {photoOpen && <ItemPhotoEditor it={it} onUpdated={(u) => { onUpdated(u); setPhotoOpen(false); }} onCancel={() => setPhotoOpen(false)} />}

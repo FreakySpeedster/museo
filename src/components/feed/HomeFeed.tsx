@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
-import type { TimelineEntry } from "@/lib/dto";
+import { useEffect, useRef, useState } from "react";
+import type { ItemDTO, ShelfDTO, TimelineEntry } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
-import { ArrowUpRight, Sprout } from "lucide-react";
+import { ArrowUpRight, MessageCircle, Sprout } from "lucide-react";
 import { ensureScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { timeAgo } from "@/lib/time";
 import { Avatar } from "@/components/ui/Avatar";
@@ -15,16 +15,31 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
 import { ItemThumb } from "@/components/profile/ItemThumb";
+import { ItemModal } from "@/components/profile/ItemModal";
+import { LikeButton } from "@/components/social/LikeButton";
 
 type Scope = "following" | "global";
 interface Feed { items: TimelineEntry[]; nextCursor: string | null }
 
-export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: Scope; initial: Feed; hasFollows: boolean }) {
+export function HomeFeed({
+  initialScope,
+  initial,
+  hasFollows,
+  viewerId,
+}: {
+  initialScope: Scope;
+  initial: Feed;
+  hasFollows: boolean;
+  viewerId: string;
+}) {
   const [scope, setScope] = useState<Scope>(initialScope);
   const [feed, setFeed] = useState<Feed>(initial);
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState<TimelineEntry | null>(null);
   const root = useRef<HTMLDivElement>(null);
+  const sentinel = useRef<HTMLDivElement>(null);
   const toast = useToast();
+  const loadingRef = useRef(false);
 
   useGSAP(
     () => {
@@ -32,17 +47,19 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
       const ScrollTrigger = ensureScrollTrigger();
       const cards = gsap.utils.toArray<HTMLElement>("[data-feed-card]:not([data-seen])", root.current);
       cards.forEach((c) => c.setAttribute("data-seen", "1"));
-      gsap.set(cards, { opacity: 0, y: 40 });
+      gsap.set(cards, { opacity: 0, y: 10 });
       ScrollTrigger.batch(cards, {
         start: "top 95%",
         once: true,
-        onEnter: (b) => gsap.to(b, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", stagger: 0.07 }),
+        onEnter: (b) => gsap.to(b, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", stagger: 0.05 }),
       });
     },
     { scope: root, dependencies: [feed.items.length, scope] },
   );
 
   async function load(next: Scope, cursor?: string) {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
     try {
       const res = await api<Feed>(`/api/feed?scope=${next}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`);
@@ -50,9 +67,23 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Couldn't load the feed");
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && feed.nextCursor && !loadingRef.current) {
+        void load(scope, feed.nextCursor);
+      }
+    }, { rootMargin: "400px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feed.nextCursor, scope]);
 
   function switchScope(s: Scope) {
     if (s === scope) return;
@@ -60,6 +91,15 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
     setFeed({ items: [], nextCursor: null });
     void load(s);
   }
+
+  function patch(item: ItemDTO) {
+    setFeed((f) => ({ ...f, items: f.items.map((e) => (e.id === item.id ? { ...e, ...item } : e)) }));
+    setOpen((o) => (o && o.id === item.id ? { ...o, ...item } : o));
+  }
+
+  const openShelf: ShelfDTO | null = open
+    ? { id: open.shelf.id, pageId: open.page.id, name: open.shelf.name, category: open.shelf.category, position: 0, items: [open] }
+    : null;
 
   return (
     <div ref={root}>
@@ -75,8 +115,8 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
       />
 
       {loading && feed.items.length === 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-72" />)}
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-96" />)}
         </div>
       ) : feed.items.length === 0 ? (
         <EmptyState
@@ -86,38 +126,77 @@ export function HomeFeed({ initialScope, initial, hasFollows }: { initialScope: 
           action={<Button variant="secondary" onClick={() => switchScope("global")}>Browse everyone</Button>}
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="feed">
-          {feed.items.map((e) => {
-            return (
-              <article key={e.id} data-feed-card className="relative">
-                <div className="relative overflow-hidden rounded-3xl border border-border bg-surface shadow-md">
-                  <Link href={`/u/${e.user.username}?page=${e.page.id}`} className="block" aria-label={`${e.title} by ${e.user.displayName}`}>
-                    <div className="aspect-[16/10] overflow-hidden"><ItemThumb item={e} /></div>
-                  </Link>
-                  <div className="space-y-2 p-4">
-                    <div className="flex items-center gap-2 text-caption text-muted">
-                      <Avatar name={e.user.displayName} username={e.user.username} avatarUrl={e.user.avatarUrl} size="xs" />
-                      <Link href={`/u/${e.user.username}`} className="font-medium text-foreground hover:underline">{e.user.displayName}</Link>
-                      <span>·</span><span>{timeAgo(e.createdAt)}</span>
-                    </div>
-                    <h3 className="line-clamp-2 text-heading font-semibold leading-snug">{e.title}</h3>
-                    {e.description && <p className="line-clamp-2 text-meta text-muted">{e.description}</p>}
-                    <div className="flex items-center justify-between pt-1 text-caption text-muted">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-hover px-2.5 py-1"><CategoryIcon category={e.shelf.category} className="size-4" />{e.shelf.name}</span>
-                      {e.url && <a href={e.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="font-medium text-accent hover:underline"><span className="inline-flex items-center gap-1">{e.siteName ?? "Visit"}<ArrowUpRight className="size-4" aria-hidden /></span></a>}
-                    </div>
-                  </div>
+        <div className="space-y-5" data-testid="feed">
+          {feed.items.map((e) => (
+            <article key={e.id} data-feed-card className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
+              <header className="flex items-center gap-3 px-4 pb-3 pt-4">
+                <Link href={`/u/${e.user.username}`} className="shrink-0">
+                  <Avatar name={e.user.displayName} username={e.user.username} avatarUrl={e.user.avatarUrl} size="sm" />
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-meta">
+                    <Link href={`/u/${e.user.username}`} className="font-semibold hover:underline">{e.user.displayName}</Link>
+                    <span className="text-muted"> · {timeAgo(e.createdAt)}</span>
+                  </p>
+                  <p className="flex items-center gap-1 truncate text-caption text-muted">
+                    <CategoryIcon category={e.shelf.category} className="size-3.5 shrink-0" />
+                    <Link href={`/u/${e.user.username}?page=${e.page.id}`} className="hover:underline">{e.shelf.name}</Link>
+                    {e.page.title && <span className="truncate"> · {e.page.title}</span>}
+                  </p>
                 </div>
-              </article>
-            );
-          })}
+              </header>
+              <button type="button" className="block w-full text-left" onClick={() => setOpen(e)} aria-label={`Open ${e.title}`}>
+                <div className="aspect-[16/10] overflow-hidden bg-surface-hover">
+                  <ItemThumb item={e} />
+                </div>
+                <div className="space-y-2 px-4 pt-3">
+                  <h3 className="text-heading font-semibold leading-snug">{e.title}</h3>
+                  {e.description && <p className="whitespace-pre-line text-body text-foreground/90">{e.description}</p>}
+                </div>
+              </button>
+              <div className="flex items-center justify-between gap-2 px-3 py-3">
+                <div className="flex items-center gap-1">
+                  <LikeButton
+                    itemId={e.id}
+                    likeCount={e.likeCount}
+                    likedByMe={e.likedByMe}
+                    signedIn
+                    onChange={(s) => patch({ ...e, ...s })}
+                  />
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-caption text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                    onClick={() => setOpen(e)}
+                    aria-label={`Comments, ${e.commentCount}`}
+                  >
+                    <MessageCircle className="size-4" aria-hidden strokeWidth={1.8} />
+                    <span>{e.commentCount}</span>
+                  </button>
+                </div>
+                {e.url && (
+                  <a href={e.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="inline-flex items-center gap-1 px-2 text-caption font-medium text-muted hover:text-foreground">
+                    {e.siteName ?? "Visit"} <ArrowUpRight className="size-4" aria-hidden />
+                  </a>
+                )}
+              </div>
+            </article>
+          ))}
         </div>
       )}
-      {feed.nextCursor && (
-        <div className="mt-8 flex justify-center">
-          <Button variant="secondary" loading={loading} onClick={() => load(scope, feed.nextCursor!)}>Load more</Button>
-        </div>
-      )}
+      <div ref={sentinel} className="h-8" aria-hidden />
+      {loading && feed.items.length > 0 && <p className="py-4 text-center text-caption text-muted">Loading more…</p>}
+      <ItemModal
+        item={open}
+        shelf={openShelf}
+        isOwner={open?.user.id === viewerId}
+        viewerId={viewerId}
+        onClose={() => setOpen(null)}
+        onUpdated={patch}
+        onDeleted={(it) => {
+          setFeed((f) => ({ ...f, items: f.items.filter((e) => e.id !== it.id) }));
+          setOpen(null);
+        }}
+      />
     </div>
   );
 }

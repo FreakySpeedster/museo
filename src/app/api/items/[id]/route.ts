@@ -1,12 +1,12 @@
 import { route, readJson, ok } from "@/lib/api";
 import { deleteItem, updateItem } from "@/lib/services/items";
 import { itemUpdateSchema } from "@/lib/validation";
-import { toItemDTO } from "@/lib/mappers";
+import { toItemDTOWithSocial } from "@/lib/services/social";
 
 export const PATCH = route<{ id: string }>(
   async ({ req, user, params }) => {
     const input = itemUpdateSchema.parse(await readJson(req));
-    return ok({ item: toItemDTO(await updateItem(user.id, params.id, input)) });
+    return ok({ item: await toItemDTOWithSocial(await updateItem(user.id, params.id, input), user.id) });
   },
   { auth: true },
 );

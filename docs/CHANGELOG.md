@@ -4,6 +4,7 @@ All notable work on nook, summarized from `git log`. Dates are Asia/Calcutta (UT
 
 ## Unreleased
 
+- Shelf names wrap in full on mobile; Rename/Delete (and page Edit/Delete) move into a three-dot menu. Add-item label is “Thoughts”. Likes and comments on items (followers only for comments). Sequential home feed. Global Spotlight search plus /search. Compare-plans shimmer. Landing page showcase with scroll-driven horizontal cards.
 - Official nook mark (exact SVG paths, viewBox 0 0 294 287): house `currentColor`, brown dot `#855E42`; lowercase wordmark “nook”. Favicon, apple icon, and OG mark regenerated from `public/logo.svg`.
 - Sticky profile chrome: shelves/timeline tabs and the page switcher pin just below the app navbar. Once the profile header leaves the viewport, a compact identity (avatar, display name, @handle) slides in on the same row with no height change. Opaque frosted background, horizontal tab scroll on small screens, IntersectionObserver-driven reveal.
 

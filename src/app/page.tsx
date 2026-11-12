@@ -11,10 +11,10 @@ export default async function Home() {
 
   const followCount = await db.follow.count({ where: { followerId: user.id } });
   const scope = followCount > 0 ? "following" : "global";
-  const initial = scope === "following" ? await followingFeed(user.id) : await globalFeed();
+  const initial = scope === "following" ? await followingFeed(user.id) : await globalFeed(undefined, user.id);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-20 pt-10 sm:px-6">
+    <div className="mx-auto max-w-2xl px-4 pb-20 pt-10 sm:px-6">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-meta text-muted">Welcome back</p>
@@ -25,7 +25,7 @@ export default async function Home() {
           <LinkButton href={`/u/${user.username}`}>My shelves</LinkButton>
         </div>
       </div>
-      <HomeFeed initialScope={scope} initial={initial} hasFollows={followCount > 0} />
+      <HomeFeed initialScope={scope} initial={initial} hasFollows={followCount > 0} viewerId={user.id} />
     </div>
   );
 }

@@ -10,6 +10,9 @@ export interface ItemDTO {
   siteName: string | null;
   position: number;
   createdAt: string;
+  likeCount: number;
+  commentCount: number;
+  likedByMe: boolean;
 }
 
 export interface ShelfDTO {
@@ -47,4 +50,26 @@ export interface ViewerDTO extends PublicUser {
   email: string;
   subscribed: boolean;
   subscriptionStatus: string;
+}
+
+export interface CommentDTO {
+  id: string;
+  body: string;
+  createdAt: string;
+  user: PublicUser;
+}
+
+export type SearchKind = "person" | "item" | "shelf";
+export type SearchSort = "relevance" | "new" | "top";
+export type SearchType = "all" | "people" | "items" | "shelves";
+
+export interface SearchHit {
+  kind: SearchKind;
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  imageUrl: string | null;
+  createdAt: string;
+  score: number;
 }

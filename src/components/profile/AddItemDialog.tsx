@@ -260,7 +260,7 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
           <Field label="Title" htmlFor="item-title" hint={mode === "LINK" ? "leave blank to use the page title" : undefined}>
             <Input id="item-title" name="title" maxLength={120} value={title} onChange={(e) => { titleTouched.current = true; setTitle(e.target.value); }} placeholder={mode === "LINK" ? preview?.title || "Auto-filled from the page" : "Name this item"} />
           </Field>
-          <Field label="Description" htmlFor="item-desc" hint="optional">
+          <Field label="Thoughts" htmlFor="item-desc" hint="optional">
             <Textarea id="item-desc" name="description" rows={3} maxLength={500} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={mode === "LINK" ? preview?.description || "Why do you love it?" : "Why do you love it?"} />
           </Field>
         </div>
