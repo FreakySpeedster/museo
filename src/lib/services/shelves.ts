@@ -26,7 +26,7 @@ export async function createShelf(userId: string, pageId: string, input: z.infer
       throw new AppError("SHELF_LIMIT", `A page can hold at most ${MAX_SHELVES_PER_PAGE} shelves`);
     }
     return tx.shelf.create({
-      data: { pageId, name: input.name, category: input.category, position: count },
+      data: { pageId, name: input.name, category: input.category, position: count, visibility: input.visibility ?? "public" },
       include: { items: true },
     });
   });

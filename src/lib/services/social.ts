@@ -1,5 +1,6 @@
 import { db } from "../db";
 import { AppError } from "../errors";
+import { canViewItem } from "../visibility";
 import { toItemDTO, toPublicUser } from "../mappers";
 import type { CommentDTO, ItemDTO } from "../dto";
 import type { Item } from "@prisma/client";
@@ -32,9 +33,18 @@ export async function canCommentOnItem(viewerId: string, ownerId: string): Promi
   return Boolean(follow);
 }
 
+
+async function loadVisibleItem(itemId: string, viewerId?: string | null) {
+  const item = await db.item.findUnique({
+    where: { id: itemId },
+    include: { user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true, socialLinks: true } }, shelf: { include: { page: true } } },
+  });
+  if (!item || !canViewItem(item, viewerId)) throw new AppError("NOT_FOUND", "That item is gone.");
+  return item;
+}
+
 export async function toggleLike(userId: string, itemId: string) {
-  const item = await db.item.findUnique({ where: { id: itemId }, select: { id: true } });
-  if (!item) throw new AppError("NOT_FOUND", "That item is gone.");
+  await loadVisibleItem(itemId, userId);
   const existing = await db.itemLike.findUnique({ where: { userId_itemId: { userId, itemId } } });
   if (existing) {
     await db.itemLike.delete({ where: { userId_itemId: { userId, itemId } } });
@@ -46,11 +56,7 @@ export async function toggleLike(userId: string, itemId: string) {
 }
 
 export async function listComments(itemId: string, viewerId?: string | null) {
-  const item = await db.item.findUnique({
-    where: { id: itemId },
-    select: { id: true, userId: true, user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true } } },
-  });
-  if (!item) throw new AppError("NOT_FOUND", "That item is gone.");
+  const item = await loadVisibleItem(itemId, viewerId);
   const comments = await db.itemComment.findMany({
     where: { itemId },
     include: { user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true } } },
@@ -70,11 +76,7 @@ export async function listComments(itemId: string, viewerId?: string | null) {
 }
 
 export async function addComment(userId: string, itemId: string, body: string): Promise<CommentDTO> {
-  const item = await db.item.findUnique({
-    where: { id: itemId },
-    select: { id: true, userId: true, user: { select: { displayName: true } } },
-  });
-  if (!item) throw new AppError("NOT_FOUND", "That item is gone.");
+  const item = await loadVisibleItem(itemId, userId);
   if (!(await canCommentOnItem(userId, item.userId))) {
     throw new AppError("FORBIDDEN", `Follow ${item.user.displayName} to leave a comment.`);
   }

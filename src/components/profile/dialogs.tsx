@@ -11,6 +11,9 @@ import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { MAX_SHELVES_PER_PAGE } from "@/lib/limits";
+import { Toggle } from "@/components/ui/Toggle";
+import { SOCIAL_NETWORKS } from "@/lib/social-links";
+import { BrandIcon } from "@/components/ui/BrandIcon";
 
 function useSubmit() {
   const [busy, setBusy] = useState(false);
@@ -54,11 +57,12 @@ export function PageDialog({
 
 function PageForm({ page, onClose, onSaved, onPaywall }: { page: PageDTO | null; onClose: () => void; onSaved: (page: PageDTO, created: boolean) => void; onPaywall: () => void }) {
   const { busy, error, run } = useSubmit();
+  const [isPrivate, setPrivate] = useState(page?.visibility === "private");
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const body = { title: f.get("title"), description: f.get("description") || "" };
+    const body = { title: f.get("title"), description: f.get("description") || "", visibility: isPrivate ? "private" : "public" };
     run(async () => {
       try {
         const res = page
@@ -84,6 +88,8 @@ function PageForm({ page, onClose, onSaved, onPaywall }: { page: PageDTO | null;
       <Field label="Description" htmlFor="page-desc" hint="optional">
         <Textarea id="page-desc" name="description" maxLength={240} rows={3} defaultValue={page?.description} placeholder="What’s this page about?" />
       </Field>
+      <Toggle checked={isPrivate} onChange={setPrivate} label={isPrivate ? "Private page" : "Public page"} />
+      <p className="text-caption text-muted">Private pages and everything on them are hidden from everyone else.</p>
       <ErrorLine msg={error} />
       <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
@@ -122,13 +128,15 @@ export function ShelfDialog({
 function ShelfForm({ pageId, shelf, onClose, onSaved }: { pageId: string; shelf: ShelfDTO | null; onClose: () => void; onSaved: (shelf: ShelfDTO, created: boolean) => void }) {
   const { busy, error, run } = useSubmit();
   const [category, setCategory] = useState("books");
+  const [isPrivate, setPrivate] = useState(shelf?.visibility === "private");
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     run(async () => {
+      const visibility = isPrivate ? "private" : "public";
       const res = shelf
-        ? await api<{ shelf: ShelfDTO }>(`/api/shelves/${shelf.id}`, { method: "PATCH", json: { name: f.get("name") } })
-        : await api<{ shelf: ShelfDTO }>(`/api/pages/${pageId}/shelves`, { json: { name: f.get("name"), category: f.get("category") } });
+        ? await api<{ shelf: ShelfDTO }>(`/api/shelves/${shelf.id}`, { method: "PATCH", json: { name: f.get("name"), visibility } })
+        : await api<{ shelf: ShelfDTO }>(`/api/pages/${pageId}/shelves`, { json: { name: f.get("name"), category: f.get("category"), visibility } });
       onSaved(res.shelf, !shelf);
     });
   }
@@ -142,6 +150,8 @@ function ShelfForm({ pageId, shelf, onClose, onSaved }: { pageId: string; shelf:
           <CategoryPicker id="shelf-cat" name="category" value={category} onChange={setCategory} />
         </Field>
       )}
+      <Toggle checked={isPrivate} onChange={setPrivate} label={isPrivate ? "Private shelf" : "Public shelf"} />
+      <p className="text-caption text-muted">Private shelves and their items are hidden from everyone else.</p>
       <ErrorLine msg={error} />
       <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
@@ -211,11 +221,17 @@ export function ProfileDialog({
 
 function ProfileForm({ viewer, onClose, onSaved, onAvatar }: { viewer: ViewerDTO; onClose: () => void; onSaved: (u: ViewerDTO) => void; onAvatar: (u: ViewerDTO) => void }) {
   const { busy, error, run } = useSubmit();
+  const [links, setLinks] = useState<Record<string, string>>(() => {
+    const out: Record<string, string> = {};
+    for (const l of viewer.socialLinks ?? []) out[l.network] = l.url;
+    return out;
+  });
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
+    const socialLinks = SOCIAL_NETWORKS.map((n) => ({ network: n.id, url: (links[n.id] ?? "").trim() })).filter((l) => l.url);
     run(async () => {
-      const { user } = await api<{ user: ViewerDTO }>("/api/me", { method: "PATCH", json: { displayName: f.get("displayName"), bio: f.get("bio") || "" } });
+      const { user } = await api<{ user: ViewerDTO }>("/api/me", { method: "PATCH", json: { displayName: f.get("displayName"), bio: f.get("bio") || "", socialLinks } });
       onSaved(user);
     });
   }
@@ -228,6 +244,25 @@ function ProfileForm({ viewer, onClose, onSaved, onAvatar }: { viewer: ViewerDTO
       <Field label="Bio" htmlFor="pf-bio" hint="optional">
         <Textarea id="pf-bio" name="bio" maxLength={240} rows={3} defaultValue={viewer.bio} placeholder="Tell people what you collect." />
       </Field>
+      <div className="space-y-3">
+        <p className="text-meta font-medium">Social links</p>
+        {SOCIAL_NETWORKS.map((n) => (
+          <Field key={n.id} label={n.label} htmlFor={`pf-${n.id}`} hint="optional">
+            <div className="flex items-center gap-2">
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-border text-foreground">
+                <BrandIcon network={n.id} className="size-4" />
+              </span>
+              <Input
+                id={`pf-${n.id}`}
+                inputMode="url"
+                placeholder={n.id === "website" ? "https://your.site" : `https://${n.id === "x" ? "x.com" : n.id + ".com"}/you`}
+                value={links[n.id] ?? ""}
+                onChange={(e) => setLinks((s) => ({ ...s, [n.id]: e.target.value }))}
+              />
+            </div>
+          </Field>
+        ))}
+      </div>
       <ErrorLine msg={error} />
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>

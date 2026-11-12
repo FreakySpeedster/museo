@@ -1,4 +1,5 @@
 import Link from "next/link";
+import clsx from "clsx";
 
 /** Official nook mark. House follows currentColor; the brown dot is fixed in both themes. */
 export const NOOK_DOT = "#855E42";
@@ -18,11 +19,15 @@ export function LogoMark({ className = "size-8" }: { className?: string }) {
   );
 }
 
+export function Wordmark({ className }: { className?: string }) {
+  return <span className={clsx("font-wordmark", className)}>nook</span>;
+}
+
 export function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="nook home">
       <LogoMark />
-      <span className="text-heading">nook</span>
+      <Wordmark className="text-heading" />
     </Link>
   );
 }

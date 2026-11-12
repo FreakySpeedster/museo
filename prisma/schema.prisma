@@ -18,6 +18,7 @@ model User {
   displayName          String
   bio                  String    @default("")
   avatarUrl            String?
+  socialLinks          Json      @default("[]")
   passwordHash         String
   // Billing
   subscribed           Boolean   @default(false)
@@ -52,6 +53,7 @@ model Page {
   userId      String
   title       String
   description String   @default("")
+  visibility  String   @default("public") // public | private
   position    Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -59,19 +61,22 @@ model Page {
   shelves     Shelf[]
 
   @@index([userId, position])
+  @@index([visibility])
 }
 
 model Shelf {
   id        String   @id @default(cuid())
   pageId    String
   name      String
-  category  String
-  position  Int      @default(0)
-  createdAt DateTime @default(now())
-  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  items     Item[]
+  category    String
+  visibility  String   @default("public") // public | private
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+  page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  items       Item[]
 
   @@index([pageId, position])
+  @@index([visibility])
 }
 
 model Item {
@@ -85,6 +90,7 @@ model Item {
   title       String
   description String   @default("")
   siteName    String?
+  visibility  String   @default("public") // public | private
   position    Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -96,6 +102,7 @@ model Item {
   @@index([shelfId, position])
   @@index([userId, createdAt])
   @@index([createdAt])
+  @@index([visibility])
 }
 
 model ItemLike {

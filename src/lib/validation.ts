@@ -18,7 +18,7 @@ const optionalText = (max: number, label: string) =>
 
 export const RESERVED_USERNAMES = new Set([
   "admin", "api", "app", "login", "logout", "signup", "settings", "pricing", "billing",
-  "u", "about", "help", "support", "explore", "feed", "search", "uploads", "shelfie", "nook", "static", "_next",
+  "u", "i", "about", "help", "support", "explore", "feed", "search", "uploads", "shelfie", "nook", "static", "_next",
 ]);
 
 export const usernameSchema = z
@@ -43,23 +43,29 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required").max(128),
 });
 
+export const visibilitySchema = z.enum(["public", "private"]);
+
 export const profileSchema = z.object({
   displayName: trimmed(1, 50, "Display name"),
   bio: optionalText(240, "Bio"),
+  socialLinks: z.array(z.object({ network: z.string().trim().min(1).max(40), url: z.string().trim().max(500) })).max(8).optional(),
 });
 
 export const pageSchema = z.object({
   title: trimmed(1, 60, "Page title"),
   description: optionalText(240, "Description"),
+  visibility: visibilitySchema.optional(),
 });
 export const pageUpdateSchema = pageSchema.partial();
 
 export const shelfSchema = z.object({
   name: trimmed(1, 40, "Shelf name"),
   category: z.string().trim().refine(isValidCategory, { error: "Choose a category" }),
+  visibility: visibilitySchema.optional(),
 });
 export const shelfUpdateSchema = z.object({
   name: trimmed(1, 40, "Shelf name").optional(),
+  visibility: visibilitySchema.optional(),
   // A shelf holds items of one category; category is fixed once set to keep that promise.
 });
 
@@ -75,10 +81,19 @@ export const itemCreateLinkSchema = itemTextSchema.extend({
 export const itemUpdateSchema = z.object({
   title: trimmed(1, 120, "Title").optional(),
   description: optionalText(500, "Description").optional(),
+  visibility: visibilitySchema.optional(),
 });
 
 export const reorderSchema = z.object({
   itemIds: z.array(z.string().min(1).max(40)).min(1).max(500),
+});
+
+export const reorderShelvesSchema = z.object({
+  shelfIds: z.array(z.string().min(1).max(40)).min(1).max(50),
+});
+
+export const reorderPagesSchema = z.object({
+  pageIds: z.array(z.string().min(1).max(40)).min(1).max(50),
 });
 
 export const previewQuerySchema = z.object({

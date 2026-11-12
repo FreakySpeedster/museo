@@ -1,4 +1,7 @@
 import { db } from "../db";
+import { canViewItem } from "../visibility";
+import { toTimelineEntry } from "../mappers";
+import { attachSocial } from "./social";
 import { AppError } from "../errors";
 import { resolveLinkPreview, resolveThumbnail } from "../link-preview";
 import { deleteUploadByUrl, saveUploadedImage } from "../uploads";
@@ -176,4 +179,17 @@ export async function backfillThumbnails(opts: BackfillOptions | number = {}) {
     }
   }
   return { checked: items.length, fixed, next: items.length === (o.limit ?? 10) ? items[items.length - 1]?.id : null, report };
+}
+
+export async function getVisibleItem(id: string, viewerId?: string | null) {
+  const item = await db.item.findUnique({
+    where: { id },
+    include: {
+      user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true, socialLinks: true } },
+      shelf: { include: { page: true } },
+    },
+  });
+  if (!item || !canViewItem(item, viewerId)) throw new AppError("NOT_FOUND", "That item is gone.");
+  const [entry] = await attachSocial([toTimelineEntry(item)], viewerId);
+  return entry;
 }

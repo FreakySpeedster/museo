@@ -2,7 +2,7 @@ import { route, ok } from "@/lib/api";
 import { searchPage, searchPreview } from "@/lib/services/search";
 import { searchQuerySchema } from "@/lib/validation";
 
-export const GET = route(async ({ req }) => {
+export const GET = route(async ({ req, user }) => {
   const sp = new URL(req.url).searchParams;
   const q = searchQuerySchema.parse({
     q: sp.get("q") ?? "",
@@ -12,7 +12,7 @@ export const GET = route(async ({ req }) => {
     cursor: sp.get("cursor") ?? undefined,
   });
   if (sp.get("preview") === "1") {
-    return ok({ items: await searchPreview(q.q, q.limit) });
+    return ok({ items: await searchPreview(q.q, q.limit, user?.id) });
   }
-  return ok(await searchPage(q.q, q.type, q.sort, q.cursor));
+  return ok(await searchPage(q.q, q.type, q.sort, q.cursor, user?.id));
 }, { limit: { key: "search", max: 60, windowMs: 60_000 } });

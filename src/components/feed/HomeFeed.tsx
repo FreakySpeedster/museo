@@ -98,7 +98,7 @@ export function HomeFeed({
   }
 
   const openShelf: ShelfDTO | null = open
-    ? { id: open.shelf.id, pageId: open.page.id, name: open.shelf.name, category: open.shelf.category, position: 0, items: [open] }
+    ? { id: open.shelf.id, pageId: open.page.id, name: open.shelf.name, category: open.shelf.category, position: 0, visibility: open.shelf.visibility, items: [open] }
     : null;
 
   return (
@@ -163,15 +163,14 @@ export function HomeFeed({
                     signedIn
                     onChange={(s) => patch({ ...e, ...s })}
                   />
-                  <button
-                    type="button"
+                  <Link
+                    href={`/i/${e.id}`}
                     className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-caption text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
-                    onClick={() => setOpen(e)}
                     aria-label={`Comments, ${e.commentCount}`}
                   >
                     <MessageCircle className="size-4" aria-hidden strokeWidth={1.8} />
                     <span>{e.commentCount}</span>
-                  </button>
+                  </Link>
                 </div>
                 {e.url && (
                   <a href={e.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="inline-flex items-center gap-1 px-2 text-caption font-medium text-muted hover:text-foreground">
@@ -179,6 +178,21 @@ export function HomeFeed({
                   </a>
                 )}
               </div>
+              {(e.previewComments?.length ?? 0) > 0 && (
+                <ul className="space-y-1.5 px-4 pb-2">
+                  {e.previewComments.map((c) => (
+                    <li key={c.id} className="text-caption leading-snug">
+                      <Link href={`/u/${c.user.username}`} className="font-semibold hover:underline">{c.user.displayName}</Link>{" "}
+                      <span className="whitespace-pre-line text-foreground/90">{c.body}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {e.commentCount > 2 && (
+                <Link href={`/i/${e.id}`} className="block px-4 pb-4 text-caption text-muted hover:underline">
+                  View all {e.commentCount} comments
+                </Link>
+              )}
             </article>
           ))}
         </div>

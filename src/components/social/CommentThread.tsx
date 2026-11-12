@@ -60,7 +60,7 @@ export function CommentThread({
       id: `tmp-${Date.now()}`,
       body: text,
       createdAt: new Date().toISOString(),
-      user: { id: viewerId ?? "", username: "", displayName: "You", bio: "", avatarUrl: null },
+      user: { id: viewerId ?? "", username: "", displayName: "You", bio: "", avatarUrl: null, socialLinks: [] },
     };
     setComments((c) => [...(c ?? []), optimistic]);
     setBody("");

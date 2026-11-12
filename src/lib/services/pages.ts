@@ -36,7 +36,7 @@ export async function createPage(userId: string, input: z.infer<typeof pageSchem
       throw new AppError("UNPROCESSABLE", "You've reached the maximum number of pages");
     }
     return tx.page.create({
-      data: { userId, title: input.title, description: input.description, position: pageCount },
+      data: { userId, title: input.title, description: input.description, position: pageCount, visibility: input.visibility ?? "public" },
       include: { shelves: true },
     });
   });
@@ -55,4 +55,23 @@ export async function deletePage(userId: string, pageId: string) {
   const items = await db.item.findMany({ where: { shelf: { pageId } }, select: { imageUrl: true, faviconUrl: true } });
   await db.page.delete({ where: { id: pageId } });
   await Promise.all(items.flatMap((i) => [deleteUploadByUrl(i.imageUrl), deleteUploadByUrl(i.faviconUrl)]));
+}
+
+export async function reorderPages(userId: string, pageIds: string[]) {
+  const pages = await db.page.findMany({ where: { userId }, select: { id: true } });
+  const have = new Set(pages.map((p) => p.id));
+  if (pageIds.length !== have.size || pageIds.some((id) => !have.has(id))) {
+    throw new AppError("BAD_REQUEST", "Page list doesn\'t match your pages.");
+  }
+  await db.$transaction(pageIds.map((id, position) => db.page.update({ where: { id }, data: { position } })));
+}
+
+export async function reorderShelves(userId: string, pageId: string, shelfIds: string[]) {
+  await assertPageOwner(userId, pageId);
+  const shelves = await db.shelf.findMany({ where: { pageId }, select: { id: true } });
+  const have = new Set(shelves.map((s) => s.id));
+  if (shelfIds.length !== have.size || shelfIds.some((id) => !have.has(id))) {
+    throw new AppError("BAD_REQUEST", "Shelf list doesn\'t match this page.");
+  }
+  await db.$transaction(shelfIds.map((id, position) => db.shelf.update({ where: { id }, data: { position } })));
 }

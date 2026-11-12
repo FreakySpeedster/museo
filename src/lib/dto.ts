@@ -13,6 +13,7 @@ export interface ItemDTO {
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+  visibility: "public" | "private";
 }
 
 export interface ShelfDTO {
@@ -21,6 +22,7 @@ export interface ShelfDTO {
   name: string;
   category: string;
   position: number;
+  visibility: "public" | "private";
   items: ItemDTO[];
 }
 
@@ -29,7 +31,13 @@ export interface PageDTO {
   title: string;
   description: string;
   position: number;
+  visibility: "public" | "private";
   shelves: ShelfDTO[];
+}
+
+export interface SocialLinkDTO {
+  network: string;
+  url: string;
 }
 
 export interface PublicUser {
@@ -38,12 +46,14 @@ export interface PublicUser {
   displayName: string;
   bio: string;
   avatarUrl: string | null;
+  socialLinks: SocialLinkDTO[];
 }
 
 export interface TimelineEntry extends ItemDTO {
   user: PublicUser;
-  shelf: { id: string; name: string; category: string };
-  page: { id: string; title: string };
+  shelf: { id: string; name: string; category: string; visibility: "public" | "private" };
+  page: { id: string; title: string; visibility: "public" | "private" };
+  previewComments: CommentDTO[];
 }
 
 export interface ViewerDTO extends PublicUser {

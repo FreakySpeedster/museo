@@ -20,6 +20,10 @@ import { ItemModal } from "./ItemModal";
 import { PageSwitcher } from "./PageSwitcher";
 import { ProfileStickyBar } from "./ProfileStickyBar";
 import { ShelfView } from "./ShelfView";
+import { OwnerTimeline } from "./OwnerTimeline";
+import { BrandIcon, brandLabel } from "@/components/ui/BrandIcon";
+import { VisibilityLock } from "@/components/ui/VisibilityLock";
+import { Tabs } from "@/components/ui/Tabs";
 
 interface Props {
   profile: {
@@ -35,6 +39,7 @@ interface Props {
   priceLabel: string;
   initialPageId?: string;
   initialItemId?: string;
+  initialView?: "pages" | "timeline";
 }
 
 function subscribeSm(cb: () => void) {
@@ -43,7 +48,7 @@ function subscribeSm(cb: () => void) {
   return () => mq.removeEventListener("change", cb);
 }
 
-export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initialPageId, initialItemId }: Props) {
+export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initialPageId, initialItemId, initialView }: Props) {
   const router = useRouter();
   const toast = useToast();
   const { isOwner } = profile;
@@ -70,6 +75,8 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   const [paywall, setPaywall] = useState(false);
   const [profileDialog, setProfileDialog] = useState(false);
   const [confirm, setConfirm] = useState<null | { kind: "shelf" | "page"; id: string; name: string }>(null);
+  const [view, setView] = useState<"pages" | "timeline">(profile.isOwner && initialView === "timeline" ? "timeline" : "pages");
+
 
   // Owners: quietly retry thumbnails for link items that were saved without one (older items, flaky sites).
   const thumbsTried = useRef(false);
@@ -150,7 +157,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       window.history.replaceState(null, "", url);
       toast.success(`Page “${saved.title}” created`);
     } else {
-      setPages((ps) => ps.map((p) => (p.id === saved.id ? { ...p, title: saved.title, description: saved.description } : p)));
+      setPages((ps) => ps.map((p) => (p.id === saved.id ? { ...p, title: saved.title, description: saved.description, visibility: saved.visibility } : p)));
       toast.success("Page updated");
     }
   }
@@ -162,7 +169,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       setPages((ps) => ps.map((p) => (p.id === saved.pageId ? { ...p, shelves: [...p.shelves, saved] } : p)));
       toast.success(`Shelf “${saved.name}” added`);
     } else {
-      patchShelf(saved.id, (s) => ({ ...s, name: saved.name }));
+      patchShelf(saved.id, (s) => ({ ...s, name: saved.name, visibility: saved.visibility }));
       toast.success("Shelf renamed");
     }
   }
@@ -251,6 +258,62 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     void onReorder(shelf.id, next, true);
   }
 
+  function selectView(next: "pages" | "timeline") {
+    setView(next);
+    const url = new URL(window.location.href);
+    if (next === "timeline") url.searchParams.set("view", "timeline");
+    else url.searchParams.delete("view");
+    window.history.replaceState(null, "", url);
+  }
+
+  async function persistPageOrder(pageIds: string[]) {
+    const byId = new Map(pages.map((p) => [p.id, p]));
+    setPages(pageIds.map((id) => byId.get(id)).filter((p): p is PageDTO => Boolean(p)));
+    try {
+      await api("/api/pages/reorder", { json: { pageIds } });
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Couldn't save page order");
+    }
+  }
+
+  async function moveShelf(shelf: ShelfDTO, dir: -1 | 1) {
+    const owner = pages.find((p) => p.id === shelf.pageId);
+    if (!owner) return;
+    const i = owner.shelves.findIndex((s) => s.id === shelf.id);
+    const j = i + dir;
+    if (j < 0 || j >= owner.shelves.length) return;
+    const next = [...owner.shelves];
+    [next[i], next[j]] = [next[j], next[i]];
+    setPages((ps) => ps.map((p) => (p.id === owner.id ? { ...p, shelves: next.map((s, n) => ({ ...s, position: n })) } : p)));
+    try {
+      await api(`/api/pages/${owner.id}/reorder-shelves`, { json: { shelfIds: next.map((s) => s.id) } });
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Couldn't save shelf order");
+    }
+  }
+
+  async function togglePageVisibility(target: PageDTO) {
+    const visibility = target.visibility === "private" ? "public" : "private";
+    try {
+      const { page: saved } = await api<{ page: PageDTO }>(`/api/pages/${target.id}`, { method: "PATCH", json: { visibility } });
+      setPages((ps) => ps.map((p) => (p.id === saved.id ? { ...p, visibility: saved.visibility } : p)));
+      toast.success(visibility === "private" ? "Page is now private" : "Page is now public");
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Couldn't update visibility");
+    }
+  }
+
+  async function toggleShelfVisibility(target: ShelfDTO) {
+    const visibility = target.visibility === "private" ? "public" : "private";
+    try {
+      const { shelf: saved } = await api<{ shelf: ShelfDTO }>(`/api/shelves/${target.id}`, { method: "PATCH", json: { visibility } });
+      patchShelf(saved.id, (s) => ({ ...s, visibility: saved.visibility }));
+      toast.success(visibility === "private" ? "Shelf is now private" : "Shelf is now public");
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Couldn't update visibility");
+    }
+  }
+
   /* ---------- follow ---------- */
   async function toggleFollow() {
     if (!viewer) return router.push(`/login`);
@@ -319,22 +382,55 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
         {user.bio && (
           <p data-head className="col-span-2 max-w-lg whitespace-pre-line text-body text-foreground/85 sm:col-span-1 sm:col-start-2 sm:self-start">{user.bio}</p>
         )}
+        {user.socialLinks?.length > 0 && (
+          <div data-head className="col-span-2 flex flex-wrap gap-2 sm:col-span-1 sm:col-start-2">
+            {user.socialLinks.map((l) => (
+              <a
+                key={l.network}
+                href={l.url}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="grid size-9 place-items-center rounded-full border border-border text-foreground transition-colors hover:bg-surface-hover"
+                aria-label={brandLabel(l.network)}
+              >
+                <BrandIcon network={l.network} className="size-4" />
+              </a>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ------------------------------------------ collections label + sticky page switcher */}
       <div className="border-t border-border" />
+      {isOwner && (
+        <Tabs
+          label="Profile view"
+          className="mt-2"
+          value={view}
+          onChange={selectView}
+          options={[
+            { value: "pages", label: "Pages" },
+            { value: "timeline", label: "Timeline" },
+          ]}
+        />
+      )}
       <ProfileStickyBar headerRef={header} displayName={user.displayName} username={user.username} avatarUrl={user.avatarUrl}>
-        {page && <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} />}
+        {view === "pages" && page && (
+          <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} onReorder={isOwner ? persistPageOrder : undefined} />
+        )}
       </ProfileStickyBar>
 
       {/* --------------------------------------------------------- body */}
-      <div ref={content} className="mt-6" key={activeId}>
-        {page ? (
+      <div ref={content} className="mt-6" key={view === "timeline" ? "timeline" : activeId}>
+        {view === "timeline" && isOwner ? (
+          <OwnerTimeline username={user.username} initial={profile.timeline} />
+        ) : page ? (
           <div className="space-y-10">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="flex items-center gap-3 text-title font-semibold tracking-tight" data-testid="page-title">
                   {page.title}
+                  {isOwner && page.visibility === "private" && <VisibilityLock label="Private page" />}
                 </h2>
                 {page.description && <p className="mt-1 max-w-2xl text-muted">{page.description}</p>}
               </div>
@@ -345,6 +441,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
                     label="Page actions"
                     items={[
                       { label: "Edit page", onSelect: () => setPageDialog({ page }) },
+                      { label: page.visibility === "private" ? "Make public" : "Make private", onSelect: () => void togglePageVisibility(page) },
                       { label: "Delete page", danger: true, hidden: pages.length <= 1, onSelect: () => setConfirm({ kind: "page", id: page.id, name: page.title }) },
                     ]}
                     trigger={({ props }) => (
@@ -372,12 +469,17 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
                 shelf={shelf}
                 isOwner={isOwner}
                 justAddedId={justAdded}
+                pagePrivate={page.visibility === "private"}
+                canMoveUp={page.shelves[0]?.id !== shelf.id}
+                canMoveDown={page.shelves[page.shelves.length - 1]?.id !== shelf.id}
                 registerCapture={registerCapture}
                 onOpenItem={(i) => setOpenItemId(i.id)}
                 onAddItem={setAddTo}
                 onEditShelf={(s) => setShelfDialog({ shelf: s })}
                 onDeleteShelf={(s) => setConfirm({ kind: "shelf", id: s.id, name: s.name })}
                 onReorder={onReorder}
+                onMoveShelf={moveShelf}
+                onToggleVisibility={toggleShelfVisibility}
               />
             ))}
 
@@ -415,7 +517,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
           {viewer && (
             <ProfileDialog
               open={profileDialog}
-              viewer={{ ...viewer, displayName: user.displayName, bio: user.bio, avatarUrl: user.avatarUrl }}
+              viewer={{ ...viewer, displayName: user.displayName, bio: user.bio, avatarUrl: user.avatarUrl, socialLinks: user.socialLinks }}
               onClose={() => setProfileDialog(false)}
               onAvatar={(u) => {
                 setUser((x) => ({ ...x, avatarUrl: u.avatarUrl }));
@@ -423,7 +525,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
                 router.refresh();
               }}
               onSaved={(u) => {
-                setUser((x) => ({ ...x, displayName: u.displayName, bio: u.bio }));
+                setUser((x) => ({ ...x, displayName: u.displayName, bio: u.bio, socialLinks: u.socialLinks }));
                 setProfileDialog(false);
                 toast.success("Profile updated");
                 router.refresh();

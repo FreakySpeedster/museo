@@ -4,6 +4,8 @@ import type { SearchHit, SearchSort, SearchType } from "../dto";
 export const SEARCH_PAGE_SIZE = 20;
 
 const like = (q: string) => `%${q.replace(/[%_\\]/g, "\\$&")}%`;
+const visItem = `AND ((i.visibility = 'public' AND s.visibility = 'public' AND p.visibility = 'public') OR i."userId" = $5)`;
+const visShelf = `AND ((s.visibility = 'public' AND p.visibility = 'public') OR p."userId" = $5)`;
 
 type PersonRow = { id: string; username: string; displayName: string; avatarUrl: string | null; createdAt: Date; score: number; followers: bigint };
 type ItemRow = { id: string; title: string; description: string; imageUrl: string | null; createdAt: Date; score: number; likes: bigint; username: string; shelfName: string };
@@ -40,7 +42,7 @@ async function people(q: string, sort: SearchSort, take: number, offset: number)
   }));
 }
 
-async function items(q: string, sort: SearchSort, take: number, offset: number): Promise<SearchHit[]> {
+async function items(q: string, sort: SearchSort, take: number, offset: number, viewerId?: string | null): Promise<SearchHit[]> {
   const pattern = like(q);
   const order = sort === "new" ? 'i."createdAt" DESC' : sort === "top" ? "likes DESC, score DESC" : "score DESC, likes DESC";
   const rows = await db.$queryRawUnsafe<ItemRow[]>(
@@ -52,7 +54,9 @@ async function items(q: string, sort: SearchSort, take: number, offset: number):
     FROM "Item" i
     JOIN "User" u ON u.id = i."userId"
     JOIN "Shelf" s ON s.id = i."shelfId"
-    WHERE i.title ILIKE $2 ESCAPE '\\' OR i.description ILIKE $2 ESCAPE '\\'
+    JOIN "Page" p ON p.id = s."pageId"
+    WHERE (i.title ILIKE $2 ESCAPE '\\' OR i.description ILIKE $2 ESCAPE '\\')
+      ${visItem}
     ORDER BY ${order}
     LIMIT $3 OFFSET $4
     `,
@@ -60,20 +64,21 @@ async function items(q: string, sort: SearchSort, take: number, offset: number):
     pattern,
     take,
     offset,
+    viewerId ?? "",
   );
   return rows.map((r) => ({
     kind: "item" as const,
     id: r.id,
     title: r.title,
     subtitle: `${r.shelfName} · @${r.username}`,
-    href: `/u/${r.username}?item=${r.id}`,
+    href: `/i/${r.id}`,
     imageUrl: r.imageUrl,
     createdAt: r.createdAt.toISOString(),
     score: Number(r.score),
   }));
 }
 
-async function shelves(q: string, sort: SearchSort, take: number, offset: number): Promise<SearchHit[]> {
+async function shelves(q: string, sort: SearchSort, take: number, offset: number, viewerId?: string | null): Promise<SearchHit[]> {
   const pattern = like(q);
   const order = sort === "new" ? 's."createdAt" DESC' : sort === "top" ? "likes DESC, score DESC" : "score DESC, likes DESC";
   const rows = await db.$queryRawUnsafe<ShelfRow[]>(
@@ -86,6 +91,7 @@ async function shelves(q: string, sort: SearchSort, take: number, offset: number
     JOIN "Page" p ON p.id = s."pageId"
     JOIN "User" u ON u.id = p."userId"
     WHERE s.name ILIKE $2 ESCAPE '\\'
+      ${visShelf}
     ORDER BY ${order}
     LIMIT $3 OFFSET $4
     `,
@@ -93,6 +99,7 @@ async function shelves(q: string, sort: SearchSort, take: number, offset: number
     pattern,
     take,
     offset,
+    viewerId ?? "",
   );
   return rows.map((r) => ({
     kind: "shelf" as const,
@@ -106,29 +113,32 @@ async function shelves(q: string, sort: SearchSort, take: number, offset: number
   }));
 }
 
-/** Quick overlay: top 5 mixed hits by relevance. */
-export async function searchPreview(q: string, limit = 5): Promise<SearchHit[]> {
+export async function searchPreview(q: string, limit = 5, viewerId?: string | null): Promise<SearchHit[]> {
   const query = q.trim();
   if (!query) return [];
   const take = limit;
-  const [p, i, s] = await Promise.all([people(query, "relevance", take, 0), items(query, "relevance", take, 0), shelves(query, "relevance", take, 0)]);
+  const [p, i, s] = await Promise.all([
+    people(query, "relevance", take, 0),
+    items(query, "relevance", take, 0, viewerId),
+    shelves(query, "relevance", take, 0, viewerId),
+  ]);
   return [...p, ...i, ...s].sort((a, b) => b.score - a.score || b.createdAt.localeCompare(a.createdAt)).slice(0, limit);
 }
 
-export async function searchPage(q: string, type: SearchType, sort: SearchSort, cursor?: string) {
+export async function searchPage(q: string, type: SearchType, sort: SearchSort, cursor?: string, viewerId?: string | null) {
   const query = q.trim();
   if (!query) return { items: [] as SearchHit[], nextCursor: null as string | null };
   const offset = cursor && /^\d+$/.test(cursor) ? Number(cursor) : 0;
   const take = SEARCH_PAGE_SIZE + 1;
   let hits: SearchHit[] = [];
   if (type === "people") hits = await people(query, sort, take, offset);
-  else if (type === "items") hits = await items(query, sort, take, offset);
-  else if (type === "shelves") hits = await shelves(query, sort, take, offset);
+  else if (type === "items") hits = await items(query, sort, take, offset, viewerId);
+  else if (type === "shelves") hits = await shelves(query, sort, take, offset, viewerId);
   else {
     const [p, i, s] = await Promise.all([
       people(query, sort, take, offset),
-      items(query, sort, take, offset),
-      shelves(query, sort, take, offset),
+      items(query, sort, take, offset, viewerId),
+      shelves(query, sort, take, offset, viewerId),
     ]);
     hits = [...p, ...i, ...s].sort((a, b) => (sort === "new" ? b.createdAt.localeCompare(a.createdAt) : b.score - a.score || b.createdAt.localeCompare(a.createdAt)));
     hits = hits.slice(0, take);

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { LogoMark } from "./Logo";
+import { LogoMark, Wordmark } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import { LinkButton } from "./ui/Button";
 
@@ -24,7 +24,7 @@ export function MarketingNav() {
           onClick={() => setOpen(false)}
         >
           <LogoMark className="size-7" />
-          <span className="text-[15px]">nook</span>
+          <Wordmark className="text-[15px]" />
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
           {links.map((l) => (

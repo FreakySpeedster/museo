@@ -99,8 +99,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   return createPortal(
     <div className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center px-4 pt-[12vh] sm:pt-[18vh]" role="dialog" aria-modal="true" aria-label="Search">
-      <button type="button" className="absolute inset-0 bg-foreground/40 backdrop-blur-[2px]" aria-label="Close search" onClick={onClose} />
-      <div className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-surface shadow-lg">
+      <button type="button" className="absolute inset-0 bg-black/75 backdrop-blur-md" aria-label="Close search" onClick={onClose} />
+      <div className="search-spotlight relative w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-surface shadow-lg" tabIndex={-1}>
         <div className="flex items-center gap-2 border-b border-border px-4">
           <Search className="size-5 shrink-0 text-muted" aria-hidden />
           <input

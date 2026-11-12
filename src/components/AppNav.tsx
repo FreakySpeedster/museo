@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, reducedMotion } from "@/lib/gsap";
-import { LogoMark } from "./Logo";
+import { LogoMark, Wordmark } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
 import { useSearch } from "./search/SearchProvider";
@@ -144,7 +144,7 @@ export function AppNav({ user }: { user: NavUser | null }) {
             <span className="nav-icon-slot">
               <LogoMark className="size-7" />
             </span>
-            <span className="nav-label whitespace-nowrap pr-3 text-heading font-semibold tracking-tight">nook</span>
+            <Wordmark className="nav-label whitespace-nowrap pr-3 text-heading" />
           </Link>
         </div>
         <nav className="flex flex-col gap-1" aria-label="Primary">
@@ -200,7 +200,7 @@ export function AppNav({ user }: { user: NavUser | null }) {
       <header className="glass sticky top-0 z-nav flex h-12 items-center justify-between border-b border-border/70 px-4 md:hidden">
         <Link href="/" aria-label="nook home" className="flex items-center gap-2 font-semibold tracking-tight">
           <LogoMark className="size-7" />
-          <span className="text-heading">nook</span>
+          <Wordmark className="text-heading" />
         </Link>
         <div className="flex items-center gap-0.5">
           <IconButton label="Search" size="sm" onClick={search.open}>

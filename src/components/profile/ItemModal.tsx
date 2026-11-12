@@ -7,10 +7,13 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Clock, ImagePlus, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Clock, MoreHorizontal, RefreshCw } from "lucide-react";
 import { LikeButton } from "@/components/social/LikeButton";
 import { CommentThread } from "@/components/social/CommentThread";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { IconButton } from "@/components/ui/IconButton";
+import { Menu } from "@/components/ui/Menu";
+import { VisibilityLock } from "@/components/ui/VisibilityLock";
 import { PhotoPicker, type PhotoCandidate } from "./PhotoPicker";
 import { categoryMeta } from "@/lib/categories";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
@@ -49,7 +52,7 @@ export function ItemModal({
   );
 }
 
-function ItemBody({
+export function ItemBody({
   it,
   shelf,
   isOwner,
@@ -104,17 +107,51 @@ function ItemBody({
     }
   }
 
+  async function setVisibility(visibility: "public" | "private") {
+    setBusy(true);
+    setError("");
+    try {
+      const { item: updated } = await api<{ item: ItemDTO }>(`/api/items/${it.id}`, { method: "PATCH", json: { visibility } });
+      onUpdated(updated);
+      toast.success(visibility === "private" ? "Item is now private" : "Item is now public");
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Couldn't update visibility");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
         <div className="grid gap-5 md:grid-cols-[1.1fr_1fr]">
           <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-surface-hover md:aspect-[4/5]">
             <ItemThumb item={it} eager />
           </div>
           <div className="flex min-w-0 flex-col">
-            {meta && shelf && (
-              <p className="text-micro font-medium uppercase tracking-wide text-muted">
-                <span className="inline-flex items-center gap-1.5"><CategoryIcon category={shelf.category} className="size-4" />{shelf.name}</span>
-              </p>
-            )}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                {meta && shelf && (
+                  <p className="text-micro font-medium uppercase tracking-wide text-muted">
+                    <span className="inline-flex items-center gap-1.5"><CategoryIcon category={shelf.category} className="size-4" />{shelf.name}</span>
+                  </p>
+                )}
+              </div>
+              {isOwner && (
+                <Menu
+                  label="Item actions"
+                  items={[
+                    { label: "Edit", onSelect: () => setEditing(true) },
+                    { label: "Change photo", onSelect: () => setPhotoOpen(true) },
+                    { label: it.visibility === "private" ? "Make public" : "Make private", onSelect: () => void setVisibility(it.visibility === "private" ? "public" : "private") },
+                    { label: "Delete", danger: true, onSelect: () => setConfirming(true) },
+                  ]}
+                  trigger={({ props }) => (
+                    <IconButton label="Item actions" size="sm" {...props}>
+                      <MoreHorizontal className="size-4" aria-hidden />
+                    </IconButton>
+                  )}
+                />
+              )}
+            </div>
             {editing ? (
               <div className="mt-3 space-y-3">
                 <Field label="Title" htmlFor="edit-title"><Input id="edit-title" data-autofocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} /></Field>
@@ -127,7 +164,10 @@ function ItemBody({
               </div>
             ) : (
               <>
-                <h3 className="mt-1 text-heading font-semibold leading-tight tracking-tight sm:text-title">{it.title}</h3>
+                <h3 className="mt-1 flex items-center gap-2 text-heading font-semibold leading-tight tracking-tight sm:text-title">
+                  <span>{it.title}</span>
+                  {isOwner && it.visibility === "private" && <VisibilityLock label="Private item" />}
+                </h3>
                 <p className="mt-1 flex items-center gap-1.5 text-caption text-muted" data-testid="item-added">
                   <Clock className="size-4" aria-hidden />
                   <time dateTime={it.createdAt} title={fullDate(it.createdAt)} className="cursor-help underline decoration-dotted decoration-border underline-offset-4">Added {timeAgo(it.createdAt)}</time>
@@ -158,32 +198,34 @@ function ItemBody({
                     onChange={(s) => onUpdated({ ...it, ...s })}
                   />
                 </div>
-                <CommentThread
-                  itemId={it.id}
-                  commentCount={it.commentCount}
-                  viewerId={viewerId}
-                  onCountChange={(n) => onUpdated({ ...it, commentCount: n })}
-                />
-                {isOwner && (
-                  <div className="mt-auto space-y-3 pt-6">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>Edit</Button>
-                      <Button variant="secondary" size="sm" data-testid="change-photo" aria-expanded={photoOpen} onClick={() => setPhotoOpen((v) => !v)}><ImagePlus className="size-4" aria-hidden /> Photo</Button>
-                      <Button variant="secondary" size="sm" disabled={!onMove || idx <= 0} onClick={() => onMove?.(it, -1)} aria-label="Move earlier on shelf"><ArrowLeft className="size-4" aria-hidden /> Earlier</Button>
-                      <Button variant="secondary" size="sm" disabled={!onMove || !shelf || idx >= shelf.items.length - 1} onClick={() => onMove?.(it, 1)} aria-label="Move later on shelf">Later <ArrowRight className="size-4" aria-hidden /></Button>
-                      {!confirming && <Button variant="ghost" size="sm" className="ml-auto hover:text-danger" onClick={() => setConfirming(true)}>Delete</Button>}
+                {photoOpen && <div className="mt-4"><ItemPhotoEditor it={it} onUpdated={(u) => { onUpdated(u); setPhotoOpen(false); }} onCancel={() => setPhotoOpen(false)} /></div>}
+                {confirming && (
+                  <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-danger/40 bg-danger-subtle p-3">
+                    <p className="text-meta">Delete this item for good?</p>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>Keep</Button>
+                      <Button variant="danger" size="sm" loading={busy} onClick={remove}>Delete</Button>
                     </div>
-                    {photoOpen && <ItemPhotoEditor it={it} onUpdated={(u) => { onUpdated(u); setPhotoOpen(false); }} onCancel={() => setPhotoOpen(false)} />}
-                    {confirming && (
-                      <div className="flex items-center justify-between gap-3 rounded-2xl border border-danger/40 bg-danger-subtle p-3">
-                        <p className="text-meta">Delete this item for good?</p>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>Keep</Button>
-                          <Button variant="danger" size="sm" loading={busy} onClick={remove}>Delete</Button>
-                        </div>
-                      </div>
-                    )}
-                    {error && !editing && <FormError>{error}</FormError>}
+                  </div>
+                )}
+                {error && !editing && <div className="mt-3"><FormError>{error}</FormError></div>}
+                <div className="mt-6 border-t border-border pt-5">
+                  <CommentThread
+                    itemId={it.id}
+                    commentCount={it.commentCount}
+                    viewerId={viewerId}
+                    onCountChange={(n) => onUpdated({ ...it, commentCount: n })}
+                  />
+                </div>
+                {onMove && shelf && (
+                  <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-4">
+                    <Button variant="ghost" size="sm" disabled={idx <= 0} onClick={() => onMove(it, -1)} aria-label="Move earlier on shelf">
+                      <ArrowLeft className="size-4" aria-hidden /> Earlier
+                    </Button>
+                    <p className="text-caption text-muted">{idx + 1} of {shelf.items.length}</p>
+                    <Button variant="ghost" size="sm" disabled={idx >= shelf.items.length - 1} onClick={() => onMove(it, 1)} aria-label="Move later on shelf">
+                      Later <ArrowRight className="size-4" aria-hidden />
+                    </Button>
                   </div>
                 )}
               </>
@@ -192,6 +234,7 @@ function ItemBody({
         </div>
   );
 }
+
 
 /** Owner tool: pick another detected photo, use their own, or re-fetch the link's photo. */
 function ItemPhotoEditor({ it, onUpdated, onCancel }: { it: ItemDTO; onUpdated: (item: ItemDTO) => void; onCancel: () => void }) {

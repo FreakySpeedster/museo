@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import Image from "next/image";
 import { useState } from "react";
 import type { ItemDTO } from "@/lib/dto";
 
@@ -26,16 +27,17 @@ export function ItemThumb({ item, className, eager }: { item: ThumbItem; classNa
   return (
     <div className={clsx("relative h-full w-full overflow-hidden bg-surface-hover", className)}>
       {showImg ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           src={item.imageUrl!}
           alt={item.title}
+          fill
+          unoptimized
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           loading={eager ? "eager" : "lazy"}
-          decoding="async"
           draggable={false}
           onError={() => setImgFailed(true)}
           referrerPolicy="no-referrer"
-          className="h-full w-full object-cover"
+          className="object-cover"
         />
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-3 text-center text-white" style={{ background: gradientFor(item.id + item.title) }}>

@@ -76,7 +76,58 @@ const PAGES: ShowcasePage[] = [
   },
 ];
 
-export function PageShowcase() {
+function ShowcaseCard({ page }: { page: ShowcasePage }) {
+  return (
+    <article className="w-[min(100%,28rem)] shrink-0 snap-center overflow-hidden rounded-3xl border border-border bg-surface shadow-md sm:w-[min(100%,34rem)]">
+      <header className="flex items-center gap-3 border-b border-border px-5 py-4">
+        <span className="grid size-10 place-items-center rounded-full bg-surface-hover text-foreground">
+          <CategoryIcon category={page.category} className="size-5" />
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-heading font-semibold">{page.owner}</p>
+          <p className="text-caption text-muted">@{page.handle} · {page.title}</p>
+        </div>
+      </header>
+      {page.shelves.map((shelf) => (
+        <div key={shelf.name} className="px-5 py-4">
+          <p className="mb-3 flex items-center gap-1.5 text-meta font-medium">
+            <CategoryIcon category={page.category} className="size-4 text-muted" />
+            {shelf.name}
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {shelf.items.map((item) => (
+              <figure key={item.title} className="overflow-hidden rounded-2xl border border-border bg-background">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.image} alt="" className="aspect-[4/5] w-full object-cover" />
+                <figcaption className="space-y-1 p-2.5">
+                  <p className="truncate text-meta font-semibold">{item.title}</p>
+                  {item.thoughts && <p className="line-clamp-2 text-caption text-muted">{item.thoughts}</p>}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      ))}
+    </article>
+  );
+}
+
+export function PageShowcase({ variant = "section" }: { variant?: "section" | "framed" }) {
+  if (variant === "framed") {
+    return (
+      <div className="overflow-hidden rounded-3xl border border-border bg-surface shadow-md" aria-label="Example nook pages">
+        <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth p-4 sm:gap-8 sm:p-6">
+          {PAGES.map((page) => (
+            <ShowcaseCard key={page.title} page={page} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return <PinnedShowcase />;
+}
+
+function PinnedShowcase() {
   const root = useRef<HTMLElement>(null);
   const track = useRef<HTMLDivElement>(null);
 
@@ -121,40 +172,7 @@ export function PageShowcase() {
         className="flex gap-5 px-4 pb-16 pt-8 sm:gap-8 sm:px-6 lg:px-[max(1.5rem,calc((100vw-72rem)/2+1.5rem))] motion-reduce:overflow-x-auto motion-reduce:scroll-smooth motion-reduce:snap-x motion-reduce:snap-mandatory"
       >
         {PAGES.map((page) => (
-          <article
-            key={page.title}
-            className="w-[min(100%,28rem)] shrink-0 snap-center overflow-hidden rounded-3xl border border-border bg-surface shadow-md sm:w-[min(100%,34rem)]"
-          >
-            <header className="flex items-center gap-3 border-b border-border px-5 py-4">
-              <span className="grid size-10 place-items-center rounded-full bg-surface-hover text-foreground">
-                <CategoryIcon category={page.category} className="size-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-heading font-semibold">{page.owner}</p>
-                <p className="text-caption text-muted">@{page.handle} · {page.title}</p>
-              </div>
-            </header>
-            {page.shelves.map((shelf) => (
-              <div key={shelf.name} className="px-5 py-4">
-                <p className="mb-3 flex items-center gap-1.5 text-meta font-medium">
-                  <CategoryIcon category={page.category} className="size-4 text-muted" />
-                  {shelf.name}
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  {shelf.items.map((item) => (
-                    <figure key={item.title} className="overflow-hidden rounded-2xl border border-border bg-background">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.image} alt="" className="aspect-[4/5] w-full object-cover" />
-                      <figcaption className="space-y-1 p-2.5">
-                        <p className="truncate text-meta font-semibold">{item.title}</p>
-                        {item.thoughts && <p className="line-clamp-2 text-caption text-muted">{item.thoughts}</p>}
-                      </figcaption>
-                    </figure>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </article>
+          <ShowcaseCard key={page.title} page={page} />
         ))}
       </div>
     </section>

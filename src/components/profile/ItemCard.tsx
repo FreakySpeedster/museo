@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { Heart, Image as ImageIcon, Link2, MessageCircle } from "lucide-react";
 import type { ItemDTO } from "@/lib/dto";
 import { ItemThumb } from "./ItemThumb";
+import { VisibilityLock } from "@/components/ui/VisibilityLock";
 
 export function ItemCard({ item, onOpen, dragging, grab }: { item: ItemDTO; onOpen: (item: ItemDTO) => void; dragging?: boolean; grab?: boolean }) {
   return (
@@ -21,7 +22,10 @@ export function ItemCard({ item, onOpen, dragging, grab }: { item: ItemDTO; onOp
           </div>
         </div>
         <div className="space-y-0.5 p-3">
-          <h4 className="line-clamp-2 text-meta font-semibold leading-snug">{item.title}</h4>
+          <h4 className="flex items-start gap-1.5 text-meta font-semibold leading-snug">
+            <span className="line-clamp-2">{item.title}</span>
+            {item.visibility === "private" && <VisibilityLock label="Private item" />}
+          </h4>
           <p className="flex items-center gap-3 text-caption text-muted">
             <span className="inline-flex items-center gap-1">
               <Heart className="size-3.5" aria-hidden />{item.likeCount}
