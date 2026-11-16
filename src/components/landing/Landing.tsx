@@ -24,7 +24,7 @@ export function Landing() {
             </span>
           </Link>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-meta text-muted">
-            <p>One page free forever. Unlimited shelves, links and photos on every plan.</p>
+            <p>One page and up to 10 items per collection, free forever. Plus unlocks unlimited pages and items, and your own blog.</p>
             <Link href="/pricing" className="font-medium text-foreground underline-offset-4 hover:underline">Compare plans</Link>
           </div>
         </div>

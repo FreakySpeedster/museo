@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Clock, MoreHorizontal, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Clock, Eye, MoreHorizontal, RefreshCw } from "lucide-react";
+import { ItemBlogPosts } from "@/components/blog/ItemBlogPosts";
 import { LikeButton } from "@/components/social/LikeButton";
 import { CommentThread } from "@/components/social/CommentThread";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -71,6 +73,7 @@ export function ItemBody({
   onNavigate?: (item: ItemDTO) => void;
 }) {
   const toast = useToast();
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -81,6 +84,19 @@ export function ItemBody({
   const [tags, setTags] = useState<string[]>(it.tags ?? []);
   const idx = shelf ? shelf.items.findIndex((i) => i.id === it.id) : -1;
   const meta = shelf ? categoryMeta(shelf.category) : null;
+  const [views, setViews] = useState(it.viewCount ?? 0);
+
+  // Count a view once the item is on screen. The server ignores the owner, bots and repeat visits (24h).
+  useEffect(() => {
+    if (isOwner) return;
+    let live = true;
+    api<{ viewCount: number }>(`/api/items/${it.id}/view`, { method: "POST" })
+      .then((r) => live && setViews(r.viewCount))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [it.id, isOwner]);
 
   async function save() {
     setBusy(true);
@@ -143,6 +159,7 @@ export function ItemBody({
                   items={[
                     { label: "Edit", onSelect: () => setEditing(true) },
                     { label: "Change photo", onSelect: () => setPhotoOpen(true) },
+                    { label: "Write about it", onSelect: () => router.push(`/blog/new?item=${it.id}`) },
                     { label: it.visibility === "private" ? "Make public" : "Make private", onSelect: () => void setVisibility(it.visibility === "private" ? "public" : "private") },
                     { label: "Delete", danger: true, onSelect: () => setConfirming(true) },
                   ]}
@@ -175,6 +192,11 @@ export function ItemBody({
                   <Clock className="size-4" aria-hidden />
                   <time dateTime={it.createdAt} title={fullDate(it.createdAt)} className="cursor-help underline decoration-dotted decoration-border underline-offset-4">Added {timeAgo(it.createdAt)}</time>
                   <span className="sr-only">{fullDate(it.createdAt)}</span>
+                  <span aria-hidden className="px-0.5">·</span>
+                  <span className="inline-flex items-center gap-1" data-testid="item-views" title={isOwner ? "Unique views from other people (your own views don't count)" : "Views"}>
+                    <Eye className="size-4" aria-hidden />
+                    {views.toLocaleString()} <span>{views === 1 ? "view" : "views"}</span>
+                  </span>
                 </p>
                 <TagList tags={it.tags ?? []} className="mt-3" />
                 {it.description ? (
@@ -202,6 +224,7 @@ export function ItemBody({
                     onChange={(s) => onUpdated({ ...it, ...s })}
                   />
                 </div>
+                <ItemBlogPosts itemId={it.id} />
                 {photoOpen && <div className="mt-4"><ItemPhotoEditor it={it} onUpdated={(u) => { onUpdated(u); setPhotoOpen(false); }} onCancel={() => setPhotoOpen(false)} /></div>}
                 {confirming && (
                   <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-danger/40 bg-danger-subtle p-3">

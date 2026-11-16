@@ -22,6 +22,7 @@ export const toItemDTO = (i: Item): ItemDTO => ({
   commentCount: 0,
   likedByMe: false,
   visibility: vis(i.visibility),
+  viewCount: i.viewCount ?? 0,
 });
 
 export const toShelfDTO = (s: Shelf & { items?: Item[] }): ShelfDTO => ({

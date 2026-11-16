@@ -8,8 +8,8 @@ import type { z } from "zod";
 
 export async function assertShelfOwner(userId: string, shelfId: string) {
   const shelf = await db.shelf.findUnique({ where: { id: shelfId }, include: { page: true } });
-  if (!shelf) throw new AppError("NOT_FOUND", "Shelf not found");
-  if (shelf.page.userId !== userId) throw new AppError("FORBIDDEN", "That shelf belongs to someone else");
+  if (!shelf) throw new AppError("NOT_FOUND", "Collection not found");
+  if (shelf.page.userId !== userId) throw new AppError("FORBIDDEN", "That collection belongs to someone else");
   return shelf;
 }
 
@@ -23,7 +23,7 @@ export async function createShelf(userId: string, pageId: string, input: z.infer
     if (page.userId !== userId) throw new AppError("FORBIDDEN", "That page belongs to someone else");
     const count = await tx.shelf.count({ where: { pageId } });
     if (!canAddShelf(count)) {
-      throw new AppError("SHELF_LIMIT", `A page can hold at most ${MAX_SHELVES_PER_PAGE} shelves`);
+      throw new AppError("SHELF_LIMIT", `A page can hold at most ${MAX_SHELVES_PER_PAGE} collections`);
     }
     return tx.shelf.create({
       data: { pageId, name: input.name, category: input.category, position: count, visibility: input.visibility ?? "public" },
@@ -48,11 +48,11 @@ export async function deleteShelf(userId: string, shelfId: string) {
 export async function moveShelfToPage(userId: string, shelfId: string, targetPageId: string) {
   return db.$transaction(async (tx) => {
     const user = await tx.user.findUnique({ where: { id: userId }, select: { subscribed: true } });
-    if (!user?.subscribed) throw new AppError("PAYWALL", "Moving shelves between pages is a nook Plus feature.");
+    if (!user?.subscribed) throw new AppError("PAYWALL", "Moving collections between pages is a nook Plus feature.");
     const shelf = await tx.shelf.findUnique({ where: { id: shelfId }, include: { page: { select: { userId: true } } } });
-    if (!shelf) throw new AppError("NOT_FOUND", "Shelf not found");
-    if (shelf.page.userId !== userId) throw new AppError("FORBIDDEN", "That shelf belongs to someone else");
-    if (shelf.pageId === targetPageId) throw new AppError("BAD_REQUEST", "The shelf is already on that page");
+    if (!shelf) throw new AppError("NOT_FOUND", "Collection not found");
+    if (shelf.page.userId !== userId) throw new AppError("FORBIDDEN", "That collection belongs to someone else");
+    if (shelf.pageId === targetPageId) throw new AppError("BAD_REQUEST", "The collection is already on that page");
     // Lock both pages in a stable order to avoid deadlocks with concurrent creates/moves.
     for (const id of [shelf.pageId, targetPageId].sort()) await advisoryLock(tx, `page:${id}`);
     const target = await tx.page.findUnique({ where: { id: targetPageId }, select: { userId: true, title: true } });
@@ -60,7 +60,7 @@ export async function moveShelfToPage(userId: string, shelfId: string, targetPag
     if (target.userId !== userId) throw new AppError("FORBIDDEN", "That page belongs to someone else");
     const count = await tx.shelf.count({ where: { pageId: targetPageId } });
     if (!canAddShelf(count)) {
-      throw new AppError("SHELF_LIMIT", `"${target.title}" already has ${MAX_SHELVES_PER_PAGE} shelves`);
+      throw new AppError("SHELF_LIMIT", `"${target.title}" already has ${MAX_SHELVES_PER_PAGE} collections`);
     }
     const moved = await tx.shelf.update({
       where: { id: shelfId },

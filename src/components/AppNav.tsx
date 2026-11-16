@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Bell, Gem, House, LayoutGrid, LogIn, Pin, PinOff, Search, UserPlus, type LucideIcon } from "lucide-react";
+import { Bell, Gem, House, LayoutGrid, LogIn, NotebookPen, Pin, PinOff, Search, UserPlus, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -78,7 +78,8 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
 
   const primary: Item[] = [
     { href: "/", label: "Home", icon: House, active: path === "/" },
-    ...(user ? [{ href: mine, label: "My shelves", icon: LayoutGrid, active: path.toLowerCase().startsWith(mine.toLowerCase()) }] : []),
+    ...(user ? [{ href: mine, label: "My collections", icon: LayoutGrid, active: path.toLowerCase().startsWith(mine.toLowerCase()) }] : []),
+    { href: "/blog", label: "Blog", icon: NotebookPen, active: path.startsWith("/blog") },
     ...(user ? [{ href: "/notifications", label: "Notifications", icon: Bell, active: path.startsWith("/notifications"), count: unreadCount }] : []),
   ];
   const utility: Item[] = [
@@ -120,8 +121,9 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
     </Link>
   );
 
-  const phonePrimary = primary.filter((it) => it.href !== "/notifications");
-  const tabs: Item[] = user ? [...phonePrimary, ...utility] : [...phonePrimary, ...utility, ...guest];
+  // Phones have room for five tabs: members get Blog (Pricing lives in the account menu); guests keep Pricing and sign-up.
+  const phonePrimary = primary.filter((it) => it.href !== "/notifications" && (user || it.href !== "/blog"));
+  const tabs: Item[] = user ? phonePrimary : [...phonePrimary, ...utility, ...guest];
 
   function onEnter() {
     window.clearTimeout(leaveTimer.current);

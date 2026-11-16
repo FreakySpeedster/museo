@@ -135,7 +135,7 @@ export function ProductDemo() {
       <div className="relative px-5 pb-5 pt-4">
         <div data-shelf="reading">
           <p className="text-caption text-muted">Books</p>
-          <h2 className="mt-0.5 text-heading font-semibold">On the shelf</h2>
+          <h2 className="mt-0.5 text-heading font-semibold">In the collection</h2>
           <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
             {READING.map((item) => (
               <div key={item.title} data-drop>

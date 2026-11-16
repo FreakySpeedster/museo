@@ -71,7 +71,7 @@ export async function reorderShelves(userId: string, pageId: string, shelfIds: s
   const shelves = await db.shelf.findMany({ where: { pageId }, select: { id: true } });
   const have = new Set(shelves.map((s) => s.id));
   if (shelfIds.length !== have.size || shelfIds.some((id) => !have.has(id))) {
-    throw new AppError("BAD_REQUEST", "Shelf list doesn\'t match this page.");
+    throw new AppError("BAD_REQUEST", "Collection list doesn\'t match this page.");
   }
   await db.$transaction(shelfIds.map((id, position) => db.shelf.update({ where: { id }, data: { position } })));
 }

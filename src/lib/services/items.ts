@@ -10,15 +10,40 @@ import { deleteUploadByUrl, saveUploadedImage } from "../uploads";
 import { itemCreateLinkSchema, itemTextSchema, itemUpdateSchema, reorderSchema } from "../validation";
 import { assertShelfOwner } from "./shelves";
 import type { z } from "zod";
+import type { Prisma } from "@prisma/client";
+import { advisoryLock } from "../locks";
+import { FREE_ITEMS_PER_SHELF, MAX_MANUAL_PHOTOS, PLUS_ITEMS_PER_SHELF, itemCreationGate, type ItemGate } from "../limits";
 
-export const MAX_ITEMS_PER_SHELF = 200;
+export const MAX_ITEMS_PER_SHELF = PLUS_ITEMS_PER_SHELF;
 
-async function nextPosition(shelfId: string) {
-  const count = await db.item.count({ where: { shelfId } });
-  if (count >= MAX_ITEMS_PER_SHELF) {
-    throw new AppError("UNPROCESSABLE", `A shelf can hold at most ${MAX_ITEMS_PER_SHELF} items`);
-  }
-  return count;
+function gateError(gate: Exclude<ItemGate, { allowed: true }>) {
+  return gate.reason === "ITEM_LIMIT"
+    ? new AppError("ITEM_LIMIT", `Free collections hold up to ${FREE_ITEMS_PER_SHELF} items. Upgrade to nook Plus for unlimited items.`, { limit: FREE_ITEMS_PER_SHELF })
+    : new AppError("UNPROCESSABLE", `A collection can hold at most ${PLUS_ITEMS_PER_SHELF} items`);
+}
+
+/** Fast pre-check (before slow link fetching / uploads). The authoritative check runs in insertItem. */
+export async function assertCanAddItem(userId: string, shelfId: string) {
+  const [user, itemCount] = await Promise.all([
+    db.user.findUnique({ where: { id: userId }, select: { subscribed: true } }),
+    db.item.count({ where: { shelfId } }),
+  ]);
+  const gate = itemCreationGate({ subscribed: Boolean(user?.subscribed), itemCount });
+  if (!gate.allowed) throw gateError(gate);
+}
+
+/** Insert at the end of the collection under a per-collection lock, so the plan limit can't be raced past. */
+async function insertItem(userId: string, shelfId: string, data: Omit<Prisma.ItemUncheckedCreateInput, "position" | "shelfId" | "userId">) {
+  return db.$transaction(async (tx) => {
+    await advisoryLock(tx, `shelf:${shelfId}`);
+    const [user, itemCount] = await Promise.all([
+      tx.user.findUnique({ where: { id: userId }, select: { subscribed: true } }),
+      tx.item.count({ where: { shelfId } }),
+    ]);
+    const gate = itemCreationGate({ subscribed: Boolean(user?.subscribed), itemCount });
+    if (!gate.allowed) throw gateError(gate);
+    return tx.item.create({ data: { ...data, shelfId, userId, position: itemCount } });
+  });
 }
 
 export async function createLinkItem(
@@ -28,7 +53,7 @@ export async function createLinkItem(
   opts: { imageUrl?: string; photo?: Buffer; extraImageUrls?: string[] } = {},
 ) {
   await assertShelfOwner(userId, shelfId);
-  const position = await nextPosition(shelfId);
+  await assertCanAddItem(userId, shelfId);
   // The user's own photo wins; then a candidate they picked; otherwise the best verified image from the page.
   const own = opts.photo ? await saveUploadedImage(opts.photo) : null;
   const resolved = await resolveLinkPreview(input.url);
@@ -52,21 +77,16 @@ export async function createLinkItem(
   }
   const title = input.title || preview.title || host || "Untitled link";
   const description = input.description || preview.description;
-  return db.item.create({
-    data: {
-      shelfId,
-      userId,
-      type: "LINK",
-      url: preview.url,
-      imageUrl,
-      images,
-      faviconUrl,
-      title: title.slice(0, 120),
-      description: description.slice(0, 500),
-      siteName: host || null,
-      tags: input.tags ?? [],
-      position,
-    },
+  return insertItem(userId, shelfId, {
+    type: "LINK",
+    url: preview.url,
+    imageUrl,
+    images,
+    faviconUrl,
+    title: title.slice(0, 120),
+    description: description.slice(0, 500),
+    siteName: host || null,
+    tags: input.tags ?? [],
   });
 }
 
@@ -74,18 +94,21 @@ export async function createPhotoItem(
   userId: string,
   shelfId: string,
   input: z.infer<typeof itemTextSchema>,
-  file: Buffer,
+  files: Buffer | Buffer[],
 ) {
+  const list = Array.isArray(files) ? files : [files];
   await assertShelfOwner(userId, shelfId);
   if (!input.title) throw new AppError("BAD_REQUEST", "Title is required");
-  const position = await nextPosition(shelfId);
-  const imageUrl = await saveUploadedImage(file);
+  if (list.length === 0) throw new AppError("BAD_REQUEST", "Choose a photo to upload");
+  if (list.length > MAX_MANUAL_PHOTOS) throw new AppError("BAD_REQUEST", `Add up to ${MAX_MANUAL_PHOTOS} photos`);
+  await assertCanAddItem(userId, shelfId);
+  const saved: string[] = [];
   try {
-    return await db.item.create({
-      data: { shelfId, userId, type: "PHOTO", imageUrl, title: input.title, description: input.description, tags: input.tags ?? [], position },
-    });
+    for (const f of list) saved.push(await saveUploadedImage(f));
+    const [imageUrl, ...images] = saved;
+    return await insertItem(userId, shelfId, { type: "PHOTO", imageUrl, images, title: input.title, description: input.description, tags: input.tags ?? [] });
   } catch (e) {
-    await deleteUploadByUrl(imageUrl);
+    await Promise.all(saved.map((u) => deleteUploadByUrl(u)));
     throw e;
   }
 }
@@ -113,7 +136,7 @@ export async function reorderItems(userId: string, shelfId: string, input: z.inf
   const existing = await db.item.findMany({ where: { shelfId }, select: { id: true } });
   const ids = new Set(existing.map((i) => i.id));
   if (input.itemIds.length !== ids.size || new Set(input.itemIds).size !== ids.size || !input.itemIds.every((id) => ids.has(id))) {
-    throw new AppError("BAD_REQUEST", "The item list doesn't match this shelf");
+    throw new AppError("BAD_REQUEST", "The item list doesn't match this collection");
   }
   await db.$transaction(input.itemIds.map((id, position) => db.item.update({ where: { id }, data: { position } })));
 }

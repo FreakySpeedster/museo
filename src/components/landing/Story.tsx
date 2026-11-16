@@ -6,8 +6,8 @@ import { ensureScrollTrigger, ensureSplitText, gsap, useGSAP } from "@/lib/gsap"
 
 const STEPS = [
   { icon: Link2, n: "01", title: "Create a page", body: "Start with one. Add more as your collections grow." },
-  { icon: ImageIcon, n: "02", title: "Stock your shelves", body: "Paste a link or snap a photo. nook finds the images." },
-  { icon: Share2, n: "03", title: "Share it", body: "One link to every shelf you choose to show." },
+  { icon: ImageIcon, n: "02", title: "Stock your collections", body: "Paste a link or snap a photo. nook finds the images." },
+  { icon: Share2, n: "03", title: "Share it", body: "One link to every collection you choose to show." },
 ] as const;
 
 /** Scroll-scrubbed statement (words light up as you read) followed by three steps that rise in. */
@@ -39,7 +39,7 @@ export function Story() {
     <section ref={root} className="border-t border-border">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
         <p data-statement className="max-w-4xl text-balance text-[clamp(1.6rem,1rem+2.6vw,3rem)] font-semibold leading-[1.15] tracking-tight">
-          Your taste is scattered across screenshots, bookmarks and notes apps. nook gathers it into shelves that look as good as the things on them.
+          Your taste is scattered across screenshots, bookmarks and notes apps. nook gathers it into collections that look as good as the things on them.
         </p>
         <div data-steps className="mt-16 grid gap-px overflow-hidden rounded-3xl border border-border bg-border md:grid-cols-3">
           {STEPS.map(({ icon: Icon, n, title, body }) => (

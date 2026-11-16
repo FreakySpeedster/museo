@@ -1,12 +1,15 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, Clock, LayoutGrid, Link2, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { Check, Clock, LayoutGrid, Link2, MoreHorizontal, NotebookPen, Pencil, Plus } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, ViewerDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
-import { MAX_SHELVES_PER_PAGE, pageCreationGate } from "@/lib/limits";
+import { FREE_ITEMS_PER_SHELF, MAX_SHELVES_PER_PAGE, pageCreationGate } from "@/lib/limits";
+import { buttonClass } from "@/components/ui/Button";
+import { FollowListDialog, type ConnectionKind } from "@/components/social/FollowListDialog";
 import { gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -15,7 +18,7 @@ import { Menu } from "@/components/ui/Menu";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { AddItemDialog } from "./AddItemDialog";
-import { ConfirmDialog, MoveShelfDialog, PageDialog, PaywallDialog, ProfileDialog, ShelfDialog } from "./dialogs";
+import { ConfirmDialog, MoveShelfDialog, PageDialog, PaywallDialog, ProfileDialog, ShelfDialog, type PaywallReason } from "./dialogs";
 import { ItemModal } from "./ItemModal";
 import { PageSwitcher } from "./PageSwitcher";
 import { ProfileStickyBar } from "./ProfileStickyBar";
@@ -27,7 +30,7 @@ interface Props {
   profile: {
     user: PublicUser;
     pages: PageDTO[];
-    stats: { followers: number; following: number; items: number };
+    stats: { followers: number; following: number; items: number; posts?: number };
     isFollowing: boolean;
     followState: "none" | "requested" | "following";
     isOwner: boolean;
@@ -71,7 +74,8 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   const [addTo, setAddTo] = useState<ShelfDTO | null>(null);
   const [moveTarget, setMoveTarget] = useState<ShelfDTO | null>(null);
   const [openItemId, setOpenItemId] = useState<string | null>(initialItemId ?? null);
-  const [paywall, setPaywall] = useState(false);
+  const [paywall, setPaywall] = useState<false | PaywallReason>(false);
+  const [connections, setConnections] = useState<ConnectionKind | null>(null);
   const [profileDialog, setProfileDialog] = useState(false);
   const [confirm, setConfirm] = useState<null | { kind: "shelf" | "page"; id: string; name: string }>(null);
 
@@ -142,7 +146,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
 
   /* ---------- pages ---------- */
   function startCreatePage() {
-    if (locked) return setPaywall(true);
+    if (locked) return setPaywall("pages");
     setPageDialog({ page: null });
   }
   function onPageSaved(saved: PageDTO, created: boolean) {
@@ -165,10 +169,10 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     setShelfDialog(null);
     if (created) {
       setPages((ps) => ps.map((p) => (p.id === saved.pageId ? { ...p, shelves: [...p.shelves, saved] } : p)));
-      toast.success(`Shelf “${saved.name}” added`);
+      toast.success(`Collection “${saved.name}” added`);
     } else {
       patchShelf(saved.id, (s) => ({ ...s, name: saved.name, visibility: saved.visibility }));
-      toast.success("Shelf renamed");
+      toast.success("Collection renamed");
     }
   }
 
@@ -179,7 +183,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       const removed = allShelves.find((s) => s.id === confirm.id);
       setPages((ps) => ps.map((p) => ({ ...p, shelves: p.shelves.filter((s) => s.id !== confirm.id) })));
       setStats((s) => ({ ...s, items: Math.max(0, s.items - (removed?.items.length ?? 0)) }));
-      toast.success("Shelf deleted");
+      toast.success("Collection deleted");
     } else {
       await api(`/api/pages/${confirm.id}`, { method: "DELETE" });
       const removed = pages.find((p) => p.id === confirm.id);
@@ -206,6 +210,12 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     setTimeout(() => {
       document.querySelector(`[data-flip-id="${item.id}"]`)?.scrollIntoView({ block: "center", behavior: reducedMotion() ? "auto" : "smooth" });
     }, 60);
+  }
+
+  /** Free plan: a full collection opens the upsell instead of the add dialog. */
+  function startAddItem(shelf: ShelfDTO) {
+    if (!subscribed && shelf.items.length >= FREE_ITEMS_PER_SHELF) return setPaywall("items");
+    setAddTo(shelf);
   }
 
   function onItemUpdated(item: ItemDTO) {
@@ -264,7 +274,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     try {
       await api(`/api/pages/${owner.id}/reorder-shelves`, { json: { shelfIds: next.map((s) => s.id) } });
     } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : "Couldn't save shelf order");
+      toast.error(e instanceof ApiError ? e.message : "Couldn't save collection order");
     }
   }
 
@@ -297,7 +307,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     try {
       const { shelf: saved } = await api<{ shelf: ShelfDTO }>(`/api/shelves/${target.id}`, { method: "PATCH", json: { visibility } });
       patchShelf(saved.id, (s) => ({ ...s, visibility: saved.visibility }));
-      toast.success(visibility === "private" ? "Shelf is now private" : "Shelf is now public");
+      toast.success(visibility === "private" ? "Collection is now private" : "Collection is now public");
     } catch (e) {
       toast.error(e instanceof ApiError ? e.message : "Couldn't update visibility");
     }
@@ -348,8 +358,12 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
           </div>
           <div className="flex gap-5 text-meta sm:gap-8">
             <span data-stat><strong className="font-semibold">{stats.items}</strong> <span className="text-muted">items</span></span>
-            <span data-stat><strong className="font-semibold">{stats.followers}</strong> <span className="text-muted">followers</span></span>
-            <span data-stat><strong className="font-semibold">{stats.following}</strong> <span className="text-muted">following</span></span>
+            <button type="button" data-stat data-testid="followers-stat" onClick={() => setConnections("followers")} className="rounded-md text-left transition-opacity hover:opacity-70">
+              <strong className="font-semibold">{stats.followers}</strong> <span className="text-muted">followers</span>
+            </button>
+            <button type="button" data-stat data-testid="following-stat" onClick={() => setConnections("following")} className="rounded-md text-left transition-opacity hover:opacity-70">
+              <strong className="font-semibold">{stats.following}</strong> <span className="text-muted">following</span>
+            </button>
           </div>
         </div>
         <div data-head className="col-span-2 flex items-center gap-2 sm:col-span-1 sm:col-start-2 sm:self-center">
@@ -376,6 +390,11 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
           >
             <Link2 className="size-4" aria-hidden /> Share
           </Button>
+          {((stats.posts ?? 0) > 0 || (isOwner && subscribed)) && (
+            <Link href={isOwner ? "/blog?view=mine" : `/blog?author=${user.username}`} className={buttonClass("secondary", "sm", "flex-1 sm:flex-none")} data-testid="profile-blog">
+              <NotebookPen className="size-4" aria-hidden /> Blog{(stats.posts ?? 0) > 0 && <span className="text-muted">{stats.posts}</span>}
+            </Link>
+          )}
         </div>
         {user.bio && (
           <p data-head className="col-span-2 max-w-lg whitespace-pre-line text-body text-foreground/85 sm:col-span-1 sm:col-start-2 sm:self-start">{user.bio}</p>
@@ -441,9 +460,9 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
             {page.shelves.length === 0 && (
               <EmptyState
                 icon={<LayoutGrid className="size-10" aria-hidden strokeWidth={1.5} />}
-                title={isOwner ? "Build your first shelf" : "No shelves yet"}
-                description={isOwner ? "A shelf holds one category — books, records, sneakers, bookmarks. Start with something you love." : "This page doesn’t have any shelves yet."}
-                action={isOwner ? <Button onClick={() => setShelfDialog({ shelf: null })}>Add a shelf</Button> : undefined}
+                title={isOwner ? "Build your first collection" : "No collections yet"}
+                description={isOwner ? "A collection holds one category — books, records, sneakers, bookmarks. Start with something you love." : "This page doesn’t have any collections yet."}
+                action={isOwner ? <Button onClick={() => setShelfDialog({ shelf: null })}>Add a collection</Button> : undefined}
               />
             )}
 
@@ -459,7 +478,8 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
                 canMoveDown={page.shelves[page.shelves.length - 1]?.id !== shelf.id}
                 registerCapture={registerCapture}
                 onOpenItem={(i) => setOpenItemId(i.id)}
-                onAddItem={setAddTo}
+                onAddItem={startAddItem}
+                itemLimit={isOwner && !subscribed ? FREE_ITEMS_PER_SHELF : undefined}
                 onEditShelf={(s) => setShelfDialog({ shelf: s })}
                 onDeleteShelf={(s) => setConfirm({ kind: "shelf", id: s.id, name: s.name })}
                 onReorder={onReorder}
@@ -472,7 +492,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
 
             {isOwner && page.shelves.length > 0 && (
               <button
-                onClick={() => (atLimit ? toast.info(`A page holds at most ${MAX_SHELVES_PER_PAGE} shelves. Delete one or start a new page.`) : setShelfDialog({ shelf: null }))}
+                onClick={() => (atLimit ? toast.info(`A page holds at most ${MAX_SHELVES_PER_PAGE} collections. Delete one or start a new page.`) : setShelfDialog({ shelf: null }))}
                 data-testid="add-shelf"
                 aria-disabled={atLimit}
                 className={clsx(
@@ -480,7 +500,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
                   atLimit ? "cursor-not-allowed border-border text-muted" : "border-border text-muted hover:border-accent hover:bg-accent-subtle/40 hover:text-foreground",
                 )}
               >
-                {atLimit ? `Shelf limit reached (${MAX_SHELVES_PER_PAGE}/${MAX_SHELVES_PER_PAGE})` : <><Plus className="size-4" aria-hidden /> Add a shelf <span className="text-caption">({shelfCount}/{MAX_SHELVES_PER_PAGE})</span></>}
+                {atLimit ? `Collection limit reached (${MAX_SHELVES_PER_PAGE}/${MAX_SHELVES_PER_PAGE})` : <><Plus className="size-4" aria-hidden /> Add a collection <span className="text-caption">({shelfCount}/{MAX_SHELVES_PER_PAGE})</span></>}
               </button>
             )}
           </div>
@@ -490,13 +510,13 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       {/* ------------------------------------------------------ dialogs */}
       {isOwner && (
         <>
-          <PageDialog open={Boolean(pageDialog)} page={pageDialog?.page ?? null} onClose={() => setPageDialog(null)} onSaved={onPageSaved} onPaywall={() => setPaywall(true)} />
+          <PageDialog open={Boolean(pageDialog)} page={pageDialog?.page ?? null} onClose={() => setPageDialog(null)} onSaved={onPageSaved} onPaywall={() => setPaywall("pages")} />
           {page && <ShelfDialog open={Boolean(shelfDialog)} pageId={page.id} shelf={shelfDialog?.shelf ?? null} onClose={() => setShelfDialog(null)} onSaved={onShelfSaved} />}
           <MoveShelfDialog shelf={moveTarget} pages={pages} onClose={() => setMoveTarget(null)} onMoved={onShelfMoved} />
-          <AddItemDialog open={Boolean(addTo)} shelf={addTo} onClose={() => setAddTo(null)} onAdded={onItemAdded} />
+          <AddItemDialog open={Boolean(addTo)} shelf={addTo} onClose={() => setAddTo(null)} onAdded={onItemAdded} onLimit={() => { setAddTo(null); setPaywall("items"); }} />
           <ConfirmDialog
             open={Boolean(confirm)}
-            title={confirm?.kind === "page" ? "Delete this page?" : "Delete this shelf?"}
+            title={confirm?.kind === "page" ? "Delete this page?" : "Delete this collection?"}
             body={`“${confirm?.name ?? ""}” and everything on it will be permanently removed.`}
             confirmLabel="Delete"
             onClose={() => setConfirm(null)}
@@ -521,21 +541,30 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
             />
           )}
           <PaywallDialog
-            open={paywall}
+            open={Boolean(paywall)}
+            reason={paywall || "pages"}
             stripeEnabled={stripeEnabled}
             priceLabel={priceLabel}
             onClose={() => setPaywall(false)}
             onUpgraded={() => {
+              const reason = paywall;
               setSubscribed(true);
               setPaywall(false);
               router.refresh();
-              setTimeout(() => {
-                setPageDialog({ page: null });
-              }, 350);
+              if (reason === "pages") setTimeout(() => setPageDialog({ page: null }), 350);
             }}
           />
         </>
       )}
+      <FollowListDialog
+        open={Boolean(connections)}
+        username={user.username}
+        initialKind={connections ?? "followers"}
+        counts={{ followers: stats.followers, following: stats.following }}
+        signedIn={Boolean(viewer)}
+        onClose={() => setConnections(null)}
+        onViewerFollowChange={isOwner ? (d) => setStats((s) => ({ ...s, following: Math.max(0, s.following + d) })) : undefined}
+      />
       <ItemModal
         item={openItem}
         shelf={openShelf}

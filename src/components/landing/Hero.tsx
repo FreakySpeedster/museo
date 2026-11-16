@@ -133,7 +133,7 @@ export function Hero() {
         </h1>
 
         <p data-hero-fade className="mx-auto mt-8 max-w-md text-pretty text-center text-lede text-muted">
-          Pages and shelves for the things you collect. Paste a link or snap a photo, and nook builds the shelf.
+          Pages and collections for the things you collect. Paste a link or snap a photo, and nook builds the collection.
         </p>
 
         <div data-hero-fade className="mt-10 flex flex-col items-center gap-3">

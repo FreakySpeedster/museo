@@ -10,7 +10,7 @@ import { appUrl } from "@/lib/env";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl()),
   title: { default: "nook — show off what you collect", template: "%s · nook" },
-  description: "nook is a home for your collections. Build pages, stock shelves with links and photos, and share them with the world.",
+  description: "nook is a home for your collections. Build pages, fill collections with links and photos, and share them with the world.",
   openGraph: { title: "nook", description: "Show off what you collect.", type: "website" },
 };
 

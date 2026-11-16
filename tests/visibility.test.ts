@@ -128,6 +128,7 @@ describe("feed pagination", () => {
   it("loads a small page, not every item at once", async () => {
     const owner = await newUser("archivist");
     const shelf = await createShelf(owner.u.id, owner.page.id, { name: "Stack", category: "books" });
+    await db.user.update({ where: { id: owner.u.id }, data: { subscribed: true } }); // > 10 items per collection needs Plus
     for (let i = 0; i < 12; i++) {
       await createPhotoItem(owner.u.id, shelf.id, { title: `Book ${i}`, description: "" }, await PNG());
     }

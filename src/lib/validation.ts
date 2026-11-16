@@ -64,12 +64,12 @@ export const pageSchema = z.object({
 export const pageUpdateSchema = pageSchema.partial();
 
 export const shelfSchema = z.object({
-  name: trimmed(1, 40, "Shelf name"),
+  name: trimmed(1, 40, "Collection name"),
   category: z.string().trim().refine(isValidCategory, { error: "Choose a category" }),
   visibility: visibilitySchema.optional(),
 });
 export const shelfUpdateSchema = z.object({
-  name: trimmed(1, 40, "Shelf name").optional(),
+  name: trimmed(1, 40, "Collection name").optional(),
   visibility: visibilitySchema.optional(),
   // A shelf holds items of one category; category is fixed once set to keep that promise.
 });
@@ -145,3 +145,22 @@ export function firstIssue(err: z.ZodError): string {
 }
 
 export const shelfMoveSchema = z.object({ pageId: z.string().min(1).max(64) });
+
+export const blogPostSchema = z.object({
+  title: trimmed(1, 140, "Title"),
+  contentHtml: z.string().max(200_000, "That post is too long").default(""),
+  status: z.enum(["draft", "published"]).default("draft"),
+  itemIds: z.array(z.string().min(1).max(40)).max(12, "Tag up to 12 items").default([]),
+});
+export const blogPostUpdateSchema = blogPostSchema.partial();
+
+export const blogListQuerySchema = z.object({
+  author: z.string().trim().toLowerCase().max(40).optional(),
+  mine: z.enum(["1", "0"]).optional(),
+  cursor: z.string().max(80).optional(),
+});
+
+export const connectionsQuerySchema = z.object({
+  q: z.string().trim().max(50).optional(),
+  cursor: z.string().max(80).optional(),
+});

@@ -45,7 +45,7 @@ export function OwnerTimeline({ username, initial }: { username: string; initial
   }, [feed.nextCursor]);
 
   if (feed.items.length === 0 && !loading) {
-    return <p className="py-16 text-center text-meta text-muted">Nothing in your timeline yet. Add an item to a shelf.</p>;
+    return <p className="py-16 text-center text-meta text-muted">Nothing in your timeline yet. Add an item to a collection.</p>;
   }
 
   return (

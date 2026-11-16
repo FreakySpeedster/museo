@@ -19,10 +19,10 @@ export default async function Home() {
         <div>
           <p className="text-meta text-muted">Welcome back</p>
           <h1 className="text-title font-semibold">Hi {user.displayName.split(" ")[0]}</h1>
-          <p className="mt-1 text-body text-muted">Here’s what’s new on the shelves.</p>
+          <p className="mt-1 text-body text-muted">Here’s what’s new across nook.</p>
         </div>
         <div className="flex gap-2">
-          <LinkButton href={`/u/${user.username}`}>My shelves</LinkButton>
+          <LinkButton href={`/u/${user.username}`}>My collections</LinkButton>
         </div>
       </div>
       <HomeFeed initialScope={scope} initial={initial} hasFollows={followCount > 0} viewerId={user.id} />

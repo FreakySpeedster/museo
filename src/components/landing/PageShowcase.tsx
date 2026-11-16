@@ -217,7 +217,7 @@ export function PageShowcase() {
             <span data-deck-count>01</span> / {String(PAGES.length).padStart(2, "0")} — Live on nook
           </p>
           <h2 className="mt-4 text-title font-semibold tracking-tight">Every collection gets a little home.</h2>
-          <p className="mt-4 max-w-md text-body text-muted">Records on rotation, the books on your nightstand, the plants you keep alive. Friends drop by, like a shelf, leave a note.</p>
+          <p className="mt-4 max-w-md text-body text-muted">Records on rotation, the books on your nightstand, the plants you keep alive. Friends drop by, like a collection, leave a note.</p>
           <ul className="mt-8 flex flex-wrap gap-2" aria-label="Profiles">
             {PAGES.map((p, i) => (
               <li key={p.handle}>

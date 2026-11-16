@@ -10,7 +10,8 @@ const SORTS = new Set<SearchSort>(["relevance", "new", "top"]);
 export default async function Page({ searchParams }: { searchParams: Promise<{ q?: string; type?: string; sort?: string }> }) {
   const sp = await searchParams;
   const q = (sp.q ?? "").slice(0, 80);
-  const type = TYPES.has(sp.type as SearchType) ? (sp.type as SearchType) : "all";
+  const raw = sp.type === "collections" ? "shelves" : sp.type; // "collections" is the public name
+  const type = TYPES.has(raw as SearchType) ? (raw as SearchType) : "all";
   const sort = SORTS.has(sp.sort as SearchSort) ? (sp.sort as SearchSort) : "relevance";
   return <SearchPage initialQ={q} initialType={type} initialSort={sort} />;
 }

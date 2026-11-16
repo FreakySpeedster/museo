@@ -13,7 +13,7 @@ import {
 import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
-import { ArrowDown, ArrowUp, FolderInput, MoreHorizontal, Plus, Share2 } from "lucide-react";
+import { ArrowDown, ArrowUp, FolderInput, Gem, MoreHorizontal, Plus, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { copyText, shelfShareText } from "@/lib/share-text";
 import { categoryMeta } from "@/lib/categories";
@@ -69,6 +69,7 @@ export function ShelfView({
   onToggleVisibility,
   onMoveToPage,
   canMoveToPage,
+  itemLimit,
 }: {
   shelf: ShelfDTO;
   username: string;
@@ -88,7 +89,10 @@ export function ShelfView({
   /** nook Plus only: omit to hide the Move item entirely. */
   onMoveToPage?: (shelf: ShelfDTO) => void;
   canMoveToPage?: boolean;
+  /** Owner on the free plan: show "n/10" and nudge to Plus when full. */
+  itemLimit?: number;
 }) {
+  const full = itemLimit !== undefined && shelf.items.length >= itemLimit;
   const root = useRef<HTMLElement>(null);
   const grid = useRef<HTMLDivElement>(null);
   const meta = categoryMeta(shelf.category);
@@ -157,10 +161,15 @@ export function ShelfView({
           <h3 className="flex items-center gap-2 text-heading font-semibold leading-tight tracking-tight">
             <CategoryIcon category={shelf.category} className="size-5 shrink-0 text-accent" />
             <span className="min-w-0 truncate">{shelf.name}</span>
-            {isOwner && locked && <VisibilityLock label={pagePrivate ? "Hidden because the page is private" : "Private shelf"} />}
+            {isOwner && locked && <VisibilityLock label={pagePrivate ? "Hidden because the page is private" : "Private collection"} />}
           </h3>
           <p className="text-caption text-muted">
-            {meta.label} · {shelf.items.length} {shelf.items.length === 1 ? "item" : "items"}
+            {meta.label} ·{" "}
+            {itemLimit !== undefined ? (
+              <span className={full ? "font-medium text-warning" : undefined} data-testid="item-count">{shelf.items.length}/{itemLimit} items{full ? " · full" : ""}</span>
+            ) : (
+              <>{shelf.items.length} {shelf.items.length === 1 ? "item" : "items"}</>
+            )}
           </p>
         </div>
         {(isOwner || shelf.items.length > 0) && (
@@ -172,14 +181,14 @@ export function ShelfView({
             )}
             {isOwner && (<>
             <Button size="sm" onClick={() => onAddItem(shelf)} aria-label={`Add item to ${shelf.name}`}>
-              <Plus className="size-4" aria-hidden strokeWidth={2.4} /><span className="hidden sm:inline">Add item</span>
+              {full ? <Gem className="size-4" aria-hidden /> : <Plus className="size-4" aria-hidden strokeWidth={2.4} />}<span className="hidden sm:inline">{full ? "Get more room" : "Add item"}</span>
             </Button>
             <Menu
               label={`Actions for ${shelf.name}`}
               items={[
                 { label: "Rename", onSelect: () => onEditShelf(shelf) },
                 { label: shelf.visibility === "private" ? "Make public" : "Make private", hidden: !onToggleVisibility, onSelect: () => onToggleVisibility?.(shelf) },
-                { label: "Move", icon: <FolderInput className="size-4" aria-hidden />, hidden: !onMoveToPage, disabled: !canMoveToPage, title: canMoveToPage ? undefined : "Create another page to move shelves", onSelect: () => onMoveToPage?.(shelf) },
+                { label: "Move", icon: <FolderInput className="size-4" aria-hidden />, hidden: !onMoveToPage, disabled: !canMoveToPage, title: canMoveToPage ? undefined : "Create another page to move collections", onSelect: () => onMoveToPage?.(shelf) },
                 { label: "Move up", icon: <ArrowUp className="size-4" aria-hidden />, hidden: !onMoveShelf || !canMoveUp, onSelect: () => onMoveShelf?.(shelf, -1) },
                 { label: "Move down", icon: <ArrowDown className="size-4" aria-hidden />, hidden: !onMoveShelf || !canMoveDown, onSelect: () => onMoveShelf?.(shelf, 1) },
                 { label: "Delete", danger: true, onSelect: () => onDeleteShelf(shelf) },
@@ -199,7 +208,7 @@ export function ShelfView({
         <EmptyState
           className="py-10"
           icon={<CategoryIcon category={shelf.category} className="size-10" />}
-          title="This shelf is empty"
+          title="This collection is empty"
           description={isOwner ? "Add a link or a photo to start your collection." : "Nothing here yet."}
           action={isOwner ? <Button size="sm" onClick={() => onAddItem(shelf)}>Add the first item</Button> : undefined}
         />

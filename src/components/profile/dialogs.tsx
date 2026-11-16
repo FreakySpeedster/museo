@@ -1,6 +1,6 @@
 "use client";
 
-import { FileStack, Heart, Zap, type LucideIcon } from "lucide-react";
+import { FileStack, FolderInput, Heart, Infinity as InfinityIcon, NotebookPen, type LucideIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import type { PageDTO, ShelfDTO, ViewerDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
@@ -10,7 +10,7 @@ import { CategoryPicker } from "@/components/ui/CategoryPicker";
 import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { MAX_SHELVES_PER_PAGE } from "@/lib/limits";
+import { FREE_ITEMS_PER_SHELF, MAX_SHELVES_PER_PAGE } from "@/lib/limits";
 import { Toggle } from "@/components/ui/Toggle";
 import { Select } from "@/components/ui/Select";
 import { SOCIAL_NETWORKS } from "@/lib/social-links";
@@ -50,7 +50,7 @@ export function PageDialog({
   onPaywall: () => void;
 }) {
   return (
-    <Modal open={open} onClose={onClose} title={page ? "Edit page" : "New page"} description={page ? undefined : "A page groups related shelves — like “Music” or “Travel”."}>
+    <Modal open={open} onClose={onClose} title={page ? "Edit page" : "New page"} description={page ? undefined : "A page groups related collections — like “Music” or “Travel”."}>
       <PageForm page={page} onClose={onClose} onSaved={onSaved} onPaywall={onPaywall} />
     </Modal>
   );
@@ -118,8 +118,8 @@ export function ShelfDialog({
     <Modal
       open={open}
       onClose={onClose}
-      title={shelf ? "Rename shelf" : "New shelf"}
-      description={shelf ? undefined : `Each shelf holds one category. A page can have up to ${MAX_SHELVES_PER_PAGE} shelves.`}
+      title={shelf ? "Rename collection" : "New collection"}
+      description={shelf ? undefined : `Each collection holds one category. A page can have up to ${MAX_SHELVES_PER_PAGE} collections.`}
     >
       <ShelfForm pageId={pageId} shelf={shelf} onClose={onClose} onSaved={onSaved} />
     </Modal>
@@ -143,20 +143,20 @@ function ShelfForm({ pageId, shelf, onClose, onSaved }: { pageId: string; shelf:
   }
   return (
     <form onSubmit={submit} className="space-y-4">
-      <Field label="Shelf name" htmlFor="shelf-name">
+      <Field label="Collection name" htmlFor="shelf-name">
         <Input id="shelf-name" name="name" data-autofocus required maxLength={40} defaultValue={shelf?.name} placeholder="e.g. Currently reading" />
       </Field>
       {!shelf && (
-        <Field label="Category" htmlFor="shelf-cat" hint="everything on this shelf fits it">
+        <Field label="Category" htmlFor="shelf-cat" hint="everything in this collection fits it">
           <CategoryPicker id="shelf-cat" name="category" value={category} onChange={setCategory} />
         </Field>
       )}
-      <Toggle checked={isPrivate} onChange={setPrivate} label={isPrivate ? "Private shelf" : "Public shelf"} />
-      <p className="text-caption text-muted">Private shelves and their items are hidden from everyone else.</p>
+      <Toggle checked={isPrivate} onChange={setPrivate} label={isPrivate ? "Private collection" : "Public collection"} />
+      <p className="text-caption text-muted">Private collections and their items are hidden from everyone else.</p>
       <ErrorLine msg={error} />
       <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-        <Button type="submit" loading={busy}>{shelf ? "Save" : "Create shelf"}</Button>
+        <Button type="submit" loading={busy}>{shelf ? "Save" : "Create collection"}</Button>
       </div>
     </form>
   );
@@ -274,27 +274,38 @@ function ProfileForm({ viewer, onClose, onSaved, onAvatar }: { viewer: ViewerDTO
 }
 
 /* --------------------------------------------------------------- Paywall */
+export type PaywallReason = "pages" | "items" | "blog";
+
+const PAYWALL_COPY: Record<PaywallReason, { title: string; description: string }> = {
+  pages: { title: "Create more pages with Plus", description: "Your first page is free forever. Plus unlocks the rest." },
+  items: { title: "This collection is full", description: `Free collections hold up to ${FREE_ITEMS_PER_SHELF} items. Plus removes the limit.` },
+  blog: { title: "Write on your nook blog", description: "Reviews and stories about the things you collect are a Plus feature." },
+};
+
 export function PaywallDialog({
   open,
   stripeEnabled,
   priceLabel,
   onClose,
   onUpgraded,
+  reason = "pages",
 }: {
   open: boolean;
   stripeEnabled: boolean;
   priceLabel: string;
   onClose: () => void;
   onUpgraded: () => void;
+  reason?: PaywallReason;
 }) {
+  const copy = PAYWALL_COPY[reason];
   return (
-    <Modal open={open} onClose={onClose} title="Create more pages with Plus" description="Your first page is free forever. Plus unlocks the rest.">
+    <Modal open={open} onClose={onClose} title={copy.title} description={copy.description}>
       <PaywallBody stripeEnabled={stripeEnabled} priceLabel={priceLabel} onClose={onClose} onUpgraded={onUpgraded} />
     </Modal>
   );
 }
 
-function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: { stripeEnabled: boolean; priceLabel: string; onClose: () => void; onUpgraded: () => void }) {
+export function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: { stripeEnabled: boolean; priceLabel: string; onClose: () => void; onUpgraded: () => void }) {
   const toast = useToast();
   const { busy, error, run } = useSubmit();
 
@@ -312,8 +323,10 @@ function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: { strip
   }
 
   const perks: Array<[LucideIcon, string, string]> = [
-    [FileStack, "Unlimited extra pages", "Music, travel, sneakers… give every collection its own page."],
-    [Zap, "Switch pages instantly", "Your page switcher shows everything you curate."],
+    [FileStack, "Unlimited pages", "Music, travel, sneakers… give every collection its own page."],
+    [InfinityIcon, "Unlimited items per collection", `Free collections stop at ${FREE_ITEMS_PER_SHELF} items. Plus never does.`],
+    [NotebookPen, "Your nook blog", "Write reviews and stories, and tag the items they’re about."],
+    [FolderInput, "Move collections between pages", "Reorganise whenever your taste changes."],
     [Heart, "Support an indie product", "Plus keeps nook ad-free and tracker-free."],
   ];
 
@@ -366,7 +379,7 @@ export function MoveShelfDialog({
   onMoved: (shelf: ShelfDTO, fromPageId: string) => void;
 }) {
   return (
-    <Modal open={Boolean(shelf)} onClose={onClose} title="Move shelf" description={shelf ? `Move “${shelf.name}” and all its items to another page.` : undefined} size="sm">
+    <Modal open={Boolean(shelf)} onClose={onClose} title="Move collection" description={shelf ? `Move “${shelf.name}” and all its items to another page.` : undefined} size="sm">
       {shelf && <MoveShelfBody key={shelf.id} shelf={shelf} pages={pages} onClose={onClose} onMoved={onMoved} />}
     </Modal>
   );

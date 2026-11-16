@@ -108,7 +108,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search people, items, and shelves"
+            placeholder="Search people, items, and collections"
             className="h-14 w-full bg-transparent text-body outline-none placeholder:text-muted"
             autoComplete="off"
             spellCheck={false}

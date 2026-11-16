@@ -17,6 +17,8 @@ export interface ItemDTO {
   commentCount: number;
   likedByMe: boolean;
   visibility: "public" | "private";
+  /** Unique views from other people (24h dedupe). */
+  viewCount: number;
 }
 
 export interface ShelfDTO {
@@ -110,4 +112,39 @@ export interface NotificationDTO {
   excerpt: string | null;
   /** FOLLOW_REQUEST only: still awaiting a decision. */
   pending?: boolean;
+}
+
+export interface ConnectionDTO extends PublicUser {
+  isViewer: boolean;
+  followState: "none" | "requested" | "following";
+}
+
+export type BlogStatus = "draft" | "published";
+
+/** An item tagged in a blog post (only the ones the reader may see). */
+export interface TaggedItemDTO {
+  id: string;
+  title: string;
+  imageUrl: string | null;
+  faviconUrl: string | null;
+  siteName: string | null;
+  collection: string;
+  username: string;
+}
+
+export interface BlogPostSummaryDTO {
+  id: string;
+  title: string;
+  excerpt: string;
+  coverUrl: string | null;
+  status: BlogStatus;
+  publishedAt: string | null;
+  updatedAt: string;
+  author: PublicUser;
+  itemCount: number;
+}
+
+export interface BlogPostDTO extends BlogPostSummaryDTO {
+  contentHtml: string;
+  items: TaggedItemDTO[];
 }

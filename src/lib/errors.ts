@@ -6,6 +6,7 @@ export type ErrorCode =
   | "CONFLICT"
   | "SHELF_LIMIT"
   | "PAYWALL"
+  | "ITEM_LIMIT"
   | "RATE_LIMITED"
   | "UPLOAD_INVALID"
   | "UNPROCESSABLE";
@@ -18,6 +19,7 @@ const STATUS: Record<ErrorCode, number> = {
   CONFLICT: 409,
   SHELF_LIMIT: 422,
   PAYWALL: 402,
+  ITEM_LIMIT: 402,
   RATE_LIMITED: 429,
   UPLOAD_INVALID: 400,
   UNPROCESSABLE: 422,

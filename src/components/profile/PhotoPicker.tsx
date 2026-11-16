@@ -37,7 +37,7 @@ async function toJpeg(file: File): Promise<File | null> {
 }
 
 /** Validate + downscale a picked/dropped/pasted image. Returns an error message instead of throwing. */
-export async function readPhotoFile(picked: File): Promise<{ file?: File; error?: string }> {
+export async function readPhotoFile(picked: File, opts: { maxBytes?: number } = {}): Promise<{ file?: File; error?: string }> {
   if (!ACCEPT.includes(picked.type)) {
     // HEIC / AVIF / BMP from phones and clipboards: let the browser decode and re-encode as JPEG when it can.
     const converted = picked.type.startsWith("image/") ? await toJpeg(picked) : null;
@@ -45,8 +45,8 @@ export async function readPhotoFile(picked: File): Promise<{ file?: File; error?
     picked = converted;
   }
   if (picked.size > MAX_MB * 1024 * 1024) return { error: `That image is too large (max ${MAX_MB}MB).` };
-  const file = await prepareImage(picked);
-  if (file.size > MAX_REQUEST_BYTES) return { error: "That image is too large to upload. Try a smaller file." };
+  const file = await prepareImage(picked, opts.maxBytes);
+  if (file.size > (opts.maxBytes ?? MAX_REQUEST_BYTES)) return { error: "That image is too large to upload. Try a smaller file." };
   return { file };
 }
 

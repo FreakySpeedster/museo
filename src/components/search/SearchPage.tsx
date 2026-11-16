@@ -38,7 +38,7 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
     const ns = next.sort ?? sort;
     const sp = new URLSearchParams();
     if (nq) sp.set("q", nq);
-    if (nt !== "all") sp.set("type", nt);
+    if (nt !== "all") sp.set("type", nt === "shelves" ? "collections" : nt);
     if (ns !== "relevance") sp.set("sort", ns);
     router.replace(`/search?${sp.toString()}`, { scroll: false });
   }
@@ -87,7 +87,7 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Search people, items, and shelves"
+          placeholder="Search people, items, and collections"
           className="h-12 w-full bg-transparent text-body outline-none placeholder:text-muted"
           autoComplete="off"
           spellCheck={false}
@@ -106,7 +106,7 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
             { value: "all", label: "All" },
             { value: "people", label: "People" },
             { value: "items", label: "Items" },
-            { value: "shelves", label: "Shelves" },
+            { value: "shelves", label: "Collections" },
           ]}
         />
         <Menu
