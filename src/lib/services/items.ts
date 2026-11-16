@@ -3,7 +3,9 @@ import { canViewItem } from "../visibility";
 import { toTimelineEntry } from "../mappers";
 import { attachSocial } from "./social";
 import { AppError } from "../errors";
-import { resolveLinkPreview, resolveThumbnail } from "../link-preview";
+import { downloadImage, resolveLinkPreview, resolveThumbnail } from "../link-preview";
+
+export const MAX_ITEM_PHOTOS = 6;
 import { deleteUploadByUrl, saveUploadedImage } from "../uploads";
 import { itemCreateLinkSchema, itemTextSchema, itemUpdateSchema, reorderSchema } from "../validation";
 import { assertShelfOwner } from "./shelves";
@@ -23,7 +25,7 @@ export async function createLinkItem(
   userId: string,
   shelfId: string,
   input: z.infer<typeof itemCreateLinkSchema>,
-  opts: { imageUrl?: string; photo?: Buffer } = {},
+  opts: { imageUrl?: string; photo?: Buffer; extraImageUrls?: string[] } = {},
 ) {
   await assertShelfOwner(userId, shelfId);
   const position = await nextPosition(shelfId);
@@ -33,6 +35,15 @@ export async function createLinkItem(
   const { preview } = resolved;
   const thumb = own ? { imageUrl: own, faviconUrl: (await resolveThumbnail({ ...resolved, best: null, alternatives: [] })).faviconUrl } : await resolveThumbnail(resolved, { prefer: opts.imageUrl });
   const { imageUrl, faviconUrl } = thumb;
+  // Extra photos the user picked: stored locally in parallel, unusable ones are dropped.
+  let referer: string | undefined;
+  try {
+    referer = new URL(preview.url).origin + "/";
+  } catch {
+    /* ignore */
+  }
+  const extras = [...new Set(opts.extraImageUrls ?? [])].filter((u) => u !== opts.imageUrl).slice(0, MAX_ITEM_PHOTOS - 1);
+  const images = (await Promise.all(extras.map((u) => downloadImage(u, referer).catch(() => null)))).filter((u): u is string => Boolean(u) && u !== imageUrl);
   let host = preview.siteName;
   try {
     host = host || new URL(preview.url).hostname.replace(/^www\./, "");
@@ -48,6 +59,7 @@ export async function createLinkItem(
       type: "LINK",
       url: preview.url,
       imageUrl,
+      images,
       faviconUrl,
       title: title.slice(0, 120),
       description: description.slice(0, 500),
@@ -93,7 +105,7 @@ export async function updateItem(userId: string, itemId: string, input: z.infer<
 export async function deleteItem(userId: string, itemId: string) {
   const item = await assertItemOwner(userId, itemId);
   await db.item.delete({ where: { id: itemId } });
-  await Promise.all([deleteUploadByUrl(item.imageUrl), deleteUploadByUrl(item.faviconUrl)]);
+  await Promise.all([deleteUploadByUrl(item.imageUrl), deleteUploadByUrl(item.faviconUrl), ...item.images.map((u) => deleteUploadByUrl(u))]);
 }
 
 export async function reorderItems(userId: string, shelfId: string, input: z.infer<typeof reorderSchema>) {

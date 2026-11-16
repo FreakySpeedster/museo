@@ -1,10 +1,10 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, History, LayoutGrid, Link2, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { Check, LayoutGrid, Link2, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, TimelineEntry, ViewerDTO } from "@/lib/dto";
+import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, ViewerDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { MAX_SHELVES_PER_PAGE, pageCreationGate } from "@/lib/limits";
 import { gsap, reducedMotion, useGSAP } from "@/lib/gsap";
@@ -20,16 +20,13 @@ import { ItemModal } from "./ItemModal";
 import { PageSwitcher } from "./PageSwitcher";
 import { ProfileStickyBar } from "./ProfileStickyBar";
 import { ShelfView } from "./ShelfView";
-import { OwnerTimeline } from "./OwnerTimeline";
 import { BrandIcon, brandLabel } from "@/components/ui/BrandIcon";
 import { VisibilityLock } from "@/components/ui/VisibilityLock";
-import { Tabs } from "@/components/ui/Tabs";
 
 interface Props {
   profile: {
     user: PublicUser;
     pages: PageDTO[];
-    timeline: { items: TimelineEntry[]; nextCursor: string | null };
     stats: { followers: number; following: number; items: number };
     isFollowing: boolean;
     isOwner: boolean;
@@ -39,7 +36,6 @@ interface Props {
   priceLabel: string;
   initialPageId?: string;
   initialItemId?: string;
-  initialView?: "pages" | "timeline";
 }
 
 function subscribeSm(cb: () => void) {
@@ -48,7 +44,7 @@ function subscribeSm(cb: () => void) {
   return () => mq.removeEventListener("change", cb);
 }
 
-export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initialPageId, initialItemId, initialView }: Props) {
+export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initialPageId, initialItemId }: Props) {
   const router = useRouter();
   const toast = useToast();
   const { isOwner } = profile;
@@ -75,7 +71,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   const [paywall, setPaywall] = useState(false);
   const [profileDialog, setProfileDialog] = useState(false);
   const [confirm, setConfirm] = useState<null | { kind: "shelf" | "page"; id: string; name: string }>(null);
-  const [view, setView] = useState<"pages" | "timeline">(profile.isOwner && initialView === "timeline" ? "timeline" : "pages");
 
 
   // Owners: quietly retry thumbnails for link items that were saved without one (older items, flaky sites).
@@ -244,14 +239,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     [pages, toast],
   );
 
-  function selectView(next: "pages" | "timeline") {
-    setView(next);
-    const url = new URL(window.location.href);
-    if (next === "timeline") url.searchParams.set("view", "timeline");
-    else url.searchParams.delete("view");
-    window.history.replaceState(null, "", url);
-  }
-
   async function persistPageOrder(pageIds: string[]) {
     const byId = new Map(pages.map((p) => [p.id, p]));
     setPages(pageIds.map((id) => byId.get(id)).filter((p): p is PageDTO => Boolean(p)));
@@ -379,7 +366,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
                 className="grid size-9 place-items-center rounded-full border border-border text-foreground transition-colors hover:bg-surface-hover"
                 aria-label={brandLabel(l.network)}
               >
-                <BrandIcon network={l.network} className="size-4" />
+                <BrandIcon network={l.network} className="size-4" brand />
               </a>
             ))}
           </div>
@@ -389,34 +376,14 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       {/* ------------------------------------------ collections label + sticky page switcher */}
       <div className="border-t border-border" />
       <ProfileStickyBar headerRef={header} displayName={user.displayName} username={user.username} avatarUrl={user.avatarUrl}>
-        <div className="flex items-center gap-3">
-          <div className="min-w-0 flex-1">
-            {view === "pages" && page ? (
-              <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} onReorder={isOwner ? persistPageOrder : undefined} />
-            ) : view === "timeline" ? (
-              <p className="px-1 text-meta font-medium text-muted">Your activity, newest first</p>
-            ) : null}
-          </div>
-          {isOwner && (
-            <Tabs
-              label="Profile view"
-              className="shrink-0 !p-0.5"
-              value={view}
-              onChange={selectView}
-              options={[
-                { value: "pages", label: <span className="inline-flex items-center gap-1.5" title="Pages"><LayoutGrid className="size-4" aria-hidden /><span className="sr-only sm:not-sr-only">Pages</span></span> },
-                { value: "timeline", label: <span className="inline-flex items-center gap-1.5" title="Timeline"><History className="size-4" aria-hidden /><span className="sr-only sm:not-sr-only">Timeline</span></span> },
-              ]}
-            />
-          )}
-        </div>
+        {page && (
+          <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} onReorder={isOwner ? persistPageOrder : undefined} />
+        )}
       </ProfileStickyBar>
 
       {/* --------------------------------------------------------- body */}
-      <div ref={content} className="mt-6" key={view === "timeline" ? "timeline" : activeId}>
-        {view === "timeline" && isOwner ? (
-          <OwnerTimeline username={user.username} initial={profile.timeline} />
-        ) : page ? (
+      <div ref={content} className="mt-6" key={activeId}>
+        {page ? (
           <div className="space-y-10">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">

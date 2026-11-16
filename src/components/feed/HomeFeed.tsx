@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
-import { ItemThumb } from "@/components/profile/ItemThumb";
+import { PhotoCarousel } from "@/components/profile/PhotoCarousel";
 import { ItemModal } from "@/components/profile/ItemModal";
 import { LikeButton } from "@/components/social/LikeButton";
 import { TagList } from "@/components/ui/Tags";
@@ -146,10 +146,10 @@ export function HomeFeed({
                   </p>
                 </div>
               </header>
+              <div className="aspect-[16/10] cursor-pointer overflow-hidden bg-surface-hover" onClick={() => setOpen(e)} aria-hidden>
+                <PhotoCarousel item={e} />
+              </div>
               <button type="button" className="block w-full text-left" onClick={() => setOpen(e)} aria-label={`Open ${e.title}`}>
-                <div className="aspect-[16/10] overflow-hidden bg-surface-hover">
-                  <ItemThumb item={e} />
-                </div>
                 <div className="space-y-2 px-4 pt-3">
                   <h3 className="text-heading font-semibold leading-snug">{e.title}</h3>
                   <TagList tags={e.tags ?? []} />

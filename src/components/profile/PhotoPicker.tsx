@@ -64,6 +64,7 @@ export function PhotoPicker({
   onError,
   revertLabel = "Back to the link photo",
   className,
+  multi,
 }: {
   candidates: PhotoCandidate[];
   selected: string | null;
@@ -74,6 +75,8 @@ export function PhotoPicker({
   onError?: (message: string) => void;
   revertLabel?: string;
   className?: string;
+  /** Multi-select: tap to add or remove photos; the order picked is the order shown (first is the cover). */
+  multi?: { picks: string[]; max: number };
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -118,6 +121,8 @@ export function PhotoPicker({
 
   const shown = candidates.filter((c) => !broken.has(c.url));
   const active = ownUrl ? null : selected ?? shown[0]?.url ?? null;
+  const offset = ownUrl ? 1 : 0;
+  const full = multi ? multi.picks.length + offset >= multi.max : false;
 
   return (
     <div
@@ -130,17 +135,21 @@ export function PhotoPicker({
       onDrop={onDrop}
       className={clsx("rounded-2xl border border-dashed p-3 transition", drag ? "border-accent bg-accent-subtle" : "border-border", className)}
     >
-      <p className="mb-2 text-caption font-medium text-muted">{ownUrl ? "Using your own photo" : shown.length > 1 ? "Pick the photo to show" : "Photo"}</p>
+      <p className="mb-2 text-caption font-medium text-muted">{multi && shown.length > 1
+          ? `Tap photos to add them (${multi.picks.length + offset}/${multi.max}). The first one is the cover.`
+          : ownUrl ? "Using your own photo" : shown.length > 1 ? "Pick the photo to show" : "Photo"}</p>
       <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1">
         {ownUrl && (
           <div ref={ownTile} className="relative size-16 shrink-0 snap-start overflow-hidden rounded-xl ring-2 ring-accent sm:size-[72px]" data-testid="own-photo-tile">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={ownUrl} alt="Your photo" className="h-full w-full object-cover" />
-            <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-accent text-accent-contrast"><Check className="size-4" aria-hidden /></span>
+            <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-accent text-micro font-semibold text-accent-contrast">{multi ? 1 : <Check className="size-4" aria-hidden />}</span>
           </div>
         )}
         {shown.map((c, i) => {
-          const on = c.url === active;
+          const order = multi ? multi.picks.indexOf(c.url) : -1;
+          const on = multi ? order >= 0 : c.url === active;
+          const dim = multi ? !on && full : Boolean(ownUrl);
           return (
             <button
               key={c.url}
@@ -149,11 +158,15 @@ export function PhotoPicker({
               aria-pressed={on}
               aria-label={`Photo option ${i + 1}${c.width ? `, ${c.width} by ${c.height}` : ""}`}
               onClick={() => onSelect(c.url)}
-              className={clsx("relative size-16 shrink-0 snap-start overflow-hidden rounded-xl bg-surface-hover outline-none transition focus-visible:ring-2 focus-visible:ring-accent sm:size-[72px]", on ? "ring-2 ring-accent" : "opacity-80 ring-1 ring-line hover:opacity-100", ownUrl && "opacity-50")}
+              className={clsx("relative size-16 shrink-0 snap-start overflow-hidden rounded-xl bg-surface-hover outline-none transition focus-visible:ring-2 focus-visible:ring-accent sm:size-[72px]", on ? "ring-2 ring-accent" : "opacity-80 ring-1 ring-line hover:opacity-100", dim && "opacity-50")}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={c.thumb ?? proxied(c.url)} alt="" loading="lazy" className="h-full w-full object-cover" onError={() => setBroken((b) => new Set(b).add(c.url))} />
-              {on && <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-accent text-accent-contrast"><Check className="size-4" aria-hidden /></span>}
+              {on && (
+                <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-accent text-micro font-semibold text-accent-contrast">
+                  {multi ? order + 1 + offset : <Check className="size-4" aria-hidden />}
+                </span>
+              )}
             </button>
           );
         })}

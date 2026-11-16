@@ -1,4 +1,5 @@
-import { Link2, ImageIcon, Share2 } from "lucide-react";
+import type { ReactNode } from "react";
+import { ArrowRight, Heart, ImageIcon, Link2, MessageCircle, Share2, Sparkles, Users } from "lucide-react";
 import { LinkButton } from "@/components/ui/Button";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CategoryMarquee } from "./CategoryMarquee";
@@ -13,23 +14,32 @@ const STEPS = [
 export function Landing() {
   return (
     <div>
-      <section className="mx-auto max-w-6xl px-4 pb-16 pt-20 sm:px-6 sm:pb-20 sm:pt-28 lg:pt-32">
-        <div className="max-w-3xl">
-          <h1 className="fade-up text-balance text-left text-display font-semibold tracking-tight">Show off what you collect.</h1>
-          <p className="fade-up fade-up-d1 mt-5 max-w-xl text-pretty text-left text-lede text-muted">
-            Build a page, add shelves, and drop in links or photos. nook pulls the image for you.
+      <section className="landing-hero relative overflow-hidden">
+        <div className="landing-dots pointer-events-none absolute inset-0" aria-hidden />
+        <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-20 text-center sm:px-6 sm:pb-24 sm:pt-28">
+          <div className="fade-up mx-auto flex w-fit items-center gap-2 rounded-full border border-border bg-surface/70 px-3.5 py-1.5 text-caption text-muted backdrop-blur">
+            <Sparkles className="size-3.5 text-accent" aria-hidden /> New: tags, replies and reactions
+          </div>
+          <h1 className="fade-up mx-auto mt-8 max-w-4xl text-balance text-display font-semibold leading-[1.02] tracking-tight">
+            Collect what you love.
+            <span className="block text-muted">Show it off beautifully.</span>
+          </h1>
+          <p className="fade-up fade-up-d1 mx-auto mt-6 max-w-xl text-pretty text-lede text-muted">
+            Pages and shelves for the things you collect, built from a link or a photo. nook pulls the images, you pick the story.
           </p>
-          <div className="fade-up fade-up-d2 mt-8 flex flex-wrap items-center justify-start gap-3">
-            <LinkButton href="/signup" size="lg">
-              Start for free
-            </LinkButton>
-            <LinkButton href="/pricing" variant="secondary" size="lg">
-              See pricing
+          <div className="fade-up fade-up-d2 mt-9 flex justify-center">
+            <LinkButton href="/signup" size="lg" className="rounded-full px-7">
+              Start your nook, free <ArrowRight className="size-4" aria-hidden />
             </LinkButton>
           </div>
-        </div>
-        <div className="fade-up fade-up-d3 mt-12 sm:mt-16">
-          <PageShowcase variant="framed" />
+          <p className="fade-up fade-up-d2 mt-4 text-meta text-muted">One page free forever. No card needed.</p>
+
+          <div className="fade-up fade-up-d3 relative mx-auto mt-14 max-w-5xl text-left sm:mt-20">
+            <PageShowcase variant="framed" />
+            <FloatCard className="-left-10 top-24 rotate-[-3deg]" icon={<Heart className="size-4 text-[#FF4D6D]" aria-hidden fill="currentColor" />} title="meera liked your shelf" body="Vinyl I keep coming back to" />
+            <FloatCard className="-right-10 top-10 rotate-[3deg]" icon={<MessageCircle className="size-4 text-accent" aria-hidden />} title="kabir commented" body="Where did you find this pair?" />
+            <FloatCard className="-right-6 bottom-10 rotate-[-2deg]" icon={<Users className="size-4 text-accent" aria-hidden />} title="12 new followers" body="Your Watches page is getting noticed" />
+          </div>
         </div>
       </section>
 
@@ -62,6 +72,15 @@ export function Landing() {
       </section>
 
       <SiteFooter />
+    </div>
+  );
+}
+
+function FloatCard({ className, icon, title, body }: { className: string; icon: ReactNode; title: string; body: string }) {
+  return (
+    <div className={`landing-float absolute hidden w-60 rounded-2xl border border-border bg-surface-raised/90 p-3.5 shadow-lg backdrop-blur-md lg:block ${className}`} aria-hidden>
+      <div className="flex items-center gap-2 text-caption text-muted">{icon}<span className="truncate">{title}</span></div>
+      <p className="mt-1.5 text-meta font-medium">{body}</p>
     </div>
   );
 }

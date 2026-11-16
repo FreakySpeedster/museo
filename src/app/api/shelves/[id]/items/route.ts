@@ -31,7 +31,14 @@ export const POST = route<{ id: string }>(
         if (own.size > maxUploadBytes()) throw new AppError("UPLOAD_INVALID", `Image is too large (max ${Math.round(maxUploadBytes() / 1024 / 1024)}MB)`);
         photo = Buffer.from(await own.arrayBuffer());
       }
-      const item = await createLinkItem(user.id, params.id, input, { imageUrl: pick && pick.length <= 2000 ? pick : undefined, photo });
+      let extraImageUrls: string[] = [];
+      try {
+        const raw = JSON.parse(str(form.get("imageUrls")) || "[]");
+        if (Array.isArray(raw)) extraImageUrls = raw.filter((u): u is string => typeof u === "string" && /^https?:\/\//.test(u) && u.length <= 2000).slice(0, 6);
+      } catch {
+        /* ignore malformed list */
+      }
+      const item = await createLinkItem(user.id, params.id, input, { imageUrl: pick && pick.length <= 2000 ? pick : undefined, photo, extraImageUrls });
       return ok({ item: toItemDTO(item) }, 201);
     }
     if (type === "PHOTO") {

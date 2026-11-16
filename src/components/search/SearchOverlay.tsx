@@ -101,7 +101,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     <div className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center px-4 pt-[12vh] sm:pt-[18vh]" role="dialog" aria-modal="true" aria-label="Search">
       <button type="button" className="absolute inset-0 bg-black/75 backdrop-blur-md" aria-label="Close search" onClick={onClose} />
       <div className="search-spotlight relative w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-surface shadow-lg" tabIndex={-1}>
-        <div className="flex items-center gap-2 border-b border-border px-4">
+        <div className={`flex items-center gap-2 px-4 ${q.trim() ? "border-b border-border" : ""}`}>
           <Search className="size-5 shrink-0 text-muted" aria-hidden />
           <input
             ref={input}
@@ -117,6 +117,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           />
           <kbd className="hidden rounded-md border border-border px-1.5 py-0.5 text-micro text-muted sm:inline">esc</kbd>
         </div>
+        {q.trim() && (
         <ul id="search-results" role="listbox" className="max-h-[min(24rem,50vh)] overflow-y-auto p-1">
           {loading && q.trim() && hits.length === 0 && <li className="px-3 py-3 text-caption text-muted">Searching…</li>}
           {!loading && q.trim() && hits.length === 0 && <li className="px-3 py-3 text-caption text-muted">No matches. Try a different word.</li>}
@@ -163,6 +164,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             </li>
           )}
         </ul>
+        )}
       </div>
     </div>,
     document.body,

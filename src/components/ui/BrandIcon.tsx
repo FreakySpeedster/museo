@@ -24,11 +24,45 @@ const PATHS: Record<SocialNetworkId, { path: string; label: string }> = {
   },
 };
 
-export function BrandIcon({ network, className = "size-4" }: { network: string; className?: string }) {
-  const def = PATHS[network as SocialNetworkId] ?? PATHS.website;
+/** Brand accent per network. X and TikTok stay foreground-coloured (their marks are mono); Instagram uses its gradient. */
+const COLORS: Partial<Record<SocialNetworkId, string>> = {
+  website: "#4F8CFF",
+  youtube: "#FF0033",
+  tiktok: "#25F4EE",
+};
+
+export function BrandIcon({ network, className = "size-4", brand = false }: { network: string; className?: string; brand?: boolean }) {
+  const id = (network in PATHS ? network : "website") as SocialNetworkId;
+  const def = PATHS[id];
+  const gradId = "brand-ig-grad";
+  const fill = brand ? (id === "instagram" ? `url(#${gradId})` : COLORS[id] ?? "currentColor") : "currentColor";
   return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="currentColor">
-      <path d={def.path} />
+    <svg viewBox="0 0 24 24" className={className} aria-hidden fill={fill}>
+      {brand && id === "instagram" && (
+        <defs>
+          <radialGradient id={gradId} cx="30%" cy="107%" r="150%">
+            <stop offset="0%" stopColor="#FDF497" />
+            <stop offset="10%" stopColor="#FDF497" />
+            <stop offset="50%" stopColor="#FD5949" />
+            <stop offset="68%" stopColor="#D6249F" />
+            <stop offset="100%" stopColor="#285AEB" />
+          </radialGradient>
+        </defs>
+      )}
+      {brand && id === "youtube" ? (
+        <>
+          <path d="M21.6 7.2a2.7 2.7 0 0 0-1.9-1.9C18 5 12 5 12 5s-6 0-7.7.3A2.7 2.7 0 0 0 2.4 7.2 28 28 0 0 0 2 12a28 28 0 0 0 .4 4.8 2.7 2.7 0 0 0 1.9 1.9C6 19 12 19 12 19s6 0 7.7-.3a2.7 2.7 0 0 0 1.9-1.9A28 28 0 0 0 22 12a28 28 0 0 0-.4-4.8Z" />
+          <path d="M10 15.2V8.8L15.6 12 10 15.2Z" fill="#fff" />
+        </>
+      ) : brand && id === "tiktok" ? (
+        <>
+          <path d={def.path} fill="#FE2C55" transform="translate(0.8 0.6)" />
+          <path d={def.path} fill="#25F4EE" transform="translate(-0.6 -0.5)" />
+          <path d={def.path} fill="currentColor" />
+        </>
+      ) : (
+        <path d={def.path} />
+      )}
     </svg>
   );
 }

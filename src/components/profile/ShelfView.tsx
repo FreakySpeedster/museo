@@ -138,9 +138,9 @@ export function ShelfView({
     <section ref={root} aria-label={shelf.name} data-shelf-id={shelf.id} className="space-y-3">
       <div data-shelf-head className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="flex items-start gap-2 text-heading font-semibold tracking-tight">
-            <CategoryIcon category={shelf.category} className="mt-0.5 size-5 shrink-0 text-accent" />
-            <span className="break-words">{shelf.name}</span>
+          <h3 className="flex items-center gap-2 text-heading font-semibold leading-tight tracking-tight">
+            <CategoryIcon category={shelf.category} className="size-5 shrink-0 text-accent" />
+            <span className="min-w-0 truncate">{shelf.name}</span>
             {isOwner && locked && <VisibilityLock label={pagePrivate ? "Hidden because the page is private" : "Private shelf"} />}
           </h3>
           <p className="text-caption text-muted">
@@ -150,7 +150,7 @@ export function ShelfView({
         {isOwner && (
           <div className="flex shrink-0 items-center gap-1">
             <Button size="sm" onClick={() => onAddItem(shelf)} aria-label={`Add item to ${shelf.name}`}>
-              <Plus className="size-4" aria-hidden strokeWidth={2.4} /> Add item
+              <Plus className="size-4" aria-hidden strokeWidth={2.4} /><span className="hidden sm:inline">Add item</span>
             </Button>
             <Menu
               label={`Actions for ${shelf.name}`}
@@ -203,7 +203,7 @@ export function ShelfView({
           </SortableContext>
         </DndContext>
       )}
-      <div data-plank className="plank" aria-hidden />
+      <hr data-plank className="!mt-8 border-0 border-t border-border" aria-hidden />
     </section>
   );
 }

@@ -59,13 +59,12 @@ describe("visibility inheritance", () => {
     const publicProfile = await getProfile(owner.u.username, stranger.u.id);
     expect(publicProfile?.stats.items).toBe(0);
     expect(publicProfile?.pages.flatMap((p) => p.shelves.flatMap((s) => s.items))).toHaveLength(0);
-    expect(publicProfile?.timeline.items).toHaveLength(0);
     expect(publicProfile?.isOwner).toBe(false);
 
     const ownProfile = await getProfile(owner.u.username, owner.u.id);
     expect(ownProfile?.stats.items).toBe(1);
     expect(ownProfile?.pages[0].shelves[0].items[0].visibility).toBe("private");
-    expect(ownProfile?.timeline.items.some((i) => i.id === item.id)).toBe(true);
+    expect((await userTimeline(owner.u.id, undefined, owner.u.id)).items.some((i) => i.id === item.id)).toBe(true);
 
     await expectCode(toggleLike(stranger.u.id, item.id), "NOT_FOUND");
     await expectCode(listComments(item.id, stranger.u.id), "NOT_FOUND");
@@ -102,11 +101,8 @@ describe("timeline is owner-only", () => {
     const other = await newUser("peeking");
     const shelf = await createShelf(owner.u.id, owner.page.id, { name: "Notes", category: "books" });
     await createPhotoItem(owner.u.id, shelf.id, { title: "Journal", description: "day one" }, await PNG());
-    const self = await getProfile(owner.u.username, owner.u.id);
-    expect(self?.timeline.items.length).toBeGreaterThan(0);
     const stranger = await getProfile(owner.u.username, other.u.id);
-    expect(stranger?.timeline.items).toHaveLength(0);
-    expect(stranger?.timeline.nextCursor).toBeNull();
+    expect(stranger && "timeline" in stranger).toBe(false);
     const mine = await userTimeline(owner.u.id, undefined, owner.u.id);
     expect(mine.items.length).toBeGreaterThan(0);
   });

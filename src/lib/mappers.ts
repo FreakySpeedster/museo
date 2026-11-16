@@ -10,6 +10,7 @@ export const toItemDTO = (i: Item): ItemDTO => ({
   type: i.type === "PHOTO" ? "PHOTO" : "LINK",
   url: i.url,
   imageUrl: i.imageUrl,
+  images: i.images ?? [],
   faviconUrl: i.faviconUrl,
   title: i.title,
   description: i.description,

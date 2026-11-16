@@ -18,7 +18,7 @@ import { PhotoPicker, type PhotoCandidate } from "./PhotoPicker";
 import { categoryMeta } from "@/lib/categories";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { timeAgo } from "@/lib/time";
-import { ItemThumb } from "./ItemThumb";
+import { PhotoCarousel } from "./PhotoCarousel";
 import { TagInput, TagList } from "@/components/ui/Tags";
 
 const fullDate = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" });
@@ -126,7 +126,7 @@ export function ItemBody({
   return (
         <div className="grid gap-5 md:grid-cols-[1.1fr_1fr]">
           <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-surface-hover md:aspect-[4/5]">
-            <ItemThumb item={it} eager />
+            <PhotoCarousel item={it} eager />
           </div>
           <div className="flex min-w-0 flex-col">
             <div className="flex items-start justify-between gap-3">

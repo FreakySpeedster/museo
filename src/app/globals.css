@@ -456,3 +456,18 @@ body[data-modal="open"] .app-phone-nav { visibility: hidden; pointer-events: non
     box-shadow: none;
   }
 }
+
+/* Landing hero: soft top glow and a faint dot grid that fades out. */
+.landing-hero {
+  background: radial-gradient(80% 60% at 50% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%);
+}
+.landing-dots {
+  background-image: radial-gradient(color-mix(in srgb, var(--foreground) 14%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(70% 55% at 50% 20%, #000 30%, transparent 75%);
+}
+.landing-float { animation: landing-float 6s ease-in-out infinite; }
+.landing-float:nth-of-type(odd) { animation-delay: -3s; }
+@keyframes landing-float { 50% { translate: 0 -8px; } }
+@media (prefers-reduced-motion: reduce) { .landing-float { animation: none; } }
+.no-scrollbar::-webkit-scrollbar { display: none; }

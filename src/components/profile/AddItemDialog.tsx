@@ -17,6 +17,7 @@ import { PhotoPicker, proxied, readPhotoFile, type PhotoCandidate } from "./Phot
 interface Preview { url: string; title: string; description: string; siteName: string; image: string | null; favicon: string | null; candidates: PhotoCandidate[] }
 
 const MAX_MB = 8;
+const MAX_PHOTOS = 6;
 
 /** The picture to show on the preview card: the picked / best candidate's inline thumbnail, else a proxied copy. */
 function shownSrc(preview: Preview, pick: string | null): string {
@@ -57,7 +58,8 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
   const [error, setError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  const [pick, setPick] = useState<string | null>(null); // candidate chosen by the user (null = detected best)
+  const [picks, setPicks] = useState<string[]>([]); // photos chosen by the user, in order (first = cover)
+  const pick = picks[0] ?? null;
   const [own, setOwn] = useState<File | null>(null); // "use my own photo" for a link
   const titleTouched = useRef(false);
   const instant = useRef(false);
@@ -85,7 +87,7 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
         const data = await res.json();
         const p: Preview | null = res.ok ? { ...data.preview, candidates: data.preview.candidates ?? [] } : null;
         setResult({ url: candidate, preview: p });
-        setPick(null);
+        setPicks(p?.candidates[0] ? [p.candidates[0].url] : []);
         if (p?.title && !titleTouched.current) setTitle(p.title); // auto-fill until the user types their own
       } catch (e) {
         if ((e as Error).name !== "AbortError") setResult({ url: candidate, preview: null });
@@ -141,8 +143,13 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
     if (mode === "LINK") {
       if (!url.trim()) return setError("Paste a link first.");
       form.set("url", url.trim());
-      if (own) form.set("file", own);
-      else if (pick && pick !== preview?.image) form.set("imageUrl", pick);
+      if (own) {
+        form.set("file", own);
+        if (picks.length) form.set("imageUrls", JSON.stringify(picks.slice(0, MAX_PHOTOS - 1)));
+      } else {
+        if (pick) form.set("imageUrl", pick);
+        if (picks.length > 1) form.set("imageUrls", JSON.stringify(picks.slice(1, MAX_PHOTOS)));
+      }
     } else {
       if (!file) return setError("Choose a photo to upload.");
       if (!title.trim()) return setError("Give your photo a title.");
@@ -211,7 +218,12 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
                 <PhotoPicker
                   candidates={preview?.candidates ?? []}
                   selected={pick}
-                  onSelect={(u) => { setPick(u); setOwn(null); }}
+                  multi={{ picks, max: MAX_PHOTOS }}
+                  onSelect={(u) =>
+                    setPicks((cur) =>
+                      cur.includes(u) ? cur.filter((x) => x !== u) : cur.length + (own ? 1 : 0) >= MAX_PHOTOS ? cur : [...cur, u],
+                    )
+                  }
                   ownUrl={ownUrl}
                   onOwn={setOwn}
                   onClearOwn={() => setOwn(null)}

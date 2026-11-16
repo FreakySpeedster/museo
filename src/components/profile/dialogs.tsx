@@ -250,7 +250,7 @@ function ProfileForm({ viewer, onClose, onSaved, onAvatar }: { viewer: ViewerDTO
           <Field key={n.id} label={n.label} htmlFor={`pf-${n.id}`} hint="optional">
             <div className="flex items-center gap-2">
               <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-border text-foreground">
-                <BrandIcon network={n.id} className="size-4" />
+                <BrandIcon network={n.id} className="size-4" brand />
               </span>
               <Input
                 id={`pf-${n.id}`}

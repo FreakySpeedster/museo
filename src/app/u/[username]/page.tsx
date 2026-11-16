@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getCurrentUser, } from "@/lib/auth";
 import { getProfile } from "@/lib/services/profile";
 import { stripeConfigured } from "@/lib/env";
@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProfilePage({ params, searchParams }: Props) {
   const [{ username }, sp, viewer] = await Promise.all([params, searchParams, getCurrentUser()]);
+  if (sp.view === "timeline" && viewer?.username === username.toLowerCase()) redirect("/timeline");
   const profile = await getProfile(username, viewer?.id);
   if (!profile) notFound();
   return (
@@ -33,7 +34,6 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       priceLabel={process.env.PLUS_PRICE_LABEL || "$4 / month"}
       initialPageId={sp.page}
       initialItemId={sp.item}
-      initialView={sp.view === "timeline" ? "timeline" : "pages"}
     />
   );
 }

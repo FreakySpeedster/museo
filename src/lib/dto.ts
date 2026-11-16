@@ -4,6 +4,8 @@ export interface ItemDTO {
   type: "LINK" | "PHOTO";
   url: string | null;
   imageUrl: string | null;
+  /** Extra photos after the cover, in order. */
+  images: string[];
   faviconUrl: string | null;
   title: string;
   description: string;
