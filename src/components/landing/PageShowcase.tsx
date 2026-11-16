@@ -67,7 +67,7 @@ const HIDDEN = { y: -56, scale: 0.84, rotate: 0, autoAlpha: 0 };
 
 function DeckCard({ page, i }: { page: ShowcasePage; i: number }) {
   return (
-    <div data-deck-card data-i={i} className="deck-card absolute inset-x-0 top-0 mx-auto w-full will-change-transform" style={{ zIndex: 10 - i }}>
+    <div data-deck-card data-i={i} className="deck-card absolute inset-x-0 top-0 mx-auto w-full" style={{ zIndex: 10 - i }}>
       <article className="overflow-hidden rounded-[1.75rem] border border-border bg-surface shadow-2xl">
         <header className="flex items-center gap-3 px-5 pb-3 pt-5">
           <span className="grid size-10 place-items-center rounded-full bg-surface-hover">
@@ -110,7 +110,7 @@ export function PageShowcase() {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
-    () => {
+    (_ctx, contextSafe) => {
       const el = root.current!;
       const cards = gsap.utils.toArray<HTMLElement>("[data-deck-card]", el);
       const order = cards.map((_, i) => i);
@@ -151,7 +151,8 @@ export function PageShowcase() {
       gsap.set(cards[order[0]].querySelectorAll("[data-note]"), { autoAlpha: 1, scale: 1 });
       if (reduce) return;
 
-      const advance = () => {
+      // contextSafe: tweens created later from timers/handlers are still reverted on unmount.
+      const advance = contextSafe!(() => {
         const front = order.shift()!;
         order.push(front);
         rounds[front] += 1;
@@ -163,8 +164,8 @@ export function PageShowcase() {
           .call(() => place(true), [], 0.28);
         setLabel();
         popNotes(order[0]);
-        if (bar) gsap.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: TICK, ease: "none" });
-      };
+        if (bar) gsap.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: TICK, ease: "none", overwrite: true });
+      });
 
       if (bar) gsap.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: TICK, ease: "none" });
       const loop = gsap.delayedCall(TICK, function tick() { advance(); loop.restart(true); });
@@ -177,19 +178,22 @@ export function PageShowcase() {
         loop.paused(!run);
         if (bar) gsap.getTweensOf(bar).forEach((t) => t.paused(!run));
       };
-      const st = ScrollTrigger.create({ trigger: el, start: "top 85%", end: "bottom 15%", onToggle: (s) => { onScreen = s.isActive; sync(); } });
+      const st = ScrollTrigger.create({ trigger: el, start: "top 85%", end: "bottom 15%", onToggle: (s) => { onScreen = s.isActive && !document.hidden; sync(); } });
       const stage = el.querySelector<HTMLElement>("[data-deck-stage]")!;
       const enter = () => { hovered = true; sync(); };
       const leave = () => { hovered = false; sync(); };
       stage.addEventListener("pointerenter", enter);
       stage.addEventListener("pointerleave", leave);
-      const jump = (e: Event) => {
+      const jump = contextSafe!((e: Event) => {
         const target = Number((e.currentTarget as HTMLElement).dataset.i);
         let guard = 0;
         while (order[0] !== target && guard++ < cards.length) advance();
         loop.restart(true);
-      };
+        sync();
+      });
       labels.forEach((l) => l.addEventListener("click", jump));
+      const vis = () => { onScreen = st.isActive && !document.hidden; sync(); };
+      document.addEventListener("visibilitychange", vis);
       onScreen = st.isActive;
       sync();
 
@@ -199,6 +203,7 @@ export function PageShowcase() {
         stage.removeEventListener("pointerenter", enter);
         stage.removeEventListener("pointerleave", leave);
         labels.forEach((l) => l.removeEventListener("click", jump));
+        document.removeEventListener("visibilitychange", vis);
       };
     },
     { scope: root },

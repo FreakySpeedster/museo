@@ -346,7 +346,7 @@ a:focus-visible,
   letter-spacing: -0.055em;
 }
 .hero-line { padding-bottom: 0.08em; }
-.hero-pill { width: 1.6em; height: 0.82em; translate: 0 -0.06em; background: var(--surface-hover); }
+.hero-pill { width: 1.2em; height: 1em; translate: 0 -0.04em; background: var(--surface-hover); }
 .deck-card { transform-origin: 50% 0%; }
 .deck-note {
   position: absolute;
@@ -363,7 +363,6 @@ a:focus-visible,
   backdrop-filter: blur(12px);
   font-size: var(--text-caption);
   pointer-events: none;
-  will-change: transform, opacity;
 }
 .deck-label {
   display: inline-flex;
