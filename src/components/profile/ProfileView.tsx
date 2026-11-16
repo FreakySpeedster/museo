@@ -426,6 +426,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
               <ShelfView
                 key={shelf.id}
                 shelf={shelf}
+                username={user.username}
                 isOwner={isOwner}
                 justAddedId={justAdded}
                 pagePrivate={page.visibility === "private"}

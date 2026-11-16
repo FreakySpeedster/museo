@@ -82,7 +82,7 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-      <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-4 shadow-sm focus-within:border-foreground">
+      <div className="flex items-center gap-2 field-shell rounded-full px-4 shadow-sm">
         <Search className="size-5 shrink-0 text-muted" aria-hidden />
         <input
           value={draft}

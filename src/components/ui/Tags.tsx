@@ -45,7 +45,7 @@ export function TagInput({ id, value, onChange }: { id?: string; value: string[]
   }
 
   return (
-    <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-xl border border-border bg-surface px-2.5 py-1.5 focus-within:border-foreground/40">
+    <div className="flex min-h-11 flex-wrap items-center gap-1.5 field-shell rounded-[var(--radius-md)] px-2.5 py-1.5">
       {value.map((t) => (
         <span key={t} className="inline-flex h-7 items-center gap-1 rounded-full bg-surface-hover pl-2.5 pr-1 text-caption">
           <Hash className="size-3 text-muted" aria-hidden />

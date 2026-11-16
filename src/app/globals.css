@@ -329,6 +329,13 @@ a:focus-visible,
 @keyframes shimmer { to { background-position: -200% 0; } }
 
 .no-scrollbar { scrollbar-width: none; }
+.showcase-rail {
+  --fade: 2.5rem;
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+}
+.showcase-rail[data-start] { mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent); }
+.showcase-rail[data-end] { mask-image: linear-gradient(to right, transparent, #000 var(--fade)); }
+.showcase-rail[data-start][data-end] { mask-image: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 .text-balance { text-wrap: balance; }
@@ -371,6 +378,27 @@ dialog::backdrop { background: rgb(0 0 0 / 0.5); }
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 18%, transparent);
 }
 .control:disabled { opacity: 0.6; }
+
+/* Text fields never draw the generic outline: the field (or its shell) draws a ring that follows its own radius. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible,
+textarea:focus, textarea:focus-visible,
+select:focus, select:focus-visible {
+  outline: none;
+}
+/* A container that looks like one field (tag input, search pill). */
+.field-shell {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+.field-shell:hover { border-color: color-mix(in srgb, var(--border) 60%, var(--foreground)); }
+.field-shell:focus-within {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 18%, transparent);
+}
 
 
 /* Desktop nav: 72px rail, expands to 240px as an overlay unless pinned. */
@@ -467,7 +495,7 @@ body[data-modal="open"] .app-phone-nav { visibility: hidden; pointer-events: non
   mask-image: radial-gradient(70% 55% at 50% 20%, #000 30%, transparent 75%);
 }
 .landing-float { animation: landing-float 6s ease-in-out infinite; }
-.landing-float:nth-of-type(odd) { animation-delay: -3s; }
+.landing-float:last-child { animation-delay: -3s; }
 @keyframes landing-float { 50% { translate: 0 -8px; } }
 @media (prefers-reduced-motion: reduce) { .landing-float { animation: none; } }
 .no-scrollbar::-webkit-scrollbar { display: none; }

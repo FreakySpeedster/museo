@@ -13,7 +13,9 @@ import {
 import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
-import { ArrowDown, ArrowUp, MoreHorizontal, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, MoreHorizontal, Plus, Share2 } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
+import { copyText, shelfShareText } from "@/lib/share-text";
 import { categoryMeta } from "@/lib/categories";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { ensureScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
@@ -51,6 +53,7 @@ function SortableItem({
 
 export function ShelfView({
   shelf,
+  username,
   isOwner,
   justAddedId,
   pagePrivate,
@@ -66,6 +69,7 @@ export function ShelfView({
   onToggleVisibility,
 }: {
   shelf: ShelfDTO;
+  username: string;
   isOwner: boolean;
   justAddedId: string | null;
   pagePrivate?: boolean;
@@ -134,6 +138,13 @@ export function ShelfView({
     void onReorder(shelf.id, next, true);
   }
 
+  const toast = useToast();
+  async function share() {
+    const ok = await copyText(shelfShareText(shelf.items.map((i) => i.title), window.location.origin, username));
+    if (ok) toast.success(`${shelf.name} copied to clipboard`);
+    else toast.error("Couldn't copy. Try again.");
+  }
+
   return (
     <section ref={root} aria-label={shelf.name} data-shelf-id={shelf.id} className="space-y-3">
       <div data-shelf-head className="flex items-start justify-between gap-3">
@@ -147,8 +158,14 @@ export function ShelfView({
             {meta.label} · {shelf.items.length} {shelf.items.length === 1 ? "item" : "items"}
           </p>
         </div>
-        {isOwner && (
+        {(isOwner || shelf.items.length > 0) && (
           <div className="flex shrink-0 items-center gap-1">
+            {shelf.items.length > 0 && (
+              <IconButton label={`Share ${shelf.name}`} size="sm" onClick={() => void share()}>
+                <Share2 className="size-4" aria-hidden />
+              </IconButton>
+            )}
+            {isOwner && (<>
             <Button size="sm" onClick={() => onAddItem(shelf)} aria-label={`Add item to ${shelf.name}`}>
               <Plus className="size-4" aria-hidden strokeWidth={2.4} /><span className="hidden sm:inline">Add item</span>
             </Button>
@@ -167,6 +184,7 @@ export function ShelfView({
                 </IconButton>
               )}
             />
+            </>)}
           </div>
         )}
       </div>
