@@ -2,7 +2,7 @@ import { db } from "../db";
 import { AppError } from "../errors";
 import { canViewItem } from "../visibility";
 import { toItemDTO, toPublicUser } from "../mappers";
-import type { CommentDTO, ItemDTO } from "../dto";
+import type { CommentDTO, ItemDTO, ReactionDTO } from "../dto";
 import type { Item } from "@prisma/client";
 
 export async function attachSocial<T extends { id: string }>(items: T[], viewerId?: string | null): Promise<T[]> {
@@ -55,11 +55,16 @@ export async function toggleLike(userId: string, itemId: string) {
   return { likedByMe: !existing, likeCount };
 }
 
+const commentInclude = {
+  user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true } },
+  reactions: { select: { emoji: true, userId: true } },
+} as const;
+
 export async function listComments(itemId: string, viewerId?: string | null) {
   const item = await loadVisibleItem(itemId, viewerId);
   const comments = await db.itemComment.findMany({
     where: { itemId },
-    include: { user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true } } },
+    include: commentInclude,
     orderBy: { createdAt: "asc" },
     take: 200,
   });
@@ -68,23 +73,39 @@ export async function listComments(itemId: string, viewerId?: string | null) {
   if (!viewerId) reason = "Sign in to comment.";
   else if (!allowed) reason = `Follow ${item.user.displayName} to leave a comment.`;
   return {
-    comments: comments.map(toCommentDTO),
+    comments: comments.map((c) => toCommentDTO(c, viewerId)),
     canComment: allowed,
     reason,
     owner: toPublicUser(item.user),
   };
 }
 
-export async function addComment(userId: string, itemId: string, body: string): Promise<CommentDTO> {
+export async function addComment(userId: string, itemId: string, body: string, parentId?: string): Promise<CommentDTO> {
   const item = await loadVisibleItem(itemId, userId);
   if (!(await canCommentOnItem(userId, item.userId))) {
     throw new AppError("FORBIDDEN", `Follow ${item.user.displayName} to leave a comment.`);
   }
-  const row = await db.itemComment.create({
-    data: { itemId, userId, body },
-    include: { user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true } } },
-  });
-  return toCommentDTO(row);
+  if (parentId) {
+    // One level of threading: replying to a reply attaches to its top-level comment.
+    const parent = await db.itemComment.findUnique({ where: { id: parentId }, select: { itemId: true, parentId: true } });
+    if (!parent || parent.itemId !== itemId) throw new AppError("NOT_FOUND", "That comment is gone.");
+    parentId = parent.parentId ?? parentId;
+  }
+  const row = await db.itemComment.create({ data: { itemId, userId, body, parentId: parentId ?? null }, include: commentInclude });
+  return toCommentDTO(row, userId);
+}
+
+/** Toggle one emoji reaction; a user may leave several different emojis on the same comment. */
+export async function toggleReaction(userId: string, commentId: string, emoji: string): Promise<CommentDTO> {
+  const row = await db.itemComment.findUnique({ where: { id: commentId }, select: { itemId: true } });
+  if (!row) throw new AppError("NOT_FOUND", "That comment is gone.");
+  await loadVisibleItem(row.itemId, userId);
+  const key = { commentId_userId_emoji: { commentId, userId, emoji } };
+  const existing = await db.commentReaction.findUnique({ where: key });
+  if (existing) await db.commentReaction.delete({ where: key });
+  else await db.commentReaction.create({ data: { commentId, userId, emoji } });
+  const fresh = await db.itemComment.findUniqueOrThrow({ where: { id: commentId }, include: commentInclude });
+  return toCommentDTO(fresh, userId);
 }
 
 export async function deleteComment(userId: string, commentId: string) {
@@ -94,13 +115,25 @@ export async function deleteComment(userId: string, commentId: string) {
   await db.itemComment.delete({ where: { id: commentId } });
 }
 
-function toCommentDTO(row: {
-  id: string;
-  body: string;
-  createdAt: Date;
-  user: { id: string; username: string; displayName: string; bio: string; avatarUrl: string | null };
-}): CommentDTO {
-  return { id: row.id, body: row.body, createdAt: row.createdAt.toISOString(), user: toPublicUser(row.user) };
+function toCommentDTO(
+  row: {
+    id: string;
+    body: string;
+    createdAt: Date;
+    parentId: string | null;
+    user: { id: string; username: string; displayName: string; bio: string; avatarUrl: string | null };
+    reactions: Array<{ emoji: string; userId: string }>;
+  },
+  viewerId?: string | null,
+): CommentDTO {
+  const map = new Map<string, ReactionDTO>();
+  for (const r of row.reactions) {
+    const cur = map.get(r.emoji) ?? { emoji: r.emoji, count: 0, mine: false };
+    cur.count++;
+    if (viewerId && r.userId === viewerId) cur.mine = true;
+    map.set(r.emoji, cur);
+  }
+  return { id: row.id, body: row.body, createdAt: row.createdAt.toISOString(), user: toPublicUser(row.user), parentId: row.parentId, reactions: [...map.values()] };
 }
 
 export async function toItemDTOWithSocial(item: Item, viewerId?: string | null): Promise<ItemDTO> {

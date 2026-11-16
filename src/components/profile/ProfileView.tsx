@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, LayoutGrid, Link2, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { Check, History, LayoutGrid, Link2, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, TimelineEntry, ViewerDTO } from "@/lib/dto";
@@ -244,20 +244,6 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     [pages, toast],
   );
 
-  function moveItem(item: ItemDTO, dir: -1 | 1) {
-    const shelf = allShelves.find((s) => s.id === item.shelfId);
-    if (!shelf) return;
-    const i = shelf.items.findIndex((x) => x.id === item.id);
-    const j = i + dir;
-    if (j < 0 || j >= shelf.items.length) return;
-    const next = [...shelf.items];
-    [next[i], next[j]] = [next[j], next[i]];
-    captureFns.current[shelf.id]?.();
-    dragSnapshot.current = shelf.items;
-    patchShelf(shelf.id, (s) => ({ ...s, items: next.map((x, n) => ({ ...x, position: n })) }));
-    void onReorder(shelf.id, next, true);
-  }
-
   function selectView(next: "pages" | "timeline") {
     setView(next);
     const url = new URL(window.location.href);
@@ -402,22 +388,28 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
 
       {/* ------------------------------------------ collections label + sticky page switcher */}
       <div className="border-t border-border" />
-      {isOwner && (
-        <Tabs
-          label="Profile view"
-          className="mt-2"
-          value={view}
-          onChange={selectView}
-          options={[
-            { value: "pages", label: "Pages" },
-            { value: "timeline", label: "Timeline" },
-          ]}
-        />
-      )}
       <ProfileStickyBar headerRef={header} displayName={user.displayName} username={user.username} avatarUrl={user.avatarUrl}>
-        {view === "pages" && page && (
-          <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} onReorder={isOwner ? persistPageOrder : undefined} />
-        )}
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            {view === "pages" && page ? (
+              <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} onReorder={isOwner ? persistPageOrder : undefined} />
+            ) : view === "timeline" ? (
+              <p className="px-1 text-meta font-medium text-muted">Your activity, newest first</p>
+            ) : null}
+          </div>
+          {isOwner && (
+            <Tabs
+              label="Profile view"
+              className="shrink-0 !p-0.5"
+              value={view}
+              onChange={selectView}
+              options={[
+                { value: "pages", label: <span className="inline-flex items-center gap-1.5" title="Pages"><LayoutGrid className="size-4" aria-hidden /><span className="sr-only sm:not-sr-only">Pages</span></span> },
+                { value: "timeline", label: <span className="inline-flex items-center gap-1.5" title="Timeline"><History className="size-4" aria-hidden /><span className="sr-only sm:not-sr-only">Timeline</span></span> },
+              ]}
+            />
+          )}
+        </div>
       </ProfileStickyBar>
 
       {/* --------------------------------------------------------- body */}
@@ -556,7 +548,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
         onClose={() => setOpenItemId(null)}
         onUpdated={onItemUpdated}
         onDeleted={onItemDeleted}
-        onMove={moveItem}
+        onNavigate={(it) => setOpenItemId(it.id)}
       />
     </div>
   );

@@ -19,7 +19,7 @@ export const POST = route<{ id: string }>(
       throw new AppError("BAD_REQUEST", "Invalid form data");
     }
     const type = str(form.get("type"));
-    const text = { title: str(form.get("title")), description: str(form.get("description")) };
+    const text = { title: str(form.get("title")), description: str(form.get("description")), tags: str(form.get("tags")) };
 
     if (type === "LINK") {
       const input = itemCreateLinkSchema.parse({ ...text, url: str(form.get("url")) });

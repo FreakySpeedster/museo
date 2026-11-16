@@ -29,6 +29,6 @@ export function Input({ className, ...p }: InputHTMLAttributes<HTMLInputElement>
   return <input className={clsx(controlClass, className)} {...p} />;
 }
 
-export function Textarea({ className, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea({ className, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement> & { ref?: React.Ref<HTMLTextAreaElement> }) {
   return <textarea className={clsx(controlClass, "min-h-24 resize-y", className)} {...p} />;
 }

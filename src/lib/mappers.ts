@@ -14,6 +14,7 @@ export const toItemDTO = (i: Item): ItemDTO => ({
   title: i.title,
   description: i.description,
   siteName: i.siteName,
+  tags: i.tags ?? [],
   position: i.position,
   createdAt: i.createdAt.toISOString(),
   likeCount: 0,

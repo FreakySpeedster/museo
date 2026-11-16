@@ -1,5 +1,6 @@
 "use client";
 
+import { TagInput } from "@/components/ui/Tags";
 import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from "react";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
@@ -51,6 +52,7 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -135,6 +137,7 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
     form.set("type", mode);
     form.set("title", title);
     form.set("description", description);
+    form.set("tags", JSON.stringify(tags));
     if (mode === "LINK") {
       if (!url.trim()) return setError("Paste a link first.");
       form.set("url", url.trim());
@@ -262,6 +265,9 @@ function AddItemForm({ shelf, onClose, onAdded }: { shelf: ShelfDTO; onClose: ()
           </Field>
           <Field label="Thoughts" htmlFor="item-desc" hint="optional">
             <Textarea id="item-desc" name="description" rows={3} maxLength={500} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={mode === "LINK" ? preview?.description || "Why do you love it?" : "Why do you love it?"} />
+          </Field>
+          <Field label="Tags" htmlFor="item-tags" hint="optional, press Enter to add">
+            <TagInput id="item-tags" value={tags} onChange={setTags} />
           </Field>
         </div>
 

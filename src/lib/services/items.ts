@@ -52,6 +52,7 @@ export async function createLinkItem(
       title: title.slice(0, 120),
       description: description.slice(0, 500),
       siteName: host || null,
+      tags: input.tags ?? [],
       position,
     },
   });
@@ -69,7 +70,7 @@ export async function createPhotoItem(
   const imageUrl = await saveUploadedImage(file);
   try {
     return await db.item.create({
-      data: { shelfId, userId, type: "PHOTO", imageUrl, title: input.title, description: input.description, position },
+      data: { shelfId, userId, type: "PHOTO", imageUrl, title: input.title, description: input.description, tags: input.tags ?? [], position },
     });
   } catch (e) {
     await deleteUploadByUrl(imageUrl);

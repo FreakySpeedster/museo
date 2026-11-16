@@ -23,7 +23,7 @@ async function attachPreviewComments(items: TimelineEntry[]): Promise<TimelineEn
     FROM (
       SELECT *, row_number() OVER (PARTITION BY "itemId" ORDER BY "createdAt" DESC) AS rn
       FROM "ItemComment"
-      WHERE "itemId" = ANY($1::text[])
+      WHERE "itemId" = ANY($1::text[]) AND "parentId" IS NULL
     ) c
     JOIN "User" u ON u.id = c."userId"
     WHERE c.rn <= 2
@@ -45,6 +45,8 @@ async function attachPreviewComments(items: TimelineEntry[]): Promise<TimelineEn
         bio: r.bio,
         avatarUrl: r.avatarUrl,
       }),
+      parentId: null,
+      reactions: [],
     });
     byItem.set(r.itemId, list);
   }

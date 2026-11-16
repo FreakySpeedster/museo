@@ -19,6 +19,7 @@ import { categoryMeta } from "@/lib/categories";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { timeAgo } from "@/lib/time";
 import { ItemThumb } from "./ItemThumb";
+import { TagInput, TagList } from "@/components/ui/Tags";
 
 const fullDate = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" });
 
@@ -30,7 +31,7 @@ export function ItemModal({
   onClose,
   onUpdated,
   onDeleted,
-  onMove,
+  onNavigate,
 }: {
   item: ItemDTO | null;
   shelf: ShelfDTO | null;
@@ -39,7 +40,7 @@ export function ItemModal({
   onClose: () => void;
   onUpdated: (item: ItemDTO) => void;
   onDeleted: (item: ItemDTO) => void;
-  onMove?: (item: ItemDTO, dir: -1 | 1) => void;
+  onNavigate?: (item: ItemDTO) => void;
 }) {
   // Keep the last item around so content stays rendered while the close animation plays.
   const [shown, setShown] = useState<ItemDTO | null>(item);
@@ -47,7 +48,7 @@ export function ItemModal({
   const it = item ?? shown;
   return (
     <Modal open={Boolean(item)} onClose={onClose} title={it?.title ?? "Item"} size="xl">
-      {it && <ItemBody key={it.id} it={it} shelf={shelf} isOwner={isOwner} viewerId={viewerId} onUpdated={onUpdated} onDeleted={onDeleted} onMove={onMove} />}
+      {it && <ItemBody key={it.id} it={it} shelf={shelf} isOwner={isOwner} viewerId={viewerId} onUpdated={onUpdated} onDeleted={onDeleted} onNavigate={onNavigate} />}
     </Modal>
   );
 }
@@ -59,7 +60,7 @@ export function ItemBody({
   viewerId,
   onUpdated,
   onDeleted,
-  onMove,
+  onNavigate,
 }: {
   it: ItemDTO;
   shelf: ShelfDTO | null;
@@ -67,7 +68,7 @@ export function ItemBody({
   viewerId?: string | null;
   onUpdated: (item: ItemDTO) => void;
   onDeleted: (item: ItemDTO) => void;
-  onMove?: (item: ItemDTO, dir: -1 | 1) => void;
+  onNavigate?: (item: ItemDTO) => void;
 }) {
   const toast = useToast();
   const [editing, setEditing] = useState(false);
@@ -77,6 +78,7 @@ export function ItemBody({
   const [error, setError] = useState("");
   const [title, setTitle] = useState(it.title);
   const [description, setDescription] = useState(it.description);
+  const [tags, setTags] = useState<string[]>(it.tags ?? []);
   const idx = shelf ? shelf.items.findIndex((i) => i.id === it.id) : -1;
   const meta = shelf ? categoryMeta(shelf.category) : null;
 
@@ -84,7 +86,7 @@ export function ItemBody({
     setBusy(true);
     setError("");
     try {
-      const { item: updated } = await api<{ item: ItemDTO }>(`/api/items/${it.id}`, { method: "PATCH", json: { title, description } });
+      const { item: updated } = await api<{ item: ItemDTO }>(`/api/items/${it.id}`, { method: "PATCH", json: { title, description, tags } });
       onUpdated(updated);
       setEditing(false);
       toast.success("Saved");
@@ -156,10 +158,11 @@ export function ItemBody({
               <div className="mt-3 space-y-3">
                 <Field label="Title" htmlFor="edit-title"><Input id="edit-title" data-autofocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} /></Field>
                 <Field label="Thoughts" htmlFor="edit-desc"><Textarea id="edit-desc" rows={5} value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} /></Field>
+                <Field label="Tags" htmlFor="edit-tags"><TagInput id="edit-tags" value={tags} onChange={setTags} /></Field>
                 {error && <FormError>{error}</FormError>}
                 <div className="flex gap-2">
                   <Button onClick={save} loading={busy} size="sm">Save</Button>
-                  <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setTitle(it.title); setDescription(it.description); }}>Cancel</Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setTitle(it.title); setDescription(it.description); setTags(it.tags ?? []); }}>Cancel</Button>
                 </div>
               </div>
             ) : (
@@ -173,6 +176,7 @@ export function ItemBody({
                   <time dateTime={it.createdAt} title={fullDate(it.createdAt)} className="cursor-help underline decoration-dotted decoration-border underline-offset-4">Added {timeAgo(it.createdAt)}</time>
                   <span className="sr-only">{fullDate(it.createdAt)}</span>
                 </p>
+                <TagList tags={it.tags ?? []} className="mt-3" />
                 {it.description ? (
                   <p className="mt-4 whitespace-pre-line text-body leading-relaxed text-foreground/90">{it.description}</p>
                 ) : (
@@ -209,7 +213,7 @@ export function ItemBody({
                   </div>
                 )}
                 {error && !editing && <div className="mt-3"><FormError>{error}</FormError></div>}
-                <div className="mt-6 border-t border-border pt-5">
+                <div className="mt-5 border-t border-border pt-5">
                   <CommentThread
                     itemId={it.id}
                     commentCount={it.commentCount}
@@ -217,14 +221,14 @@ export function ItemBody({
                     onCountChange={(n) => onUpdated({ ...it, commentCount: n })}
                   />
                 </div>
-                {onMove && shelf && (
+                {onNavigate && shelf && shelf.items.length > 1 && (
                   <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-4">
-                    <Button variant="ghost" size="sm" disabled={idx <= 0} onClick={() => onMove(it, -1)} aria-label="Move earlier on shelf">
-                      <ArrowLeft className="size-4" aria-hidden /> Earlier
+                    <Button variant="ghost" size="sm" disabled={idx <= 0} onClick={() => onNavigate(shelf.items[idx - 1])}>
+                      <ArrowLeft className="size-4" aria-hidden /> Previous
                     </Button>
                     <p className="text-caption text-muted">{idx + 1} of {shelf.items.length}</p>
-                    <Button variant="ghost" size="sm" disabled={idx >= shelf.items.length - 1} onClick={() => onMove(it, 1)} aria-label="Move later on shelf">
-                      Later <ArrowRight className="size-4" aria-hidden />
+                    <Button variant="ghost" size="sm" disabled={idx >= shelf.items.length - 1} onClick={() => onNavigate(shelf.items[idx + 1])}>
+                      Next <ArrowRight className="size-4" aria-hidden />
                     </Button>
                   </div>
                 )}

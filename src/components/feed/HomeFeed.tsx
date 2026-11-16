@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/Toast";
 import { ItemThumb } from "@/components/profile/ItemThumb";
 import { ItemModal } from "@/components/profile/ItemModal";
 import { LikeButton } from "@/components/social/LikeButton";
+import { TagList } from "@/components/ui/Tags";
 
 type Scope = "following" | "global";
 interface Feed { items: TimelineEntry[]; nextCursor: string | null }
@@ -151,6 +152,7 @@ export function HomeFeed({
                 </div>
                 <div className="space-y-2 px-4 pt-3">
                   <h3 className="text-heading font-semibold leading-snug">{e.title}</h3>
+                  <TagList tags={e.tags ?? []} />
                   {e.description && <p className="whitespace-pre-line text-body text-foreground/90">{e.description}</p>}
                 </div>
               </button>

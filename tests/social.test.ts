@@ -4,7 +4,8 @@ import { AppError } from "@/lib/errors";
 import { createUser } from "@/lib/services/accounts";
 import { createShelf } from "@/lib/services/shelves";
 import { createPhotoItem } from "@/lib/services/items";
-import { addComment, canCommentOnItem, deleteComment, toggleLike } from "@/lib/services/social";
+import { addComment, canCommentOnItem, deleteComment, listComments, toggleLike, toggleReaction } from "@/lib/services/social";
+import { itemTextSchema } from "@/lib/validation";
 import sharp from "sharp";
 
 const PNG = () => sharp({ create: { width: 40, height: 30, channels: 3, background: "#abc" } }).png().toBuffer();
@@ -76,5 +77,39 @@ describe("likes", () => {
     const off = await toggleLike(stranger.u.id, item.id);
     expect(off.likedByMe).toBe(false);
     expect(off.likeCount).toBe(0);
+  });
+});
+
+describe("tags, replies and reactions", () => {
+  it("normalises tags on create", async () => {
+    const { owner } = await setup();
+    const shelf = await createShelf(owner.u.id, owner.page.id, { name: "More", category: "books" });
+    const input = itemTextSchema.parse({ title: "X", tags: "Sci Fi, #Classic, sci-fi" });
+    const it2 = await createPhotoItem(owner.u.id, shelf.id, input, await PNG());
+    expect(it2.tags).toEqual(["sci-fi", "classic"]);
+  });
+
+  it("threads replies one level deep and cascades on delete", async () => {
+    const { owner, item } = await setup();
+    const c = await addComment(owner.u.id, item.id, "Top");
+    const r1 = await addComment(owner.u.id, item.id, "Reply", c.id);
+    const r2 = await addComment(owner.u.id, item.id, "Reply to reply", r1.id);
+    expect(r1.parentId).toBe(c.id);
+    expect(r2.parentId).toBe(c.id);
+    await deleteComment(owner.u.id, c.id);
+    expect(await db.itemComment.count({ where: { itemId: item.id } })).toBe(0);
+  });
+
+  it("lets a viewer stack several emojis and toggle them off", async () => {
+    const { owner, fan, item } = await setup();
+    const c = await addComment(owner.u.id, item.id, "React to me");
+    await toggleReaction(fan.u.id, c.id, "\u{1F525}");
+    await toggleReaction(fan.u.id, c.id, "\u{1F44F}");
+    let after = await toggleReaction(owner.u.id, c.id, "\u{1F525}");
+    expect(after.reactions.find((r) => r.emoji === "\u{1F525}")).toEqual({ emoji: "\u{1F525}", count: 2, mine: true });
+    after = await toggleReaction(fan.u.id, c.id, "\u{1F44F}");
+    expect(after.reactions.some((r) => r.emoji === "\u{1F44F}")).toBe(false);
+    const { comments } = await listComments(item.id, fan.u.id);
+    expect(comments[0].reactions).toEqual([{ emoji: "\u{1F525}", count: 2, mine: true }]);
   });
 });

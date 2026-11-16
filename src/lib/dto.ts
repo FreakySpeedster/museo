@@ -7,6 +7,7 @@ export interface ItemDTO {
   faviconUrl: string | null;
   title: string;
   description: string;
+  tags: string[];
   siteName: string | null;
   position: number;
   createdAt: string;
@@ -67,6 +68,14 @@ export interface CommentDTO {
   body: string;
   createdAt: string;
   user: PublicUser;
+  parentId: string | null;
+  reactions: ReactionDTO[];
+}
+
+export interface ReactionDTO {
+  emoji: string;
+  count: number;
+  mine: boolean;
 }
 
 export type SearchKind = "person" | "item" | "shelf";

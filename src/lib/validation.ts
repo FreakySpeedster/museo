@@ -69,7 +69,19 @@ export const shelfUpdateSchema = z.object({
   // A shelf holds items of one category; category is fixed once set to keep that promise.
 });
 
+/** Tags: lowercase words, deduped, max 8 of 24 chars. Accepts an array, a JSON array string or a comma-separated string. */
+export const tagsSchema = z
+  .preprocess((v) => {
+    if (typeof v === "string") {
+      try { const j = JSON.parse(v); if (Array.isArray(j)) return j; } catch { /* comma list */ }
+      return v.split(",");
+    }
+    return v ?? [];
+  }, z.array(z.string()))
+  .transform((arr) => [...new Set(arr.map((t) => t.trim().replace(/^#/, "").toLowerCase().replace(/\s+/g, "-").slice(0, 24)).filter(Boolean))].slice(0, 8));
+
 export const itemTextSchema = z.object({
+  tags: tagsSchema.optional(),
   title: z.string().trim().max(120, "Title must be at most 120 characters").optional().transform((v) => v ?? ""),
   description: optionalText(500, "Description"),
 });
@@ -81,6 +93,7 @@ export const itemCreateLinkSchema = itemTextSchema.extend({
 export const itemUpdateSchema = z.object({
   title: trimmed(1, 120, "Title").optional(),
   description: optionalText(500, "Description").optional(),
+  tags: tagsSchema.optional(),
   visibility: visibilitySchema.optional(),
 });
 
@@ -107,7 +120,12 @@ export const feedQuerySchema = z.object({
 
 export const commentSchema = z.object({
   body: trimmed(1, 500, "Comment"),
+  parentId: z.string().min(1).max(40).optional(),
 });
+
+/** The reaction palette; kept small so counts stay meaningful. */
+export const REACTION_EMOJIS = ["\u2764\uFE0F", "\u{1F602}", "\u{1F525}", "\u{1F44F}", "\u{1F62E}", "\u{1F44D}"] as const;
+export const reactionSchema = z.object({ emoji: z.enum(REACTION_EMOJIS) });
 
 export const searchQuerySchema = z.object({
   q: z.string().trim().max(80),

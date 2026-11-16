@@ -12,29 +12,30 @@ datasource db {
 }
 
 model User {
-  id                   String    @id @default(cuid())
-  email                String    @unique
-  username             String    @unique
+  id                   String   @id @default(cuid())
+  email                String   @unique
+  username             String   @unique
   displayName          String
-  bio                  String    @default("")
+  bio                  String   @default("")
   avatarUrl            String?
-  socialLinks          Json      @default("[]")
+  socialLinks          Json     @default("[]")
   passwordHash         String
   // Billing
-  subscribed           Boolean   @default(false)
-  subscriptionStatus   String    @default("none") // none | active | past_due | canceled | demo
-  stripeCustomerId     String?   @unique
-  stripeSubscriptionId String?   @unique
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  subscribed           Boolean  @default(false)
+  subscriptionStatus   String   @default("none") // none | active | past_due | canceled | demo
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   sessions  Session[]
   pages     Page[]
   items     Item[]
   likes     ItemLike[]
   comments  ItemComment[]
-  following Follow[]  @relation("follower")
-  followers Follow[]  @relation("following")
+  reactions CommentReaction[]
+  following Follow[]          @relation("follower")
+  followers Follow[]          @relation("following")
 }
 
 model Session {
@@ -65,22 +66,22 @@ model Page {
 }
 
 model Shelf {
-  id        String   @id @default(cuid())
-  pageId    String
-  name      String
-  category    String
-  visibility  String   @default("public") // public | private
-  position    Int      @default(0)
-  createdAt   DateTime @default(now())
-  page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  items       Item[]
+  id         String   @id @default(cuid())
+  pageId     String
+  name       String
+  category   String
+  visibility String   @default("public") // public | private
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+  page       Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  items      Item[]
 
   @@index([pageId, position])
   @@index([visibility])
 }
 
 model Item {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   shelfId     String
   userId      String
   type        String // LINK | PHOTO
@@ -88,14 +89,15 @@ model Item {
   imageUrl    String?
   faviconUrl  String?
   title       String
-  description String   @default("")
+  description String        @default("")
   siteName    String?
-  visibility  String   @default("public") // public | private
-  position    Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  shelf       Shelf    @relation(fields: [shelfId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags        String[]      @default([])
+  visibility  String        @default("public") // public | private
+  position    Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  shelf       Shelf         @relation(fields: [shelfId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   likes       ItemLike[]
   comments    ItemComment[]
 
@@ -117,15 +119,20 @@ model ItemLike {
 }
 
 model ItemComment {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   itemId    String
   userId    String
   body      String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  parentId  String?
+  createdAt DateTime          @default(now())
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item      Item              @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  parent    ItemComment?      @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   ItemComment[]     @relation("replies")
+  reactions CommentReaction[]
 
   @@index([itemId, createdAt])
+  @@index([parentId])
   @@index([userId])
 }
 
@@ -141,6 +148,18 @@ model Follow {
 }
 
 /// Fixed-window rate limiter state (shared across serverless instances).
+model CommentReaction {
+  commentId String
+  userId    String
+  emoji     String
+  createdAt DateTime    @default(now())
+  comment   ItemComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId, emoji])
+  @@index([userId])
+}
+
 model RateLimit {
   key         String   @id
   count       Int
