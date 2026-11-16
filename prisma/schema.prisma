@@ -23,6 +23,8 @@ model User {
   // Billing
   subscribed           Boolean  @default(false)
   subscriptionStatus   String   @default("none") // none | active | past_due | canceled | demo
+  // Privacy: "request" = new followers need approval (default); "open" = anyone can follow
+  followPolicy         String   @default("request")
   stripeCustomerId     String?  @unique
   stripeSubscriptionId String?  @unique
   createdAt            DateTime @default(now())
@@ -36,6 +38,11 @@ model User {
   reactions CommentReaction[]
   following Follow[]          @relation("follower")
   followers Follow[]          @relation("following")
+
+  sentFollowRequests     FollowRequest[] @relation("requester")
+  receivedFollowRequests FollowRequest[] @relation("requestTarget")
+  notifications          Notification[]  @relation("recipient")
+  actedNotifications     Notification[]  @relation("actor")
 }
 
 model Session {
@@ -99,8 +106,9 @@ model Item {
   updatedAt   DateTime      @updatedAt
   shelf       Shelf         @relation(fields: [shelfId], references: [id], onDelete: Cascade)
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  likes       ItemLike[]
-  comments    ItemComment[]
+  likes         ItemLike[]
+  comments      ItemComment[]
+  notifications Notification[]
 
   @@index([shelfId, position])
   @@index([userId, createdAt])
@@ -129,8 +137,9 @@ model ItemComment {
   user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   item      Item              @relation(fields: [itemId], references: [id], onDelete: Cascade)
   parent    ItemComment?      @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   ItemComment[]     @relation("replies")
-  reactions CommentReaction[]
+  replies       ItemComment[]     @relation("replies")
+  reactions     CommentReaction[]
+  notifications Notification[]
 
   @@index([itemId, createdAt])
   @@index([parentId])
@@ -146,6 +155,40 @@ model Follow {
 
   @@id([followerId, followingId])
   @@index([followingId])
+}
+
+/// Pending follow, awaiting the target's approval (when their followPolicy is "request").
+model FollowRequest {
+  requesterId String
+  targetId    String
+  createdAt   DateTime @default(now())
+  requester   User     @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  target      User     @relation("requestTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@id([requesterId, targetId])
+  @@index([targetId, createdAt])
+}
+
+/// Activity for a user: LIKE | COMMENT | REPLY | FOLLOW | FOLLOW_REQUEST | FOLLOW_ACCEPTED
+model Notification {
+  id        String       @id @default(cuid())
+  userId    String
+  actorId   String
+  type      String
+  itemId    String?
+  commentId String?
+  readAt    DateTime?
+  createdAt DateTime     @default(now())
+  user      User         @relation("recipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor     User         @relation("actor", fields: [actorId], references: [id], onDelete: Cascade)
+  item      Item?        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  comment   ItemComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([actorId])
+  @@index([itemId])
+  @@index([commentId])
 }
 
 /// Fixed-window rate limiter state (shared across serverless instances).

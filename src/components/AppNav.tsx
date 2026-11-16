@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Gem, House, LayoutGrid, LogIn, Pin, PinOff, Search, UserPlus, type LucideIcon } from "lucide-react";
+import { Bell, Gem, House, LayoutGrid, LogIn, Pin, PinOff, Search, UserPlus, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -12,6 +12,8 @@ import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
 import { useSearch } from "./search/SearchProvider";
 import { IconButton } from "./ui/IconButton";
+import { CountBadge } from "./ui/CountBadge";
+import { useUnreadCount } from "./notifications/useUnreadCount";
 
 export interface NavUser {
   username: string;
@@ -26,6 +28,7 @@ interface Item {
   icon: LucideIcon;
   active: boolean;
   primary?: boolean;
+  count?: number;
 }
 
 const PIN_KEY = "shelfie.nav-pinned";
@@ -54,7 +57,7 @@ function writePinned(next: boolean) {
  * Groups are structured so Search, Notifications or Create can slot in later
  * without rearranging the chrome — only items that exist are rendered.
  */
-export function AppNav({ user }: { user: NavUser | null }) {
+export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: number }) {
   const path = usePathname() ?? "/";
   const search = useSearch();
   const side = useRef<HTMLElement>(null);
@@ -65,6 +68,8 @@ export function AppNav({ user }: { user: NavUser | null }) {
   const [focus, setFocus] = useState(false);
   const mine = user ? `/u/${user.username}` : "";
   const open = pinned || hover || focus;
+  const liveUnread = useUnreadCount(unread);
+  const unreadCount = path.startsWith("/notifications") ? 0 : liveUnread;
 
   useEffect(() => () => {
     window.clearTimeout(enterTimer.current);
@@ -74,7 +79,7 @@ export function AppNav({ user }: { user: NavUser | null }) {
   const primary: Item[] = [
     { href: "/", label: "Home", icon: House, active: path === "/" },
     ...(user ? [{ href: mine, label: "My shelves", icon: LayoutGrid, active: path.toLowerCase().startsWith(mine.toLowerCase()) }] : []),
-    // Future: Search, Notifications, Create — add here when those features ship.
+    ...(user ? [{ href: "/notifications", label: "Notifications", icon: Bell, active: path.startsWith("/notifications"), count: unreadCount }] : []),
   ];
   const utility: Item[] = [
     { href: "/pricing", label: "Pricing", icon: Gem, active: path.startsWith("/pricing") },
@@ -99,19 +104,24 @@ export function AppNav({ user }: { user: NavUser | null }) {
       data-nav-item
       aria-current={it.active ? "page" : undefined}
       title={it.label}
+      aria-label={it.count ? `${it.label}, ${it.count} unread` : undefined}
       className={clsx(
         "nav-row",
         it.primary ? "bg-accent text-accent-contrast hover:bg-accent-hover active:bg-accent-pressed" : it.active ? "bg-surface-hover font-semibold text-foreground" : "text-muted hover:bg-surface-hover hover:text-foreground",
       )}
     >
       <span className="nav-icon-slot">
-        <it.icon className="nav-icon" aria-hidden strokeWidth={it.active ? 2.2 : 1.8} />
+        <span className="relative inline-flex">
+          <it.icon className="nav-icon" aria-hidden strokeWidth={it.active ? 2.2 : 1.8} />
+          <CountBadge count={it.count ?? 0} />
+        </span>
       </span>
       <span className="nav-label whitespace-nowrap pr-3 text-meta">{it.label}</span>
     </Link>
   );
 
-  const tabs: Item[] = user ? [...primary, ...utility] : [...primary, ...utility, ...guest];
+  const phonePrimary = primary.filter((it) => it.href !== "/notifications");
+  const tabs: Item[] = user ? [...phonePrimary, ...utility] : [...phonePrimary, ...utility, ...guest];
 
   function onEnter() {
     window.clearTimeout(leaveTimer.current);
@@ -206,6 +216,19 @@ export function AppNav({ user }: { user: NavUser | null }) {
           <IconButton label="Search" size="sm" onClick={search.open}>
             <Search className="size-5" aria-hidden />
           </IconButton>
+          {user && (
+            <Link
+              href="/notifications"
+              aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}
+              aria-current={path.startsWith("/notifications") ? "page" : undefined}
+              className="grid size-9 place-items-center rounded-full text-foreground transition-colors hover:bg-surface-hover"
+            >
+              <span className="relative inline-flex">
+                <Bell className="size-5" aria-hidden strokeWidth={path.startsWith("/notifications") ? 2.3 : 1.8} />
+                <CountBadge count={unreadCount} />
+              </span>
+            </Link>
+          )}
           <ThemeToggle />
         </div>
       </header>

@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { AppNav } from "./AppNav";
 import { MarketingNav } from "./MarketingNav";
 import { SearchProvider } from "./search/SearchProvider";
+import { unreadCount } from "@/lib/services/notifications";
 
 /** Public pages get a top bar. The signed-in app keeps the sidebar (and phone bars). */
 export async function Shell({ children }: { children: React.ReactNode }) {
@@ -14,6 +15,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+  const unread = await unreadCount(user.id).catch(() => 0);
   return (
     <SearchProvider>
       <div className="app-shell" data-shell="app">
@@ -24,6 +26,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
             avatarUrl: user.avatarUrl,
             subscribed: user.subscribed,
           }}
+          unread={unread}
         />
         <main className="pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pl-[var(--nav-offset)]">{children}</main>
       </div>

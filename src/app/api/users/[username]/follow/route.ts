@@ -1,32 +1,19 @@
 import { route, ok } from "@/lib/api";
-import { db } from "@/lib/db";
-import { AppError } from "@/lib/errors";
+import { follow, unfollow } from "@/lib/services/notifications";
 
-async function target(username: string, viewerId: string) {
-  const t = await db.user.findUnique({ where: { username: username.toLowerCase() }, select: { id: true } });
-  if (!t) throw new AppError("NOT_FOUND", "User not found");
-  if (t.id === viewerId) throw new AppError("BAD_REQUEST", "You can't follow yourself");
-  return t;
-}
-
+/** POST follows (or requests to, when the account approves followers); DELETE unfollows or cancels a request. */
 export const POST = route<{ username: string }>(
   async ({ user, params }) => {
-    const t = await target(params.username, user.id);
-    await db.follow.upsert({
-      where: { followerId_followingId: { followerId: user.id, followingId: t.id } },
-      create: { followerId: user.id, followingId: t.id },
-      update: {},
-    });
-    return ok({ following: true });
+    const state = await follow(user.id, params.username);
+    return ok({ state, following: state === "following" });
   },
-  { auth: true },
+  { auth: true, limit: { key: "follow", max: 60, windowMs: 60_000 } },
 );
 
 export const DELETE = route<{ username: string }>(
   async ({ user, params }) => {
-    const t = await target(params.username, user.id);
-    await db.follow.deleteMany({ where: { followerId: user.id, followingId: t.id } });
-    return ok({ following: false });
+    const state = await unfollow(user.id, params.username);
+    return ok({ state, following: false });
   },
   { auth: true },
 );

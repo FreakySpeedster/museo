@@ -59,6 +59,7 @@ export const toViewerDTO = (u: User): ViewerDTO => ({
   email: u.email,
   subscribed: u.subscribed,
   subscriptionStatus: u.subscriptionStatus,
+  followPolicy: u.followPolicy === "open" ? "open" : "request",
 });
 
 type EntryRow = Item & {

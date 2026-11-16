@@ -63,6 +63,7 @@ export interface ViewerDTO extends PublicUser {
   email: string;
   subscribed: boolean;
   subscriptionStatus: string;
+  followPolicy: FollowPolicy;
 }
 
 export interface CommentDTO {
@@ -93,4 +94,20 @@ export interface SearchHit {
   imageUrl: string | null;
   createdAt: string;
   score: number;
+}
+
+export type NotificationType = "LIKE" | "COMMENT" | "REPLY" | "FOLLOW" | "FOLLOW_REQUEST" | "FOLLOW_ACCEPTED";
+export type FollowPolicy = "request" | "open";
+
+export interface NotificationDTO {
+  id: string;
+  type: NotificationType;
+  createdAt: string;
+  read: boolean;
+  actor: PublicUser;
+  item: { id: string; title: string; imageUrl: string | null } | null;
+  /** Comment text for COMMENT / REPLY. */
+  excerpt: string | null;
+  /** FOLLOW_REQUEST only: still awaiting a decision. */
+  pending?: boolean;
 }

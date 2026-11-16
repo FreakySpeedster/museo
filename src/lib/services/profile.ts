@@ -1,3 +1,4 @@
+import { followState, type FollowState } from "./notifications";
 import { db } from "../db";
 import { toPageDTO, toPublicUser } from "../mappers";
 import { listPages } from "./pages";
@@ -25,7 +26,7 @@ export async function getProfile(username: string, viewerId?: string | null) {
     listPages(user.id),
     db.follow.count({ where: { followingId: user.id } }),
     db.follow.count({ where: { followerId: user.id } }),
-    viewerId ? db.follow.findUnique({ where: { followerId_followingId: { followerId: viewerId, followingId: user.id } } }) : null,
+    viewerId && !isOwner ? followState(viewerId, user.id) : ("none" as FollowState),
     db.item.count({ where: isOwner ? { userId: user.id } : { userId: user.id, ...publicItemFilter } }),
   ]);
   const visible = filterPagesForViewer(pages.map(toPageDTO), isOwner);
@@ -33,7 +34,8 @@ export async function getProfile(username: string, viewerId?: string | null) {
     user: toPublicUser(user),
     pages: await attachPagesSocial(visible, viewerId),
     stats: { followers, following, items: itemCount },
-    isFollowing: Boolean(follow),
+    isFollowing: follow === "following",
+    followState: follow,
     isOwner,
   };
 }

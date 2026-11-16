@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, LayoutGrid, Link2, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { Check, Clock, LayoutGrid, Link2, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, ViewerDTO } from "@/lib/dto";
@@ -29,6 +29,7 @@ interface Props {
     pages: PageDTO[];
     stats: { followers: number; following: number; items: number };
     isFollowing: boolean;
+    followState: "none" | "requested" | "following";
     isOwner: boolean;
   };
   viewer: ViewerDTO | null;
@@ -59,7 +60,8 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     return profile.pages.some((p) => p.id === initialPageId) ? initialPageId! : profile.pages[0]?.id;
   });
   const [stats, setStats] = useState(profile.stats);
-  const [following, setFollowing] = useState(profile.isFollowing);
+  const [followState, setFollowState] = useState(profile.followState);
+  const following = followState === "following";
   const [subscribed, setSubscribed] = useState(viewer?.subscribed ?? false);
   const [justAdded, setJustAdded] = useState<string | null>(null);
 
@@ -304,14 +306,23 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   /* ---------- follow ---------- */
   async function toggleFollow() {
     if (!viewer) return router.push(`/login`);
-    const next = !following;
-    setFollowing(next);
-    setStats((s) => ({ ...s, followers: s.followers + (next ? 1 : -1) }));
+    const prev = followState;
+    const undo = prev !== "none";
+    // Optimistic only for unfollow / cancel; following may turn into a request, so wait for the server.
+    if (undo) {
+      setFollowState("none");
+      if (prev === "following") setStats((s) => ({ ...s, followers: s.followers - 1 }));
+    }
     try {
-      await api(`/api/users/${user.username}/follow`, { method: next ? "POST" : "DELETE" });
+      const { state } = await api<{ state: typeof prev }>(`/api/users/${user.username}/follow`, { method: undo ? "DELETE" : "POST" });
+      if (!undo) {
+        setFollowState(state);
+        if (state === "following") setStats((s) => ({ ...s, followers: s.followers + 1 }));
+        else if (state === "requested") toast.success(`Follow request sent to ${user.displayName}`);
+      }
     } catch (err) {
-      setFollowing(!next);
-      setStats((s) => ({ ...s, followers: s.followers + (next ? -1 : 1) }));
+      setFollowState(prev);
+      if (prev === "following") setStats((s) => ({ ...s, followers: s.followers + 1 }));
       toast.error(err instanceof ApiError ? err.message : "Couldn't update follow");
     }
   }
@@ -345,8 +356,8 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
           {isOwner ? (
             <Button variant="secondary" size="sm" className="flex-1 sm:flex-none" onClick={() => setProfileDialog(true)}><Pencil className="size-4" aria-hidden /> Edit profile</Button>
           ) : (
-            <Button size="sm" variant={following ? "secondary" : "primary"} className="flex-1 sm:flex-none sm:min-w-28" onClick={toggleFollow} data-testid="follow-button">
-              {following ? <><Check className="size-4" aria-hidden strokeWidth={2.4} /> Following</> : "Follow"}
+            <Button size="sm" variant={followState !== "none" ? "secondary" : "primary"} className="flex-1 sm:flex-none sm:min-w-28" onClick={toggleFollow} data-testid="follow-button">
+              {following ? <><Check className="size-4" aria-hidden strokeWidth={2.4} /> Following</> : followState === "requested" ? <><Clock className="size-4" aria-hidden /> Requested</> : "Follow"}
             </Button>
           )}
           <Button

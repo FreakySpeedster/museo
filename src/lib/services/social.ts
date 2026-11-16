@@ -1,6 +1,7 @@
 import { db } from "../db";
 import { AppError } from "../errors";
 import { canViewItem } from "../visibility";
+import { notify } from "./notifications";
 import { toItemDTO, toPublicUser } from "../mappers";
 import type { CommentDTO, ItemDTO, ReactionDTO } from "../dto";
 import type { Item } from "@prisma/client";
@@ -44,12 +45,15 @@ async function loadVisibleItem(itemId: string, viewerId?: string | null) {
 }
 
 export async function toggleLike(userId: string, itemId: string) {
-  await loadVisibleItem(itemId, userId);
+  const item = await loadVisibleItem(itemId, userId);
   const existing = await db.itemLike.findUnique({ where: { userId_itemId: { userId, itemId } } });
   if (existing) {
     await db.itemLike.delete({ where: { userId_itemId: { userId, itemId } } });
+    // Unlike retracts the notification so like/unlike spam doesn't pile up.
+    await db.notification.deleteMany({ where: { userId: item.userId, actorId: userId, itemId, type: "LIKE" } });
   } else {
     await db.itemLike.create({ data: { userId, itemId } });
+    await notify({ userId: item.userId, actorId: userId, type: "LIKE", itemId });
   }
   const likeCount = await db.itemLike.count({ where: { itemId } });
   return { likedByMe: !existing, likeCount };
@@ -85,13 +89,17 @@ export async function addComment(userId: string, itemId: string, body: string, p
   if (!(await canCommentOnItem(userId, item.userId))) {
     throw new AppError("FORBIDDEN", `Follow ${item.user.displayName} to leave a comment.`);
   }
+  let replyTo: string | null = null;
   if (parentId) {
     // One level of threading: replying to a reply attaches to its top-level comment.
-    const parent = await db.itemComment.findUnique({ where: { id: parentId }, select: { itemId: true, parentId: true } });
+    const parent = await db.itemComment.findUnique({ where: { id: parentId }, select: { itemId: true, parentId: true, userId: true } });
     if (!parent || parent.itemId !== itemId) throw new AppError("NOT_FOUND", "That comment is gone.");
     parentId = parent.parentId ?? parentId;
+    replyTo = parent.userId;
   }
   const row = await db.itemComment.create({ data: { itemId, userId, body, parentId: parentId ?? null }, include: commentInclude });
+  await notify({ userId: item.userId, actorId: userId, type: "COMMENT", itemId, commentId: row.id });
+  if (replyTo && replyTo !== item.userId) await notify({ userId: replyTo, actorId: userId, type: "REPLY", itemId, commentId: row.id });
   return toCommentDTO(row, userId);
 }
 
