@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { createUser } from "@/lib/services/accounts";
 import { createPage, deletePage } from "@/lib/services/pages";
-import { createShelf } from "@/lib/services/shelves";
+import { createShelf, moveShelfToPage } from "@/lib/services/shelves";
 import { createPhotoItem, deleteItem, reorderItems, updateItem } from "@/lib/services/items";
 import { activateDemoSubscription, applyStripeSubscription } from "@/lib/services/billing";
 import { followingFeed, userTimeline } from "@/lib/services/feed";
@@ -136,5 +136,29 @@ describe("page creation race", () => {
     );
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(0);
     expect(await db.page.count({ where: { userId: u.id } })).toBe(1);
+  });
+});
+
+describe("move shelf to another page", () => {
+  it("is Plus-only, moves items along, respects the target limit and ownership", async () => {
+    const { u, page } = await newUser("mover");
+    const a = await createShelf(u.id, page.id, { name: "A", category: "books" });
+    const b = await createShelf(u.id, page.id, { name: "B", category: "books" });
+    await db.item.create({ data: { shelfId: a.id, userId: u.id, type: "PHOTO", title: "x", position: 0 } as never });
+    await activateDemoSubscription(u.id);
+    const p2 = await createPage(u.id, { title: "Two", description: "" });
+    await db.user.update({ where: { id: u.id }, data: { subscribed: false } });
+    await expectCode(moveShelfToPage(u.id, a.id, p2.id), "PAYWALL");
+    await activateDemoSubscription(u.id);
+    const moved = await moveShelfToPage(u.id, a.id, p2.id);
+    expect(moved.pageId).toBe(p2.id);
+    expect(moved.items).toHaveLength(1);
+    expect((await db.shelf.findUniqueOrThrow({ where: { id: b.id } })).position).toBe(0);
+    await expectCode(moveShelfToPage(u.id, a.id, p2.id), "BAD_REQUEST");
+    for (let i = 0; i < 4; i++) await createShelf(u.id, p2.id, { name: `F${i}`, category: "art" });
+    await expectCode(moveShelfToPage(u.id, b.id, p2.id), "SHELF_LIMIT");
+    const other = await newUser("thief");
+    await activateDemoSubscription(other.u.id);
+    await expectCode(moveShelfToPage(other.u.id, b.id, other.page.id), "FORBIDDEN");
   });
 });

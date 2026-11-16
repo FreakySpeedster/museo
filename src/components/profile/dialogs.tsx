@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { MAX_SHELVES_PER_PAGE } from "@/lib/limits";
 import { Toggle } from "@/components/ui/Toggle";
+import { Select } from "@/components/ui/Select";
 import { SOCIAL_NETWORKS } from "@/lib/social-links";
 import { BrandIcon } from "@/components/ui/BrandIcon";
 
@@ -349,5 +350,58 @@ function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: { strip
           </Button>
         </div>
       </div>
+  );
+}
+
+/* --------------------------------------------------------------- Move shelf */
+export function MoveShelfDialog({
+  shelf,
+  pages,
+  onClose,
+  onMoved,
+}: {
+  shelf: ShelfDTO | null;
+  pages: PageDTO[];
+  onClose: () => void;
+  onMoved: (shelf: ShelfDTO, fromPageId: string) => void;
+}) {
+  return (
+    <Modal open={Boolean(shelf)} onClose={onClose} title="Move shelf" description={shelf ? `Move “${shelf.name}” and all its items to another page.` : undefined} size="sm">
+      {shelf && <MoveShelfBody key={shelf.id} shelf={shelf} pages={pages} onClose={onClose} onMoved={onMoved} />}
+    </Modal>
+  );
+}
+
+function MoveShelfBody({ shelf, pages, onClose, onMoved }: { shelf: ShelfDTO; pages: PageDTO[]; onClose: () => void; onMoved: (shelf: ShelfDTO, fromPageId: string) => void }) {
+  const { busy, error, run } = useSubmit();
+  const [target, setTarget] = useState<string | null>(null);
+  const options = pages
+    .filter((p) => p.id !== shelf.pageId)
+    .map((p) => {
+      const full = p.shelves.length >= MAX_SHELVES_PER_PAGE;
+      return { value: p.id, label: p.title, hint: full ? "Full" : `${p.shelves.length}/${MAX_SHELVES_PER_PAGE}`, disabled: full };
+    });
+  return (
+    <>
+      <Field label="Destination page" htmlFor="move-target">
+        <Select id="move-target" label="Destination page" value={target} options={options} onChange={setTarget} placeholder="Choose a page" />
+      </Field>
+      <div className="mt-4"><ErrorLine msg={error} /></div>
+      <div className="mt-5 flex justify-end gap-2">
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button
+          disabled={!target}
+          loading={busy}
+          onClick={() =>
+            run(async () => {
+              const { shelf: saved } = await api<{ shelf: ShelfDTO }>(`/api/shelves/${shelf.id}/move`, { json: { pageId: target } });
+              onMoved(saved, shelf.pageId);
+            })
+          }
+        >
+          Confirm
+        </Button>
+      </div>
+    </>
   );
 }

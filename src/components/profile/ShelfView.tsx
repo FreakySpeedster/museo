@@ -13,7 +13,7 @@ import {
 import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
-import { ArrowDown, ArrowUp, MoreHorizontal, Plus, Share2 } from "lucide-react";
+import { ArrowDown, ArrowUp, FolderInput, MoreHorizontal, Plus, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { copyText, shelfShareText } from "@/lib/share-text";
 import { categoryMeta } from "@/lib/categories";
@@ -67,6 +67,8 @@ export function ShelfView({
   onReorder,
   onMoveShelf,
   onToggleVisibility,
+  onMoveToPage,
+  canMoveToPage,
 }: {
   shelf: ShelfDTO;
   username: string;
@@ -83,6 +85,9 @@ export function ShelfView({
   onReorder: (shelfId: string, items: ItemDTO[], commit: boolean) => void;
   onMoveShelf?: (shelf: ShelfDTO, dir: -1 | 1) => void;
   onToggleVisibility?: (shelf: ShelfDTO) => void;
+  /** nook Plus only: omit to hide the Move item entirely. */
+  onMoveToPage?: (shelf: ShelfDTO) => void;
+  canMoveToPage?: boolean;
 }) {
   const root = useRef<HTMLElement>(null);
   const grid = useRef<HTMLDivElement>(null);
@@ -174,6 +179,7 @@ export function ShelfView({
               items={[
                 { label: "Rename", onSelect: () => onEditShelf(shelf) },
                 { label: shelf.visibility === "private" ? "Make public" : "Make private", hidden: !onToggleVisibility, onSelect: () => onToggleVisibility?.(shelf) },
+                { label: "Move", icon: <FolderInput className="size-4" aria-hidden />, hidden: !onMoveToPage, disabled: !canMoveToPage, title: canMoveToPage ? undefined : "Create another page to move shelves", onSelect: () => onMoveToPage?.(shelf) },
                 { label: "Move up", icon: <ArrowUp className="size-4" aria-hidden />, hidden: !onMoveShelf || !canMoveUp, onSelect: () => onMoveShelf?.(shelf, -1) },
                 { label: "Move down", icon: <ArrowDown className="size-4" aria-hidden />, hidden: !onMoveShelf || !canMoveDown, onSelect: () => onMoveShelf?.(shelf, 1) },
                 { label: "Delete", danger: true, onSelect: () => onDeleteShelf(shelf) },

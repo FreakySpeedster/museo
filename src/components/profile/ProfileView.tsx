@@ -15,7 +15,7 @@ import { Menu } from "@/components/ui/Menu";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { AddItemDialog } from "./AddItemDialog";
-import { ConfirmDialog, PageDialog, PaywallDialog, ProfileDialog, ShelfDialog } from "./dialogs";
+import { ConfirmDialog, MoveShelfDialog, PageDialog, PaywallDialog, ProfileDialog, ShelfDialog } from "./dialogs";
 import { ItemModal } from "./ItemModal";
 import { PageSwitcher } from "./PageSwitcher";
 import { ProfileStickyBar } from "./ProfileStickyBar";
@@ -67,6 +67,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   const [pageDialog, setPageDialog] = useState<{ page: PageDTO | null } | null>(null);
   const [shelfDialog, setShelfDialog] = useState<{ shelf: ShelfDTO | null } | null>(null);
   const [addTo, setAddTo] = useState<ShelfDTO | null>(null);
+  const [moveTarget, setMoveTarget] = useState<ShelfDTO | null>(null);
   const [openItemId, setOpenItemId] = useState<string | null>(initialItemId ?? null);
   const [paywall, setPaywall] = useState(false);
   const [profileDialog, setProfileDialog] = useState(false);
@@ -265,6 +266,19 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     }
   }
 
+  function onShelfMoved(saved: ShelfDTO, fromPageId: string) {
+    setPages((ps) =>
+      ps.map((p) => {
+        if (p.id === fromPageId) return { ...p, shelves: p.shelves.filter((s) => s.id !== saved.id).map((s, n) => ({ ...s, position: n })) };
+        if (p.id === saved.pageId) return { ...p, shelves: [...p.shelves, saved] };
+        return p;
+      }),
+    );
+    setMoveTarget(null);
+    const dest = pages.find((p) => p.id === saved.pageId);
+    toast.success(`Moved “${saved.name}” to ${dest?.title ?? "another page"}`);
+  }
+
   async function togglePageVisibility(target: PageDTO) {
     const visibility = target.visibility === "private" ? "public" : "private";
     try {
@@ -440,6 +454,8 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
                 onReorder={onReorder}
                 onMoveShelf={moveShelf}
                 onToggleVisibility={toggleShelfVisibility}
+                onMoveToPage={subscribed ? setMoveTarget : undefined}
+                canMoveToPage={pages.length > 1}
               />
             ))}
 
@@ -465,6 +481,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
         <>
           <PageDialog open={Boolean(pageDialog)} page={pageDialog?.page ?? null} onClose={() => setPageDialog(null)} onSaved={onPageSaved} onPaywall={() => setPaywall(true)} />
           {page && <ShelfDialog open={Boolean(shelfDialog)} pageId={page.id} shelf={shelfDialog?.shelf ?? null} onClose={() => setShelfDialog(null)} onSaved={onShelfSaved} />}
+          <MoveShelfDialog shelf={moveTarget} pages={pages} onClose={() => setMoveTarget(null)} onMoved={onShelfMoved} />
           <AddItemDialog open={Boolean(addTo)} shelf={addTo} onClose={() => setAddTo(null)} onAdded={onItemAdded} />
           <ConfirmDialog
             open={Boolean(confirm)}

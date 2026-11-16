@@ -138,3 +138,5 @@ export const searchQuerySchema = z.object({
 export function firstIssue(err: z.ZodError): string {
   return err.issues[0]?.message ?? "Invalid input";
 }
+
+export const shelfMoveSchema = z.object({ pageId: z.string().min(1).max(64) });

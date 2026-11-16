@@ -10,6 +10,9 @@ export interface MenuItem {
   danger?: boolean;
   icon?: ReactNode;
   hidden?: boolean;
+  disabled?: boolean;
+  /** Shown as a tooltip, e.g. why an item is disabled. */
+  title?: string;
 }
 
 export function Menu({
@@ -123,11 +126,15 @@ export function Menu({
                 key={it.label}
                 type="button"
                 role="menuitem"
+                aria-disabled={it.disabled || undefined}
+                title={it.title}
                 className={clsx(
-                  "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-meta transition-colors duration-[var(--duration-fast)] hover:bg-surface-hover",
-                  it.danger ? "text-danger hover:text-danger" : "text-foreground",
+                  "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-meta transition-colors duration-[var(--duration-fast)]",
+                  it.disabled ? "cursor-not-allowed text-muted opacity-60" : "hover:bg-surface-hover",
+                  !it.disabled && (it.danger ? "text-danger hover:text-danger" : "text-foreground"),
                 )}
                 onClick={() => {
+                  if (it.disabled) return;
                   setOpen(false);
                   it.onSelect();
                 }}

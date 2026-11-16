@@ -43,3 +43,33 @@ export async function deleteShelf(userId: string, shelfId: string) {
   await db.shelf.delete({ where: { id: shelfId } });
   await Promise.all(items.flatMap((i) => [deleteUploadByUrl(i.imageUrl), deleteUploadByUrl(i.faviconUrl)]));
 }
+
+/** Move a whole shelf (with its items) to another of the owner's pages. nook Plus only; respects the target's shelf limit. */
+export async function moveShelfToPage(userId: string, shelfId: string, targetPageId: string) {
+  return db.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({ where: { id: userId }, select: { subscribed: true } });
+    if (!user?.subscribed) throw new AppError("PAYWALL", "Moving shelves between pages is a nook Plus feature.");
+    const shelf = await tx.shelf.findUnique({ where: { id: shelfId }, include: { page: { select: { userId: true } } } });
+    if (!shelf) throw new AppError("NOT_FOUND", "Shelf not found");
+    if (shelf.page.userId !== userId) throw new AppError("FORBIDDEN", "That shelf belongs to someone else");
+    if (shelf.pageId === targetPageId) throw new AppError("BAD_REQUEST", "The shelf is already on that page");
+    // Lock both pages in a stable order to avoid deadlocks with concurrent creates/moves.
+    for (const id of [shelf.pageId, targetPageId].sort()) await advisoryLock(tx, `page:${id}`);
+    const target = await tx.page.findUnique({ where: { id: targetPageId }, select: { userId: true, title: true } });
+    if (!target) throw new AppError("NOT_FOUND", "Page not found");
+    if (target.userId !== userId) throw new AppError("FORBIDDEN", "That page belongs to someone else");
+    const count = await tx.shelf.count({ where: { pageId: targetPageId } });
+    if (!canAddShelf(count)) {
+      throw new AppError("SHELF_LIMIT", `"${target.title}" already has ${MAX_SHELVES_PER_PAGE} shelves`);
+    }
+    const moved = await tx.shelf.update({
+      where: { id: shelfId },
+      data: { pageId: targetPageId, position: count },
+      include: { items: { orderBy: { position: "asc" } } },
+    });
+    // Close the gap on the source page.
+    const rest = await tx.shelf.findMany({ where: { pageId: shelf.pageId }, orderBy: { position: "asc" }, select: { id: true } });
+    await Promise.all(rest.map((s, i) => tx.shelf.update({ where: { id: s.id }, data: { position: i } })));
+    return moved;
+  });
+}
