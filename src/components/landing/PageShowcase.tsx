@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { gsap, reducedMotion, useGSAP } from "@/lib/gsap";
-import { ChevronLeft, ChevronRight, Heart, MessageCircle } from "lucide-react";
-import clsx from "clsx";
+import { useRef } from "react";
+import { Heart, MessageCircle } from "lucide-react";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
+import { ensureScrollTrigger, gsap, useGSAP } from "@/lib/gsap";
 
 interface ShowcasePage {
   owner: string;
@@ -19,7 +18,7 @@ interface ShowcasePage {
 
 const s = (f: string) => `/seed/${f}.svg`;
 
-const PAGES: ShowcasePage[] = [
+export const PAGES: ShowcasePage[] = [
   {
     owner: "Alex Rivera", handle: "alex", title: "Music", category: "music", shelf: "On rotation",
     items: [["Kind of Blue", s("05-kind-of-blue")], ["In Rainbows", s("08-in-rainbows")], ["Rumours", s("07-rumours")], ["Random Access Memories", s("06-random-access-memories")], ["Blue Hour", s("28-blue-hour")], ["Mist", s("29-mist")]],
@@ -58,191 +57,182 @@ const PAGES: ShowcasePage[] = [
   },
 ];
 
-const TICK_MS = 3000;
+const TICK = 3; // seconds per profile
+const DEPTH = [
+  { y: 0, scale: 1, rotate: 0, autoAlpha: 1 },
+  { y: -22, scale: 0.94, rotate: 2.5, autoAlpha: 0.75 },
+  { y: -42, scale: 0.88, rotate: -2.5, autoAlpha: 0.45 },
+];
+const HIDDEN = { y: -56, scale: 0.84, rotate: 0, autoAlpha: 0 };
 
-/** Floating activity note. When `body`/`title` change it swaps with a short GSAP out/in (transform + opacity only). */
-function Note({ className, icon, title, body }: { className: string; icon: ReactNode; title: string; body?: string }) {
-  const el = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState({ title, body });
-  const first = useRef(true);
-
-  useGSAP(() => {
-    if (first.current) { first.current = false; return; }
-    if (shown.title === title && shown.body === body) return;
-    const node = el.current;
-    if (!node || reducedMotion()) { setShown({ title, body }); return; }
-    gsap.killTweensOf(node);
-    gsap.to(node, {
-      autoAlpha: 0, y: -6, scale: 0.96, duration: 0.22, ease: "power2.in", overwrite: true,
-      onComplete: () => {
-        setShown({ title, body });
-        gsap.fromTo(node, { autoAlpha: 0, y: 8, scale: 0.94 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.6)", clearProps: "transform" });
-      },
-    });
-  }, { dependencies: [title, body] });
-
+function DeckCard({ page, i }: { page: ShowcasePage; i: number }) {
   return (
-    <div className={clsx("pointer-events-none absolute z-10", className)} aria-hidden>
-      <div ref={el} className="landing-float max-w-[13.5rem] rounded-xl border border-border bg-surface-raised/95 px-3 py-2 shadow-lg backdrop-blur-md will-change-transform">
-        <div className="flex items-center gap-1.5 text-micro text-muted">{icon}<span className="truncate">{shown.title}</span></div>
-        {shown.body && <p className="mt-0.5 truncate text-caption font-medium">{shown.body}</p>}
-      </div>
-    </div>
-  );
-}
-
-function ShowcaseCard({ page, i, tick }: { page: ShowcasePage; i: number; tick: number }) {
-  const flip = i % 2 === 1;
-  // Offset per card so neighbours never swap in lockstep: likes change on even ticks, comments on odd ticks.
-  const like = page.likes[Math.floor((tick + i) / 2) % page.likes.length];
-  const [who, text] = page.comments[Math.floor((tick + i + 1) / 2) % page.comments.length];
-  return (
-    <div data-card className="relative shrink-0">
-      <Note
-        className={clsx("-top-5", flip ? "-right-3 rotate-[2deg]" : "-left-3 rotate-[-2deg]")}
-        icon={<Heart className="size-3 text-[#FF4D6D]" fill="currentColor" />}
-        title={like}
-      />
-      <article className="w-[16.5rem] overflow-hidden rounded-2xl border border-border bg-background shadow-sm sm:w-[18rem]">
-        <header className="flex items-center gap-2.5 px-3.5 pb-2.5 pt-3.5">
-          <span className="grid size-8 place-items-center rounded-full bg-surface-hover">
-            <CategoryIcon category={page.category} className="size-4" />
+    <div data-deck-card data-i={i} className="deck-card absolute inset-x-0 top-0 mx-auto w-full will-change-transform" style={{ zIndex: 10 - i }}>
+      <article className="overflow-hidden rounded-[1.75rem] border border-border bg-surface shadow-2xl">
+        <header className="flex items-center gap-3 px-5 pb-3 pt-5">
+          <span className="grid size-10 place-items-center rounded-full bg-surface-hover">
+            <CategoryIcon category={page.category} className="size-5" />
           </span>
-          <div className="min-w-0 leading-tight">
-            <p className="truncate text-meta font-semibold">{page.owner}</p>
-            <p className="truncate text-micro text-muted">@{page.handle} · {page.title}</p>
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-body font-semibold">{page.owner}</p>
+            <p className="truncate text-caption text-muted">@{page.handle} · {page.title}</p>
           </div>
+          <span className="rounded-full border border-border px-3 py-1 text-caption font-medium">Follow</span>
         </header>
-        <p className="px-3.5 text-caption font-medium text-muted">{page.shelf}</p>
-        <div className="grid grid-cols-3 gap-1.5 p-3.5 pt-2">
+        <p className="px-5 text-meta font-medium text-muted">{page.shelf}</p>
+        <div className="grid grid-cols-3 gap-2 p-5 pt-3">
           {page.items.map(([title, img]) => (
-            <figure key={title} className="min-w-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img} alt="" loading="lazy" decoding="async" className="aspect-square w-full rounded-lg object-cover" />
-              <figcaption className="mt-1 truncate text-micro text-muted">{title}</figcaption>
-            </figure>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={title} src={img} alt="" loading="lazy" decoding="async" className="aspect-square w-full rounded-xl object-cover" />
           ))}
         </div>
-        <hr className="mx-3.5 border-0 border-t border-border" />
-        <p className="px-3.5 py-2.5 text-micro text-muted">6 items · 1.{i + 2}k views</p>
       </article>
-      <Note
-        className={clsx("-bottom-6", flip ? "-left-4 rotate-[-2deg]" : "-right-4 rotate-[2deg]")}
-        icon={<MessageCircle className="size-3 text-accent" />}
-        title={`${who} commented`}
-        body={text}
-      />
+      <div data-note="like" className="deck-note -left-4 -top-5 rotate-[-3deg] sm:-left-12">
+        <Heart className="size-3.5 shrink-0 text-[#FF4D6D]" fill="currentColor" aria-hidden />
+        <span data-text className="truncate">{page.likes[0]}</span>
+      </div>
+      <div data-note="comment" className="deck-note -right-4 bottom-10 max-w-[15rem] flex-col !items-start rotate-[2deg] sm:-right-14">
+        <span className="flex items-center gap-1.5 text-micro text-muted">
+          <MessageCircle className="size-3.5 text-accent" aria-hidden /> <span data-who>{page.comments[0][0]}</span> commented
+        </span>
+        <span data-text className="truncate text-meta font-medium">{page.comments[0][1]}</span>
+      </div>
     </div>
   );
 }
 
 /**
- * Compact rail of example pages. Every 3s it glides to the next profile (GSAP tween on scrollLeft, wrapping at the end)
- * and the activity notes swap. Pauses while hovered, focused, touched, off-screen, or the tab is hidden; off under reduced motion.
- * The mouse wheel scrolls it sideways until an edge, then the page scrolls.
+ * A deck of example profiles. Every 3s the front card flicks away to the back, the rest step forward,
+ * and the new front card's like/comment notes pop in with fresh activity. Transforms and opacity only;
+ * text swaps write textContent directly so React never re-renders mid-animation. Plays only on screen.
  */
 export function PageShowcase() {
-  const rail = useRef<HTMLDivElement>(null);
-  const [edge, setEdge] = useState({ start: true, end: false });
-  const [tick, setTick] = useState(0);
+  const root = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    const el = rail.current;
-    if (!el) return;
-    let frame = 0;
-    const sync = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const start = el.scrollLeft <= 2;
-        const end = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
-        setEdge((e) => (e.start === start && e.end === end ? e : { start, end }));
-      });
-    };
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-      const max = el.scrollWidth - el.clientWidth;
-      if (max <= 0) return;
-      if ((el.scrollLeft <= 0 && e.deltaY < 0) || (el.scrollLeft >= max - 1 && e.deltaY > 0)) return;
-      e.preventDefault();
-      gsap.killTweensOf(el);
-      el.scrollLeft += e.deltaY;
-    };
-    sync();
-    el.addEventListener("wheel", onWheel, { passive: false });
-    el.addEventListener("scroll", sync, { passive: true });
-    window.addEventListener("resize", sync);
-    return () => {
-      cancelAnimationFrame(frame);
-      el.removeEventListener("wheel", onWheel);
-      el.removeEventListener("scroll", sync);
-      window.removeEventListener("resize", sync);
-    };
-  }, []);
+  useGSAP(
+    () => {
+      const el = root.current!;
+      const cards = gsap.utils.toArray<HTMLElement>("[data-deck-card]", el);
+      const order = cards.map((_, i) => i);
+      const rounds = cards.map(() => 0);
+      const labels = gsap.utils.toArray<HTMLElement>("[data-deck-label]", el);
+      const bar = el.querySelector<HTMLElement>("[data-deck-bar]");
+      const counter = el.querySelector<HTMLElement>("[data-deck-count]");
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Autoplay loop.
-  useEffect(() => {
-    const el = rail.current;
-    if (!el || reducedMotion()) return;
-    let hovering = false;
-    let visible = false;
-    let resumeAt = 0;
-    const hold = () => { resumeAt = performance.now() + 5000; gsap.killTweensOf(el); };
-    const enter = () => { hovering = true; };
-    const leave = () => { hovering = false; };
-    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0.25 });
-    io.observe(el);
-    el.addEventListener("pointerenter", enter);
-    el.addEventListener("pointerleave", leave);
-    el.addEventListener("touchstart", hold, { passive: true });
-    el.addEventListener("focusin", hold);
+      const place = (animate: boolean) => {
+        order.forEach((ci, depth) => {
+          const vars = { ...(DEPTH[depth] ?? HIDDEN), zIndex: 10 - depth };
+          if (animate) gsap.to(cards[ci], { ...vars, duration: 0.8, ease: "expo.out", overwrite: "auto" });
+          else gsap.set(cards[ci], vars);
+          const notes = cards[ci].querySelectorAll("[data-note]");
+          if (depth !== 0) gsap.set(notes, { autoAlpha: 0, scale: 0.6 });
+        });
+      };
+      const setLabel = () => {
+        labels.forEach((l, i) => l.classList.toggle("is-active", i === order[0]));
+        if (counter) counter.textContent = String(order[0] + 1).padStart(2, "0");
+      };
+      const popNotes = (ci: number) => {
+        const page = PAGES[ci];
+        const r = rounds[ci];
+        const c = cards[ci];
+        const like = c.querySelector<HTMLElement>("[data-note=like] [data-text]");
+        const who = c.querySelector<HTMLElement>("[data-note=comment] [data-who]");
+        const text = c.querySelector<HTMLElement>("[data-note=comment] [data-text]");
+        if (like) like.textContent = page.likes[r % page.likes.length];
+        if (who) who.textContent = page.comments[r % page.comments.length][0];
+        if (text) text.textContent = page.comments[r % page.comments.length][1];
+        gsap.fromTo(c.querySelectorAll("[data-note]"), { autoAlpha: 0, scale: 0.6, y: 10 }, { autoAlpha: 1, scale: 1, y: 0, duration: 0.7, stagger: 0.18, delay: 0.25, ease: "back.out(2)", overwrite: true });
+      };
 
-    const id = window.setInterval(() => {
-      if (!visible || hovering || document.hidden || performance.now() < resumeAt) return;
-      setTick((t) => t + 1);
-      const cards = Array.from(el.querySelectorAll<HTMLElement>("[data-card]"));
-      const max = el.scrollWidth - el.clientWidth;
-      if (max <= 0 || cards.length < 2) return;
-      const pad = cards[0].offsetLeft;
-      const next = cards.find((c) => c.offsetLeft - pad > el.scrollLeft + 4);
-      const target = !next || el.scrollLeft >= max - 2 ? 0 : Math.min(max, next.offsetLeft - pad);
-      gsap.to(el, { scrollLeft: target, duration: target === 0 ? 1.1 : 0.9, ease: "power3.inOut", overwrite: true });
-    }, TICK_MS);
+      place(false);
+      setLabel();
+      gsap.set(cards[order[0]].querySelectorAll("[data-note]"), { autoAlpha: 1, scale: 1 });
+      if (reduce) return;
 
-    return () => {
-      window.clearInterval(id);
-      io.disconnect();
-      gsap.killTweensOf(el);
-      el.removeEventListener("pointerenter", enter);
-      el.removeEventListener("pointerleave", leave);
-      el.removeEventListener("touchstart", hold);
-      el.removeEventListener("focusin", hold);
-    };
-  }, []);
+      const advance = () => {
+        const front = order.shift()!;
+        order.push(front);
+        rounds[front] += 1;
+        const c = cards[front];
+        gsap.to(c.querySelectorAll("[data-note]"), { autoAlpha: 0, scale: 0.6, duration: 0.25, ease: "power2.in", overwrite: true });
+        gsap.timeline()
+          .to(c, { xPercent: -115, rotate: -14, y: 30, duration: 0.6, ease: "power3.in" })
+          .set(c, { xPercent: 0, ...HIDDEN, zIndex: 0 })
+          .call(() => place(true), [], 0.28);
+        setLabel();
+        popNotes(order[0]);
+        if (bar) gsap.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: TICK, ease: "none" });
+      };
 
-  const nudge = (dir: 1 | -1) => {
-    const el = rail.current;
-    if (!el) return;
-    const max = el.scrollWidth - el.clientWidth;
-    gsap.to(el, { scrollLeft: Math.max(0, Math.min(max, el.scrollLeft + dir * 300)), duration: 0.6, ease: "power3.out", overwrite: true });
-  };
-  const arrow = "absolute top-1/2 z-20 hidden size-9 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface-raised/90 text-foreground shadow-md backdrop-blur transition-opacity md:grid";
+      if (bar) gsap.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: TICK, ease: "none" });
+      const loop = gsap.delayedCall(TICK, function tick() { advance(); loop.restart(true); });
+
+      const ScrollTrigger = ensureScrollTrigger();
+      let hovered = false;
+      let onScreen = false;
+      const sync = () => {
+        const run = onScreen && !hovered;
+        loop.paused(!run);
+        if (bar) gsap.getTweensOf(bar).forEach((t) => t.paused(!run));
+      };
+      const st = ScrollTrigger.create({ trigger: el, start: "top 85%", end: "bottom 15%", onToggle: (s) => { onScreen = s.isActive; sync(); } });
+      const stage = el.querySelector<HTMLElement>("[data-deck-stage]")!;
+      const enter = () => { hovered = true; sync(); };
+      const leave = () => { hovered = false; sync(); };
+      stage.addEventListener("pointerenter", enter);
+      stage.addEventListener("pointerleave", leave);
+      const jump = (e: Event) => {
+        const target = Number((e.currentTarget as HTMLElement).dataset.i);
+        let guard = 0;
+        while (order[0] !== target && guard++ < cards.length) advance();
+        loop.restart(true);
+      };
+      labels.forEach((l) => l.addEventListener("click", jump));
+      onScreen = st.isActive;
+      sync();
+
+      return () => {
+        loop.kill();
+        st.kill();
+        stage.removeEventListener("pointerenter", enter);
+        stage.removeEventListener("pointerleave", leave);
+        labels.forEach((l) => l.removeEventListener("click", jump));
+      };
+    },
+    { scope: root },
+  );
 
   return (
-    <div className="relative rounded-3xl border border-border bg-surface/60 shadow-md backdrop-blur" aria-label="Example nook pages">
-      <div
-        ref={rail}
-        className="showcase-rail no-scrollbar flex gap-5 overflow-x-auto overscroll-x-contain px-5 pb-12 pt-10 sm:gap-6 sm:px-8"
-        data-start={edge.start || undefined}
-        data-end={edge.end || undefined}
-      >
-        {PAGES.map((page, i) => <ShowcaseCard key={page.handle} page={page} i={i} tick={tick} />)}
+    <section ref={root} id="showcase" className="relative overflow-hidden border-t border-border" aria-label="Example nook profiles">
+      <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:py-20">
+        <div>
+          <p className="text-micro font-medium uppercase tracking-[0.2em] text-muted">
+            <span data-deck-count>01</span> / {String(PAGES.length).padStart(2, "0")} — Live on nook
+          </p>
+          <h2 className="mt-4 text-title font-semibold tracking-tight">Every collection gets a little home.</h2>
+          <p className="mt-4 max-w-md text-body text-muted">Records on rotation, the books on your nightstand, the plants you keep alive. Friends drop by, like a shelf, leave a note.</p>
+          <ul className="mt-8 flex flex-wrap gap-2" aria-label="Profiles">
+            {PAGES.map((p, i) => (
+              <li key={p.handle}>
+                <button type="button" data-deck-label data-i={i} className="deck-label">
+                  <CategoryIcon category={p.category} className="size-3.5" /> {p.title}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-6 h-px w-full max-w-xs overflow-hidden bg-border" aria-hidden>
+            <div data-deck-bar className="h-full origin-left scale-x-0 bg-foreground" />
+          </div>
+        </div>
+
+        <div data-deck-stage className="relative mx-auto h-[25rem] w-full max-w-[22rem] pt-12 sm:h-[27rem] sm:max-w-[24rem]">
+          <div className="relative size-full">
+            {PAGES.map((page, i) => <DeckCard key={page.handle} page={page} i={i} />)}
+          </div>
+        </div>
       </div>
-      <button type="button" aria-label="Scroll left" onClick={() => nudge(-1)} className={clsx(arrow, "-left-4", edge.start && "pointer-events-none opacity-0")}>
-        <ChevronLeft className="size-4" />
-      </button>
-      <button type="button" aria-label="Scroll right" onClick={() => nudge(1)} className={clsx(arrow, "-right-4", edge.end && "pointer-events-none opacity-0")}>
-        <ChevronRight className="size-4" />
-      </button>
-    </div>
+    </section>
   );
 }

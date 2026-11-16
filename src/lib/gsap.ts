@@ -2,11 +2,12 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Flip } from "gsap/Flip";
+import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(useGSAP);
 
-const registered = { scrollTrigger: false, flip: false };
+const registered = { scrollTrigger: false, flip: false, split: false };
 
 /** Register ScrollTrigger on first use so marketing pages that only need a tween don't pay upfront. */
 export function ensureScrollTrigger() {
@@ -23,6 +24,14 @@ export function ensureFlip() {
     registered.flip = true;
   }
   return Flip;
+}
+
+export function ensureSplitText() {
+  if (!registered.split) {
+    gsap.registerPlugin(SplitText);
+    registered.split = true;
+  }
+  return SplitText;
 }
 
 export { gsap, ScrollTrigger, Flip, useGSAP };
