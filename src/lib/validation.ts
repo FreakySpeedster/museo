@@ -49,6 +49,10 @@ export const profileSchema = z.object({
   displayName: trimmed(1, 50, "Display name"),
   bio: optionalText(240, "Bio"),
   socialLinks: z.array(z.object({ network: z.string().trim().min(1).max(40), url: z.string().trim().max(500) })).max(8).optional(),
+});
+
+/** Account settings; every field optional so each control can save on its own. */
+export const settingsSchema = z.object({
   followPolicy: z.enum(["request", "open"]).optional(),
 });
 

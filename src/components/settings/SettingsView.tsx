@@ -1,0 +1,69 @@
+"use client";
+
+import { Shield, UserCheck, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import type { FollowPolicy, ViewerDTO } from "@/lib/dto";
+import { ApiError, api } from "@/lib/client";
+import { Select } from "@/components/ui/Select";
+import { useToast } from "@/components/ui/Toast";
+import { SettingRow, SettingsSection } from "./SettingsSection";
+
+export function SettingsView({ viewer, pendingRequests }: { viewer: ViewerDTO; pendingRequests: number }) {
+  const [policy, setPolicy] = useState<FollowPolicy>(viewer.followPolicy);
+  const [pending, setPending] = useState(pendingRequests);
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
+  const router = useRouter();
+
+  async function changePolicy(next: FollowPolicy) {
+    if (next === policy || saving) return;
+    const prev = policy;
+    setPolicy(next);
+    setSaving(true);
+    try {
+      const { approved } = await api<{ approved: number }>("/api/me/settings", { method: "PATCH", json: { followPolicy: next } });
+      if (next === "open") setPending(0);
+      toast.success(
+        next === "open"
+          ? approved > 0
+            ? `Anyone can follow you now. ${approved} pending request${approved === 1 ? " was" : "s were"} approved.`
+            : "Anyone can follow you now"
+          : "New followers now need your approval",
+      );
+      router.refresh();
+    } catch (e) {
+      setPolicy(prev);
+      toast.error(e instanceof ApiError ? e.message : "Couldn't save that setting");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <SettingsSection title="Privacy" description="Control who can follow you." icon={<Shield className="size-4" aria-hidden />}>
+        <SettingRow
+          label="Who can follow you"
+          htmlFor="set-follow"
+          description={
+            policy === "request"
+              ? `New followers need your approval. Requests show up in Notifications.${pending > 0 ? ` Switching to "Anyone can follow" approves your ${pending} pending request${pending === 1 ? "" : "s"}.` : ""}`
+              : "Anyone can follow you right away."
+          }
+        >
+          <Select
+            id="set-follow"
+            label="Who can follow you"
+            value={policy}
+            onChange={(v) => void changePolicy(v as FollowPolicy)}
+            options={[
+              { value: "request", label: "Approve follow requests", icon: <UserCheck className="size-4 shrink-0 text-muted" aria-hidden /> },
+              { value: "open", label: "Anyone can follow", icon: <Users className="size-4 shrink-0 text-muted" aria-hidden /> },
+            ]}
+          />
+        </SettingRow>
+      </SettingsSection>
+    </div>
+  );
+}

@@ -1,8 +1,8 @@
 "use client";
 
-import { FileStack, Heart, UserCheck, Users, Zap, type LucideIcon } from "lucide-react";
+import { FileStack, Heart, Zap, type LucideIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import type { FollowPolicy, PageDTO, ShelfDTO, ViewerDTO } from "@/lib/dto";
+import type { PageDTO, ShelfDTO, ViewerDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { Button } from "@/components/ui/Button";
 import { AvatarEditor } from "./AvatarEditor";
@@ -227,13 +227,12 @@ function ProfileForm({ viewer, onClose, onSaved, onAvatar }: { viewer: ViewerDTO
     for (const l of viewer.socialLinks ?? []) out[l.network] = l.url;
     return out;
   });
-  const [followPolicy, setFollowPolicy] = useState<FollowPolicy>(viewer.followPolicy ?? "request");
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const socialLinks = SOCIAL_NETWORKS.map((n) => ({ network: n.id, url: (links[n.id] ?? "").trim() })).filter((l) => l.url);
     run(async () => {
-      const { user } = await api<{ user: ViewerDTO }>("/api/me", { method: "PATCH", json: { displayName: f.get("displayName"), bio: f.get("bio") || "", socialLinks, followPolicy } });
+      const { user } = await api<{ user: ViewerDTO }>("/api/me", { method: "PATCH", json: { displayName: f.get("displayName"), bio: f.get("bio") || "", socialLinks } });
       onSaved(user);
     });
   }
@@ -264,28 +263,6 @@ function ProfileForm({ viewer, onClose, onSaved, onAvatar }: { viewer: ViewerDTO
             </div>
           </Field>
         ))}
-      </div>
-      <div className="space-y-3 border-t border-border pt-4">
-        <p className="text-meta font-medium">Privacy</p>
-        <Field label="Who can follow you" htmlFor="pf-follow">
-          <Select
-            id="pf-follow"
-            label="Who can follow you"
-            value={followPolicy}
-            onChange={(v) => setFollowPolicy(v as FollowPolicy)}
-            options={[
-              { value: "request", label: "Approve follow requests", icon: <UserCheck className="size-4 shrink-0 text-muted" aria-hidden /> },
-              { value: "open", label: "Anyone can follow", icon: <Users className="size-4 shrink-0 text-muted" aria-hidden /> },
-            ]}
-          />
-        </Field>
-        <p className="text-caption text-muted">
-          {followPolicy === "request"
-            ? "New followers need your approval. Requests show up in Notifications."
-            : viewer.followPolicy === "request"
-              ? "Anyone can follow you right away. Pending requests will be approved when you save."
-              : "Anyone can follow you right away."}
-        </p>
       </div>
       <ErrorLine msg={error} />
       <div className="flex justify-end gap-2">

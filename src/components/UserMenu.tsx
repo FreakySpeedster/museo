@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Gem, History, House, LayoutGrid, LogOut } from "lucide-react";
+import { Gem, History, House, LayoutGrid, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -105,6 +105,7 @@ export function UserMenu({
           <Link role="menuitem" href={`/u/${username}`} className={item} onClick={close}><LayoutGrid className="size-4" aria-hidden /> My shelves</Link>
           <Link role="menuitem" href="/timeline" className={item} onClick={close}><History className="size-4" aria-hidden /> Timeline</Link>
           <Link role="menuitem" href="/pricing" className={item} onClick={close}><Gem className="size-4" aria-hidden /> {plus ? "Manage plan" : "Upgrade to Plus"}</Link>
+          <Link role="menuitem" href="/settings" className={item} onClick={close}><Settings className="size-4" aria-hidden /> Settings</Link>
           <div className="my-1 border-t border-border" />
           <button role="menuitem" className={item} onClick={logout}><LogOut className="size-4" aria-hidden /> Log out</button>
         </div>
