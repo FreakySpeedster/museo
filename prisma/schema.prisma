@@ -44,6 +44,7 @@ model User {
   notifications          Notification[]  @relation("recipient")
   actedNotifications     Notification[]  @relation("actor")
   blogPosts              BlogPost[]
+  passwordResets         PasswordResetToken[]
 }
 
 model Session {
@@ -53,6 +54,19 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Single-use password reset link. Only the SHA-256 of the emailed token is stored.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

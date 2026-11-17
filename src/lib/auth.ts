@@ -8,7 +8,7 @@ import { isSecureDeployment } from "./env";
 export const SESSION_COOKIE = "shelfie_session";
 const SESSION_DAYS = 30;
 
-const sha256 = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
+export const sha256 = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
 
 export async function createSession(userId: string) {
   const token = crypto.randomBytes(32).toString("base64url");
@@ -48,3 +48,9 @@ export const getCurrentUser = cache(async () => {
 });
 
 export type SessionUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
+
+/** Hash of the current request's session token, if any (used to keep "this device" signed in). */
+export async function currentSessionHash(): Promise<string | null> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  return token ? sha256(token) : null;
+}

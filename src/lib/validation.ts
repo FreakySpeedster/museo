@@ -28,14 +28,30 @@ export const usernameSchema = z
   .regex(/^[a-z0-9_]{3,20}$/, "Username must be 3–20 characters: letters, numbers or underscores")
   .refine((v) => !RESERVED_USERNAMES.has(v), "That username is reserved");
 
+export const passwordSchema = z
+  .string({ error: "Password is required" })
+  .min(8, "Password must be at least 8 characters")
+  .max(128, "Password must be at most 128 characters");
+
 export const signupSchema = z.object({
   email: z.string({ error: "Email is required" }).trim().toLowerCase().max(254).pipe(z.email("Enter a valid email")),
   username: usernameSchema,
   displayName: trimmed(1, 50, "Display name").optional(),
-  password: z
-    .string({ error: "Password is required" })
-    .min(8, "Password must be at least 8 characters")
-    .max(128, "Password must be at most 128 characters"),
+  password: passwordSchema,
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string({ error: "Email is required" }).trim().toLowerCase().max(254).pipe(z.email("Enter a valid email")),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(20).max(200),
+  password: passwordSchema,
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Enter your current password").max(128),
+  newPassword: passwordSchema,
 });
 
 export const loginSchema = z.object({

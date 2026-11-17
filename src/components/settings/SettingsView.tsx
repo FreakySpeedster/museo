@@ -1,18 +1,21 @@
 "use client";
 
-import { Shield, UserCheck, Users } from "lucide-react";
+import { KeyRound, LockKeyhole, Shield, UserCheck, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FollowPolicy, ViewerDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { SettingRow, SettingsSection } from "./SettingsSection";
 
 export function SettingsView({ viewer, pendingRequests }: { viewer: ViewerDTO; pendingRequests: number }) {
   const [policy, setPolicy] = useState<FollowPolicy>(viewer.followPolicy);
   const [pending, setPending] = useState(pendingRequests);
   const [saving, setSaving] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
   const toast = useToast();
   const router = useRouter();
 
@@ -64,6 +67,16 @@ export function SettingsView({ viewer, pendingRequests }: { viewer: ViewerDTO; p
           />
         </SettingRow>
       </SettingsSection>
+
+      <SettingsSection title="Security" description="Keep your account safe." icon={<LockKeyhole className="size-4" aria-hidden />}>
+        <SettingRow label="Password" description={`Signed in as ${viewer.email}. Changing it signs you out on every other device.`}>
+          <Button variant="secondary" className="w-full" onClick={() => setPwOpen(true)}>
+            <KeyRound className="size-4" aria-hidden />
+            Change password
+          </Button>
+        </SettingRow>
+      </SettingsSection>
+      <ChangePasswordDialog open={pwOpen} onClose={() => setPwOpen(false)} />
     </div>
   );
 }

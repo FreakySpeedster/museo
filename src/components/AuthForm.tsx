@@ -69,6 +69,13 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
           <Field label="Password" htmlFor="password" hint={isSignup ? "min. 8 characters" : undefined}>
             <Input id="password" name="password" type="password" autoComplete={isSignup ? "new-password" : "current-password"} required minLength={isSignup ? 8 : 1} />
           </Field>
+          {!isSignup && (
+            <div className="-mt-2 flex justify-end">
+              <Link href="/forgot-password" className="rounded-sm text-meta text-muted underline-offset-4 hover:text-foreground hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+          )}
           {error && <FormError>{error}</FormError>}
           <Button type="submit" loading={busy} className="w-full" size="lg">
             {isSignup ? "Create account" : "Log in"}
