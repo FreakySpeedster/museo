@@ -1,14 +1,16 @@
 "use client";
 
 import clsx from "clsx";
-import { Check, Clock, LayoutGrid, Link2, MoreHorizontal, NotebookPen, Pencil, Plus } from "lucide-react";
-import Link from "next/link";
+import { Check, Clock, LayoutGrid, MoreHorizontal, NotebookPen, Plus, Share } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, ViewerDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { FREE_ITEMS_PER_SHELF, MAX_SHELVES_PER_PAGE, pageCreationGate } from "@/lib/limits";
-import { buttonClass } from "@/components/ui/Button";
+import { plural } from "@/lib/plural";
+import { ITEM_ADDED_EVENT, SHELF_SAVED_EVENT } from "@/components/create/CreateSheet";
+import { UnderlineTabs } from "@/components/ui/UnderlineTabs";
+import { ProfilePosts } from "./ProfilePosts";
 import { FollowListDialog, type ConnectionKind } from "@/components/social/FollowListDialog";
 import { gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Avatar } from "@/components/ui/Avatar";
@@ -78,6 +80,41 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   const [connections, setConnections] = useState<ConnectionKind | null>(null);
   const [profileDialog, setProfileDialog] = useState(false);
   const [confirm, setConfirm] = useState<null | { kind: "shelf" | "page"; id: string; name: string }>(null);
+  const [tab, setTab] = useState<"collections" | "posts">("collections");
+  const showPostsTab = isOwner || (stats.posts ?? 0) > 0;
+
+  // The phone Create sheet adds items / collections from anywhere; patch this profile in place when it's ours.
+  useEffect(() => {
+    if (!isOwner) return;
+    const onItem = (e: Event) => {
+      const item = (e as CustomEvent<ItemDTO>).detail;
+      setPages((ps) => ps.map((p) => ({ ...p, shelves: p.shelves.map((sh) => (sh.id === item.shelfId && !sh.items.some((i) => i.id === item.id) ? { ...sh, items: [...sh.items, item] } : sh)) })));
+      setStats((st) => ({ ...st, items: st.items + 1 }));
+      setTab("collections");
+      setJustAdded(item.id);
+      toast.success(`Added “${item.title}”`);
+      setTimeout(() => document.querySelector(`[data-flip-id="${item.id}"]`)?.scrollIntoView({ block: "center", behavior: reducedMotion() ? "auto" : "smooth" }), 120);
+    };
+    const onShelf = (e: Event) => {
+      const { shelf, created } = (e as CustomEvent<{ shelf: ShelfDTO; created: boolean }>).detail;
+      if (!created) return;
+      setPages((ps) => ps.map((p) => (p.id === shelf.pageId && !p.shelves.some((x) => x.id === shelf.id) ? { ...p, shelves: [...p.shelves, shelf] } : p)));
+      setTab("collections");
+      setActiveId(shelf.pageId);
+    };
+    window.addEventListener(ITEM_ADDED_EVENT, onItem);
+    window.addEventListener(SHELF_SAVED_EVENT, onShelf);
+    return () => {
+      window.removeEventListener(ITEM_ADDED_EVENT, onItem);
+      window.removeEventListener(SHELF_SAVED_EVENT, onShelf);
+    };
+  }, [isOwner, toast]);
+
+  /** Phones push the item's own page (back, double-tap like, docked composer); desktop keeps the modal. */
+  const openItemView = (i: ItemDTO) => {
+    if (window.matchMedia("(max-width: 767.98px)").matches) router.push(`/i/${i.id}`);
+    else setOpenItemId(i.id);
+  };
 
 
   // Owners: quietly retry thumbnails for link items that were saved without one (older items, flaky sites).
@@ -343,84 +380,91 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   return (
     <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
       {/* ---------------------------------------------------------- header (Instagram layout) */}
-      <div
-        ref={header}
-        data-testid="profile-header"
-        className="grid grid-cols-[auto_1fr] items-center gap-x-5 gap-y-4 py-6 sm:gap-x-14 sm:gap-y-3 sm:py-10 md:mx-auto md:max-w-3xl"
-      >
-        <span data-avatar className="inline-block justify-self-center sm:row-span-3">
-          <Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={wide ? 160 : 88} className="shadow-xl ring-4 ring-surface" />
+      <div ref={header} data-testid="profile-header" className={clsx("profile-head py-5 sm:py-10 md:mx-auto md:max-w-3xl", !(user.bio || user.socialLinks?.length > 0) && "profile-head--bare")}>
+        <span data-avatar className="inline-block justify-self-center [grid-area:avatar]">
+          <Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={wide ? 160 : 84} className="shadow-xl ring-4 ring-surface" />
         </span>
-        <div data-head className="min-w-0 space-y-3 sm:self-end">
-          <div className="min-w-0">
-            <h1 className="truncate text-heading font-semibold tracking-tight sm:text-title">{user.displayName}</h1>
-            <p className="truncate text-meta text-muted">@{user.username}</p>
-          </div>
-          <div className="flex gap-5 text-meta sm:gap-8">
-            <span data-stat><strong className="font-semibold">{stats.items}</strong> <span className="text-muted">items</span></span>
-            <button type="button" data-stat data-testid="followers-stat" onClick={() => setConnections("followers")} className="rounded-md text-left transition-opacity hover:opacity-70">
-              <strong className="font-semibold">{stats.followers}</strong> <span className="text-muted">followers</span>
-            </button>
-            <button type="button" data-stat data-testid="following-stat" onClick={() => setConnections("following")} className="rounded-md text-left transition-opacity hover:opacity-70">
-              <strong className="font-semibold">{stats.following}</strong> <span className="text-muted">following</span>
-            </button>
-          </div>
+        <div data-head className="min-w-0 [grid-area:name]">
+          <h1 className="truncate text-body font-semibold tracking-tight sm:text-title">{user.displayName}</h1>
+          <p className="truncate text-meta text-muted">@{user.username}</p>
         </div>
-        <div data-head className="col-span-2 flex items-center gap-2 sm:col-span-1 sm:col-start-2 sm:self-center">
+        <div data-head className="grid grid-cols-3 [grid-area:stats] sm:flex sm:gap-8" data-testid="profile-stats">
+          <Stat value={stats.items} label={plural("item", stats.items)} onClick={() => content.current?.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "start" })} />
+          <Stat value={stats.followers} label={plural("follower", stats.followers)} onClick={() => setConnections("followers")} testId="followers-stat" />
+          <Stat value={stats.following} label="following" onClick={() => setConnections("following")} testId="following-stat" />
+        </div>
+        {(user.bio || user.socialLinks?.length > 0) && (
+          <div data-head className="min-w-0 space-y-3 [grid-area:about]">
+            {user.bio && <p className="max-w-lg whitespace-pre-line text-meta text-foreground/85 sm:text-body">{user.bio}</p>}
+            {user.socialLinks?.length > 0 && (
+              <div className="-ml-1.5 flex flex-wrap gap-0.5">
+                {user.socialLinks.map((l) => (
+                  <a
+                    key={l.network}
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="grid size-11 place-items-center rounded-full text-foreground transition-colors hover:bg-surface-hover"
+                    aria-label={brandLabel(l.network)}
+                  >
+                    <span className="grid size-9 place-items-center rounded-full border border-border"><BrandIcon network={l.network} className="size-4" brand /></span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        <div data-head className="grid grid-cols-2 gap-2 [grid-area:actions] sm:flex">
           {isOwner ? (
-            <Button variant="secondary" size="sm" className="flex-1 sm:flex-none" onClick={() => setProfileDialog(true)}><Pencil className="size-4" aria-hidden /> Edit profile</Button>
+            <Button variant="secondary" size="sm" className="sm:min-w-32" onClick={() => setProfileDialog(true)} data-testid="edit-profile">Edit profile</Button>
           ) : (
-            <Button size="sm" variant={followState !== "none" ? "secondary" : "primary"} className="flex-1 sm:flex-none sm:min-w-28" onClick={toggleFollow} data-testid="follow-button">
+            <Button size="sm" variant={followState !== "none" ? "secondary" : "primary"} className="sm:min-w-32" onClick={toggleFollow} data-testid="follow-button">
               {following ? <><Check className="size-4" aria-hidden strokeWidth={2.4} /> Following</> : followState === "requested" ? <><Clock className="size-4" aria-hidden /> Requested</> : "Follow"}
             </Button>
           )}
           <Button
             variant="secondary"
             size="sm"
-            className="flex-1 sm:flex-none"
+            className="sm:min-w-32"
+            data-testid="share-profile"
             onClick={async () => {
               const link = `${window.location.origin}/u/${user.username}`;
               try {
-                await navigator.clipboard.writeText(link);
-                toast.success("Profile link copied");
-              } catch {
-                toast.info(link);
+                if (navigator.share && window.matchMedia("(pointer: coarse)").matches) await navigator.share({ title: `${user.displayName} on nook`, url: link });
+                else {
+                  await navigator.clipboard.writeText(link);
+                  toast.success("Profile link copied");
+                }
+              } catch (e) {
+                if ((e as Error)?.name !== "AbortError") toast.info(link);
               }
             }}
           >
-            <Link2 className="size-4" aria-hidden /> Share
+            <Share className="size-4" aria-hidden /> Share profile
           </Button>
-          {((stats.posts ?? 0) > 0 || (isOwner && subscribed)) && (
-            <Link href={isOwner ? "/blog?view=mine" : `/blog?author=${user.username}`} className={buttonClass("secondary", "sm", "flex-1 sm:flex-none")} data-testid="profile-blog">
-              <NotebookPen className="size-4" aria-hidden /> Blog{(stats.posts ?? 0) > 0 && <span className="text-muted">{stats.posts}</span>}
-            </Link>
-          )}
         </div>
-        {user.bio && (
-          <p data-head className="col-span-2 max-w-lg whitespace-pre-line text-body text-foreground/85 sm:col-span-1 sm:col-start-2 sm:self-start">{user.bio}</p>
-        )}
-        {user.socialLinks?.length > 0 && (
-          <div data-head className="col-span-2 flex flex-wrap gap-2 sm:col-span-1 sm:col-start-2">
-            {user.socialLinks.map((l) => (
-              <a
-                key={l.network}
-                href={l.url}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                className="grid size-9 place-items-center rounded-full border border-border text-foreground transition-colors hover:bg-surface-hover"
-                aria-label={brandLabel(l.network)}
-              >
-                <BrandIcon network={l.network} className="size-4" brand />
-              </a>
-            ))}
-          </div>
-        )}
       </div>
 
+      {showPostsTab && (
+        <UnderlineTabs
+          label="Profile sections"
+          value={tab}
+          onChange={setTab}
+          className="-mx-4 sm:-mx-6"
+          options={[
+            { value: "collections", label: "Collections", icon: LayoutGrid },
+            { value: "posts", label: (stats.posts ?? 0) > 0 ? `Posts ${stats.posts}` : "Posts", icon: NotebookPen },
+          ]}
+        />
+      )}
       {/* ------------------------------------------ collections label + sticky page switcher */}
-      <div className="border-t border-border" />
+      {!showPostsTab && <div className="border-t border-border" />}
+      {tab === "posts" ? (
+        <ProfilePosts username={user.username} isOwner={isOwner} subscribed={subscribed} />
+      ) : (
+      <>
       <ProfileStickyBar headerRef={header} displayName={user.displayName} username={user.username} avatarUrl={user.avatarUrl}>
-        {page && (
+        {page && (isOwner || pages.length > 1) && (
           <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} onReorder={isOwner ? persistPageOrder : undefined} />
         )}
       </ProfileStickyBar>
@@ -439,7 +483,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
               </div>
               {isOwner && (
                 <div className="flex items-center gap-2">
-                  <span className="text-caption text-muted" data-testid="shelf-count">{shelfCount}/{MAX_SHELVES_PER_PAGE} shelves</span>
+                  <span className="text-caption text-muted" data-testid="shelf-count">{shelfCount}/{MAX_SHELVES_PER_PAGE} {plural("collection", MAX_SHELVES_PER_PAGE)}</span>
                   <Menu
                     label="Page actions"
                     items={[
@@ -477,7 +521,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
                 canMoveUp={page.shelves[0]?.id !== shelf.id}
                 canMoveDown={page.shelves[page.shelves.length - 1]?.id !== shelf.id}
                 registerCapture={registerCapture}
-                onOpenItem={(i) => setOpenItemId(i.id)}
+                onOpenItem={openItemView}
                 onAddItem={startAddItem}
                 itemLimit={isOwner && !subscribed ? FREE_ITEMS_PER_SHELF : undefined}
                 onEditShelf={(s) => setShelfDialog({ shelf: s })}
@@ -506,6 +550,8 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
           </div>
         ) : null}
       </div>
+      </>
+      )}
 
       {/* ------------------------------------------------------ dialogs */}
       {isOwner && (
@@ -576,5 +622,20 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
         onNavigate={(it) => setOpenItemId(it.id)}
       />
     </div>
+  );
+}
+
+function Stat({ value, label, onClick, testId }: { value: number; label: string; onClick: () => void; testId?: string }) {
+  return (
+    <button
+      type="button"
+      data-stat
+      data-testid={testId}
+      onClick={onClick}
+      className="flex min-h-11 flex-col items-center justify-center rounded-xl leading-tight transition-opacity hover:opacity-70 active:opacity-60 sm:flex-row sm:items-baseline sm:gap-1.5"
+    >
+      <strong className="text-body font-semibold tabular-nums">{value.toLocaleString("en-US")}</strong>
+      <span className="text-caption text-muted sm:text-meta">{label}</span>
+    </button>
   );
 }

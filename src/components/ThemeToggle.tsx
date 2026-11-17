@@ -7,9 +7,42 @@ import { useSyncExternalStore } from "react";
 function subscribe(cb: () => void) {
   const obs = new MutationObserver(cb);
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-  return () => obs.disconnect();
+  window.addEventListener("nook:theme", cb);
+  return () => {
+    obs.disconnect();
+    window.removeEventListener("nook:theme", cb);
+  };
 }
 const getDark = () => document.documentElement.classList.contains("dark");
+
+export type ThemeMode = "light" | "dark" | "system";
+
+function readMode(): ThemeMode {
+  try {
+    const t = localStorage.getItem("theme");
+    return t === "light" || t === "dark" ? t : "system";
+  } catch {
+    return "system";
+  }
+}
+
+/** Light, dark, or follow the device. "system" clears the stored choice (the boot script then reads prefers-color-scheme). */
+export function applyTheme(mode: ThemeMode) {
+  const dark = mode === "system" ? window.matchMedia("(prefers-color-scheme: dark)").matches : mode === "dark";
+  try {
+    if (mode === "system") localStorage.removeItem("theme");
+    else localStorage.setItem("theme", mode);
+  } catch {
+    /* ignore */
+  }
+  document.documentElement.classList.toggle("dark", dark);
+  window.dispatchEvent(new Event("nook:theme"));
+}
+
+/** Current theme mode; re-reads whenever the `dark` class flips. */
+export function useThemeMode(): ThemeMode {
+  return useSyncExternalStore(subscribe, readMode, () => "system");
+}
 
 /** `icon` = round icon button; `row` = sidebar row (icon in a fixed slot, label revealed when the rail is open). */
 export function ThemeToggle({ variant = "icon", className }: { variant?: "icon" | "row"; className?: string }) {

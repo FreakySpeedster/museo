@@ -10,6 +10,7 @@ import { ApiError, api } from "@/lib/client";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { FormError } from "@/components/ui/Field";
+import { PhoneHeader, useBack } from "@/components/ui/PushedScreen";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmDialog } from "@/components/profile/dialogs";
@@ -39,6 +40,7 @@ export function BlogComposer({ post, initialItems = [] }: { post?: ComposerPost;
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const status = post?.status ?? "draft";
+  const cancel = useBack(post ? `/blog/${post.id}` : "/blog?view=mine");
 
   async function save(next: BlogStatus) {
     setError("");
@@ -75,8 +77,18 @@ export function BlogComposer({ post, initialItems = [] }: { post?: ComposerPost;
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-24 pt-6 sm:px-6 sm:pt-10">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto max-w-6xl px-4 pb-40 sm:px-6 md:pb-24 md:pt-10">
+      <PhoneHeader
+        backHref="/blog?view=mine"
+        title={post ? (status === "published" ? "Edit post" : "Edit draft") : "New post"}
+        left={<Button variant="ghost" size="sm" className="h-11 px-3 text-foreground" onClick={cancel}>Cancel</Button>}
+        right={
+          <Button size="sm" className="h-9" loading={busy === "published"} disabled={Boolean(busy)} onClick={() => void save("published")} data-testid="publish-post-phone">
+            {status === "published" ? "Update" : "Publish"}
+          </Button>
+        }
+      />
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 max-md:hidden">
         <Link href="/blog?view=mine" className="inline-flex items-center gap-1.5 text-meta text-muted hover:text-foreground">
           <ArrowLeft className="size-4" aria-hidden /> Your posts
         </Link>
@@ -104,19 +116,23 @@ export function BlogComposer({ post, initialItems = [] }: { post?: ComposerPost;
               className="field-sizing-content w-full resize-none bg-transparent text-title font-semibold leading-tight tracking-tight outline-none placeholder:text-muted/60"
             />
           </label>
+          <div className="md:hidden">
+            <ItemTagPicker value={items} onChange={setItems} variant="chips" />
+          </div>
+          {error && <div className="md:hidden"><FormError>{error}</FormError></div>}
           <BlogEditor initialHtml={post?.contentHtml ?? ""} onChange={setHtml} />
         </div>
 
         <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
-          <section className="rounded-3xl border border-border bg-surface p-5">
+          <section className="rounded-3xl border border-border bg-surface p-5 max-md:hidden">
             <h2 className="text-meta font-semibold">Tagged items</h2>
             <div className="mt-3">
               <ItemTagPicker value={items} onChange={setItems} />
             </div>
           </section>
           <section className="space-y-2 rounded-3xl border border-border bg-surface p-5">
-            {error && <FormError>{error}</FormError>}
-            <Button className="w-full" loading={busy === "published"} disabled={Boolean(busy)} onClick={() => void save("published")} data-testid="publish-post">
+            {error && <div className="max-md:hidden"><FormError>{error}</FormError></div>}
+            <Button className="w-full max-md:hidden" loading={busy === "published"} disabled={Boolean(busy)} onClick={() => void save("published")} data-testid="publish-post">
               <Send className="size-4" aria-hidden /> {status === "published" ? "Update post" : "Publish"}
             </Button>
             <Button variant="secondary" className="w-full" loading={busy === "draft"} disabled={Boolean(busy)} onClick={() => void save("draft")}>

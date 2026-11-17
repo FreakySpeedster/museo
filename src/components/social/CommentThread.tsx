@@ -11,6 +11,7 @@ import { REACTION_EMOJIS } from "@/lib/validation";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { FormError, Textarea } from "@/components/ui/Field";
+import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { useToast } from "@/components/ui/Toast";
 
 type Lists = { comments: CommentDTO[]; canComment: boolean; reason: string | null };
@@ -20,12 +21,16 @@ export function CommentThread({
   commentCount,
   viewerId,
   onCountChange,
+  docked = false,
 }: {
   itemId: string;
   commentCount: number;
   viewerId?: string | null;
   onCountChange?: (n: number) => void;
+  /** Phones: pin a one-line composer to the bottom of the screen, riding above the keyboard. */
+  docked?: boolean;
 }) {
+  const keyboard = useKeyboardInset();
   const toast = useToast();
   const [comments, setComments] = useState<CommentDTO[] | null>(null);
   const [canComment, setCanComment] = useState(false);
@@ -159,7 +164,16 @@ export function CommentThread({
           </div>
         ))}
       </div>
-      <form onSubmit={submit} className="mt-4 space-y-2">
+      <form
+        onSubmit={submit}
+        data-testid="comment-composer"
+        style={docked ? ({ "--kb": `${keyboard}px` } as React.CSSProperties) : undefined}
+        className={clsx(
+          "mt-4 space-y-2",
+          docked &&
+            "max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--kb)] max-md:z-nav max-md:mt-0 max-md:border-t max-md:border-border max-md:bg-background/95 max-md:px-4 max-md:pt-2 max-md:backdrop-blur max-md:pb-[calc(0.5rem+env(safe-area-inset-bottom))]",
+        )}
+      >
         {replyTo && (
           <div className="flex items-center justify-between gap-2 rounded-xl bg-surface-hover px-3 py-1.5 text-caption">
             <span className="inline-flex min-w-0 items-center gap-1.5 text-muted">
@@ -171,9 +185,11 @@ export function CommentThread({
             </button>
           </div>
         )}
+        <div className={clsx(docked && "max-md:flex max-md:items-end max-md:gap-2")}>
         <Textarea
           ref={box}
-          rows={3}
+          rows={docked ? 1 : 3}
+          className={clsx(docked && "max-md:max-h-32 max-md:min-h-11 max-md:flex-1 max-md:resize-none max-md:rounded-3xl max-md:py-2.5 md:min-h-20 [field-sizing:content]")}
           maxLength={500}
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -181,8 +197,14 @@ export function CommentThread({
           disabled={!canComment || busy}
           aria-label="Comment"
         />
+        {docked && canComment && (
+          <Button type="submit" size="sm" loading={busy} disabled={!body.trim()} className="h-11 shrink-0 md:hidden">
+            {replyTo ? "Reply" : "Post"}
+          </Button>
+        )}
+        </div>
         {error && <FormError>{error}</FormError>}
-        <div className="flex items-center justify-between gap-2">
+        <div className={clsx("flex items-center justify-between gap-2", docked && "max-md:hidden")}>
           {!canComment && reason && <p className="text-caption text-muted">{reason}</p>}
           {canComment && (
             <Button type="submit" size="sm" loading={busy} disabled={!body.trim()}>

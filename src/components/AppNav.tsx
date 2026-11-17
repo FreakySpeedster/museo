@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Bell, Gem, House, LayoutGrid, LogIn, NotebookPen, Pin, PinOff, Search, UserPlus, type LucideIcon } from "lucide-react";
+import { Bell, Gem, House, LayoutGrid, LogIn, NotebookPen, Pin, PinOff, Search, SquarePlus, UserPlus, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -11,7 +11,8 @@ import { LogoMark, Wordmark } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
 import { useSearch } from "./search/SearchProvider";
-import { IconButton } from "./ui/IconButton";
+import { Avatar } from "./ui/Avatar";
+import { CreateSheet } from "./create/CreateSheet";
 import { CountBadge } from "./ui/CountBadge";
 import { useUnreadCount } from "./notifications/useUnreadCount";
 
@@ -30,6 +31,14 @@ interface Item {
   primary?: boolean;
   count?: number;
 }
+
+/** Phone tab: 44px+ target, 24px icon, one-word label that never wraps. */
+const tabClass = (active: boolean, primary?: boolean) =>
+  clsx(
+    "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 whitespace-nowrap text-micro transition-colors active:opacity-70",
+    active ? "font-semibold text-foreground" : "font-medium text-muted",
+    primary && !active && "text-accent",
+  );
 
 const PIN_KEY = "shelfie.nav-pinned";
 const OPEN_DELAY = 100;
@@ -66,6 +75,7 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
   const pinned = useSyncExternalStore(subscribePinned, getPinned, () => false);
   const [hover, setHover] = useState(false);
   const [focus, setFocus] = useState(false);
+  const [creating, setCreating] = useState(false);
   const mine = user ? `/u/${user.username}` : "";
   const open = pinned || hover || focus;
   const liveUnread = useUnreadCount(unread);
@@ -78,7 +88,7 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
 
   const primary: Item[] = [
     { href: "/", label: "Home", icon: House, active: path === "/" },
-    ...(user ? [{ href: mine, label: "My collections", icon: LayoutGrid, active: path.toLowerCase().startsWith(mine.toLowerCase()) }] : []),
+    ...(user ? [{ href: mine, label: "Profile", icon: LayoutGrid, active: path.toLowerCase().startsWith(mine.toLowerCase()) }] : []),
     { href: "/blog", label: "Blog", icon: NotebookPen, active: path.startsWith("/blog") },
     ...(user ? [{ href: "/notifications", label: "Notifications", icon: Bell, active: path.startsWith("/notifications"), count: unreadCount }] : []),
   ];
@@ -121,9 +131,17 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
     </Link>
   );
 
-  // Phones have room for five tabs: members get Blog (Pricing lives in the account menu); guests keep Pricing and sign-up.
-  const phonePrimary = primary.filter((it) => it.href !== "/notifications" && (user || it.href !== "/blog"));
-  const tabs: Item[] = user ? phonePrimary : [...phonePrimary, ...utility, ...guest];
+  // Phones: Home · Search · Create · Blog · Profile. Notifications live in the top bar; the account menu on your own profile.
+  const tabs: Item[] = user
+    ? primary.filter((it) => it.href === "/" || it.href === "/blog")
+    : [primary[0], ...utility, ...guest];
+  const onOwnProfile = Boolean(user) && path.toLowerCase().startsWith(mine.toLowerCase());
+  const tab = (it: Item) => (
+    <Link key={`tab-${it.href}`} href={it.href} aria-current={it.active ? "page" : undefined} className={tabClass(it.active, it.primary)}>
+      <it.icon className="size-6" aria-hidden strokeWidth={it.active ? 2.5 : 1.8} fill={it.active ? "currentColor" : "none"} fillOpacity={it.active ? 0.14 : 0} />
+      <span>{it.label}</span>
+    </Link>
+  );
 
   function onEnter() {
     window.clearTimeout(leaveTimer.current);
@@ -209,81 +227,69 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
         </div>
       </aside>
 
-      <header className="glass sticky top-0 z-nav flex h-12 items-center justify-between border-b border-border/70 px-4 md:hidden">
-        <Link href="/" aria-label="nook home" className="flex items-center gap-2 font-semibold tracking-tight">
-          <LogoMark className="size-7" />
-          <Wordmark className="text-heading" />
-        </Link>
-        <div className="flex items-center gap-0.5">
-          <IconButton label="Search" size="sm" onClick={search.open}>
-            <Search className="size-5" aria-hidden />
-          </IconButton>
-          {user && (
-            <Link
-              href="/notifications"
-              aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}
-              aria-current={path.startsWith("/notifications") ? "page" : undefined}
-              className="grid size-9 place-items-center rounded-full text-foreground transition-colors hover:bg-surface-hover"
-            >
-              <span className="relative inline-flex">
-                <Bell className="size-5" aria-hidden strokeWidth={path.startsWith("/notifications") ? 2.3 : 1.8} />
-                <CountBadge count={unreadCount} />
-              </span>
-            </Link>
-          )}
-          <ThemeToggle />
+      <header className="app-phone-top glass sticky top-0 z-nav border-b border-border/70 pt-[env(safe-area-inset-top)] md:hidden">
+        <div className="flex h-12 items-center justify-between pl-4 pr-1.5">
+          <Link href="/" aria-label="nook home" className="flex items-center gap-2 font-semibold tracking-tight">
+            <LogoMark className="size-7" />
+            <Wordmark className="text-heading" />
+          </Link>
+          <div className="flex items-center">
+            {user ? (
+              <>
+                <Link
+                  href="/notifications"
+                  aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}
+                  aria-current={path.startsWith("/notifications") ? "page" : undefined}
+                  data-testid="topbar-notifications"
+                  className="grid size-11 place-items-center rounded-full text-foreground transition-colors hover:bg-surface-hover"
+                >
+                  <span className="relative inline-flex">
+                    <Bell className="size-6" aria-hidden strokeWidth={path.startsWith("/notifications") ? 2.4 : 1.8} fill={path.startsWith("/notifications") ? "currentColor" : "none"} />
+                    <CountBadge count={unreadCount} />
+                  </span>
+                </Link>
+                {onOwnProfile && <UserMenu username={user.username} displayName={user.displayName} avatarUrl={user.avatarUrl} plus={user.subscribed} variant="icon" />}
+              </>
+            ) : (
+              <ThemeToggle />
+            )}
+          </div>
         </div>
       </header>
 
       <nav
         aria-label="Primary"
-        className="app-phone-nav fixed inset-x-0 bottom-0 z-nav flex items-center border-t border-border bg-[color-mix(in_srgb,var(--background)_92%,var(--surface))] pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        data-testid="tab-bar"
+        className="app-phone-nav fixed inset-x-0 bottom-0 z-nav border-t border-border bg-[color-mix(in_srgb,var(--background)_92%,var(--surface))] pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
-        {tabs.slice(0, 1).map((it) => (
-          <Link
-            key={`tab-${it.href}`}
-            href={it.href}
-            aria-current={it.active ? "page" : undefined}
-            className={clsx(
-              "flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-micro font-medium",
-              it.active ? "text-foreground" : "text-muted",
-              it.primary && !it.active && "text-accent",
-            )}
-          >
-            <it.icon className="size-6" aria-hidden strokeWidth={it.active ? 2.3 : 1.8} />
-            <span>{it.label}</span>
-          </Link>
-        ))}
-        <button
-          type="button"
-          onClick={search.open}
-          className={clsx(
-            "flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-micro font-medium",
-            path.startsWith("/search") ? "text-foreground" : "text-muted",
+        <div className="mx-auto flex h-14 max-w-lg items-stretch">
+          {tabs.slice(0, 1).map(tab)}
+          <button type="button" onClick={search.open} className={tabClass(path.startsWith("/search"))} aria-current={path.startsWith("/search") ? "page" : undefined}>
+            <Search className="size-6" aria-hidden strokeWidth={path.startsWith("/search") ? 2.5 : 1.8} />
+            <span>Search</span>
+          </button>
+          {user && (
+            <button type="button" onClick={() => setCreating(true)} className={tabClass(creating)} data-testid="tab-create" aria-haspopup="dialog">
+              <SquarePlus className="size-6" aria-hidden strokeWidth={creating ? 2.5 : 1.8} />
+              <span>Create</span>
+            </button>
           )}
-        >
-          <Search className="size-6" aria-hidden strokeWidth={path.startsWith("/search") ? 2.3 : 1.8} />
-          <span>Search</span>
-        </button>
-        {tabs.slice(1).map((it) => (
-          <Link
-            key={`tab-${it.href}`}
-            href={it.href}
-            aria-current={it.active ? "page" : undefined}
-            className={clsx(
-              "flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-micro font-medium",
-              it.active ? "text-foreground" : "text-muted",
-              it.primary && !it.active && "text-accent",
-            )}
-          >
-            <it.icon className="size-6" aria-hidden strokeWidth={it.active ? 2.3 : 1.8} />
-            <span>{it.label}</span>
-          </Link>
-        ))}
-        {user && (
-          <UserMenu username={user.username} displayName={user.displayName} avatarUrl={user.avatarUrl} plus={user.subscribed} variant="tab" active={path.toLowerCase().startsWith(mine.toLowerCase())} />
-        )}
+          {tabs.slice(1).map(tab)}
+          {user && (
+            <Link href={mine} aria-current={onOwnProfile ? "page" : undefined} className={tabClass(onOwnProfile)} data-testid="tab-profile">
+              <Avatar
+                name={user.displayName}
+                username={user.username}
+                avatarUrl={user.avatarUrl}
+                size={24}
+                className={clsx(onOwnProfile && "ring-2 ring-foreground ring-offset-1 ring-offset-background")}
+              />
+              <span>Profile</span>
+            </Link>
+          )}
+        </div>
       </nav>
+      {user && <CreateSheet open={creating} onClose={() => setCreating(false)} username={user.username} subscribed={user.subscribed} />}
     </>
   );
 }

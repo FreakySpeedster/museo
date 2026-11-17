@@ -67,6 +67,7 @@ export function PageSwitcher({
               {reordering && isOwner && (
                 <button
                   type="button"
+                  data-hit="compact"
                   className="relative z-10 grid size-8 place-items-center rounded-full text-muted hover:text-foreground disabled:opacity-30"
                   aria-label={`Move ${p.title} earlier`}
                   disabled={i === 0}
@@ -92,6 +93,7 @@ export function PageSwitcher({
               {reordering && isOwner && (
                 <button
                   type="button"
+                  data-hit="compact"
                   className="relative z-10 grid size-8 place-items-center rounded-full text-muted hover:text-foreground disabled:opacity-30"
                   aria-label={`Move ${p.title} later`}
                   disabled={i === pages.length - 1}

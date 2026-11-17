@@ -15,7 +15,7 @@ const links = [
 export function MarketingNav() {
   const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-[var(--z-nav)] border-b border-border/80 bg-background/85 backdrop-blur-md">
+    <header className="app-phone-top sticky top-0 z-[var(--z-nav)] border-b border-border/80 bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link
           href="/"

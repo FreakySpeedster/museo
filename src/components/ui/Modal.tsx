@@ -121,18 +121,19 @@ export function Modal({
           widths[size],
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
+        <span aria-hidden className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border sm:hidden" />
+        <div className="flex items-start justify-between gap-4 border-b border-border px-5 pb-4 pt-2 sm:px-6 sm:pt-4">
           <div>
             <h2 className="text-heading font-semibold tracking-tight">{title}</h2>
             {description && <p className="mt-1 text-meta text-muted">{description}</p>}
           </div>
           {dismissible && (
-            <IconButton label="Close" size="sm" onClick={onClose} className="-mr-1">
+            <IconButton label="Close" size="sm" onClick={onClose} className="-mr-2 -mt-1">
               <X className="size-5" aria-hidden />
             </IconButton>
           )}
         </div>
-        <div className="overflow-y-auto px-5 py-5 sm:px-6">{children}</div>
+        <div className="overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pb-5">{children}</div>
       </div>
     </div>,
     document.body,

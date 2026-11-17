@@ -3,6 +3,7 @@ import { Layers, NotebookPen } from "lucide-react";
 import type { BlogPostSummaryDTO } from "@/lib/dto";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { count } from "@/lib/plural";
 
 export const postDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
@@ -34,7 +35,7 @@ export function PostCard({ post, showStatus = false }: { post: BlogPostSummaryDT
           <span aria-hidden>·</span>
           <time dateTime={post.publishedAt ?? post.updatedAt}>{postDate(post.publishedAt ?? post.updatedAt)}</time>
           {post.itemCount > 0 && (
-            <span className="ml-auto inline-flex items-center gap-1" title={`${post.itemCount} tagged ${post.itemCount === 1 ? "item" : "items"}`}>
+            <span className="ml-auto inline-flex items-center gap-1" title={`${count(post.itemCount, "tagged item")}`}>
               <Layers className="size-3.5" aria-hidden /> {post.itemCount}
             </span>
           )}

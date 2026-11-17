@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { useKeyboardInset } from "@/lib/use-keyboard-inset";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
@@ -46,9 +47,9 @@ export function BlogEditor({ initialHtml, onChange }: { initialHtml: string; onC
   });
 
   return (
-    <div className="nook-editor rounded-3xl border border-border bg-surface focus-within:border-accent/60">
+    <div className="nook-editor rounded-3xl border border-border bg-surface focus-within:border-accent/60 max-md:rounded-none max-md:border-0 max-md:bg-transparent">
       {editor ? <Toolbar editor={editor} /> : <div className="h-12 border-b border-border" />}
-      <div className="px-5 py-5 sm:px-8 sm:py-7">
+      <div className="py-5 md:px-8 md:py-7">
         <EditorContent editor={editor} />
       </div>
     </div>
@@ -56,6 +57,7 @@ export function BlogEditor({ initialHtml, onChange }: { initialHtml: string; onC
 }
 
 function Toolbar({ editor }: { editor: Editor }) {
+  const keyboard = useKeyboardInset();
   const toast = useToast();
   const fileInput = useRef<HTMLInputElement>(null);
   const [bar, setBar] = useState<null | "link" | "image">(null);
@@ -123,8 +125,12 @@ function Toolbar({ editor }: { editor: Editor }) {
     id === "p" ? chain().setParagraph().run() : chain().setHeading({ level: Number(id.slice(1)) as 1 | 2 | 3 | 4 }).run();
 
   return (
-    <div className="sticky top-0 z-10 rounded-t-3xl border-b border-border bg-surface/95 backdrop-blur">
-      <div role="toolbar" aria-label="Formatting" className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 sm:px-3">
+    <div
+      data-testid="editor-toolbar"
+      style={{ "--kb": `${keyboard}px` } as React.CSSProperties}
+      className="sticky top-0 z-10 rounded-t-3xl border-b border-border bg-surface/95 backdrop-blur max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--kb)] max-md:top-auto max-md:z-nav max-md:flex max-md:flex-col-reverse max-md:rounded-none max-md:border-b-0 max-md:border-t max-md:bg-background/95 max-md:pb-[env(safe-area-inset-bottom)]"
+    >
+      <div role="toolbar" aria-label="Formatting" className="no-scrollbar flex flex-wrap items-center gap-0.5 px-2 py-1.5 max-md:flex-nowrap max-md:overflow-x-auto max-md:py-0.5 sm:px-3">
         <Tool icon={Undo2} label="Undo" onClick={() => chain().undo().run()} disabled={!s.canUndo} />
         <Tool icon={Redo2} label="Redo" onClick={() => chain().redo().run()} disabled={!s.canRedo} />
         <Sep />
@@ -133,7 +139,7 @@ function Toolbar({ editor }: { editor: Editor }) {
           align="start"
           items={BLOCKS.map((b) => ({ label: b.label, onSelect: () => setBlock(b.id) }))}
           trigger={({ props }) => (
-            <button type="button" {...props} className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-meta font-medium text-foreground hover:bg-surface-hover">
+            <button type="button" {...props} className="inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-2.5 text-meta font-medium text-foreground hover:bg-surface-hover max-md:h-11">
               {BLOCKS.find((b) => b.id === s.block)?.label}
               <ChevronDown className="size-3.5 text-muted" aria-hidden />
             </button>
@@ -206,7 +212,7 @@ function Toolbar({ editor }: { editor: Editor }) {
 
 const toolClass = (active?: boolean) =>
   clsx(
-    "grid size-8 place-items-center rounded-lg transition-colors disabled:pointer-events-none disabled:opacity-40",
+    "grid size-8 shrink-0 place-items-center rounded-lg transition-colors disabled:pointer-events-none disabled:opacity-40 max-md:size-11",
     active ? "bg-foreground text-background" : "text-muted hover:bg-surface-hover hover:text-foreground",
   );
 
@@ -220,5 +226,5 @@ function Tool({ icon: Icon, label, onClick, active, disabled, shortcut }: { icon
 }
 
 function Sep(): ReactNode {
-  return <span aria-hidden className="mx-1 h-5 w-px bg-border" />;
+  return <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-border" />;
 }

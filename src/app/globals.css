@@ -140,12 +140,12 @@
 
 /* Public site uses a top bar. The signed-in app shell owns the left rail offset. */
 [data-shell="marketing"] {
-  --chrome-top: var(--marketing-topbar);
+  --chrome-top: calc(var(--marketing-topbar) + env(safe-area-inset-top));
   --chrome-top-px: 64;
   --nav-offset: 0px;
 }
 [data-shell="app"] {
-  --chrome-top: var(--topbar-height);
+  --chrome-top: calc(var(--topbar-height) + env(safe-area-inset-top));
   --chrome-top-px: 48;
 }
 @media (min-width: 768px) {
@@ -493,6 +493,40 @@ html:not([data-nav-pinned]) .app-nav-side[data-open="true"] {
 
 /* A modal or sheet covers the phone tab bar so it cannot paint on top. */
 body[data-modal="open"] .app-phone-nav { visibility: hidden; pointer-events: none; }
+
+/* Pushed phone screens (item detail, blog composer) own the whole viewport: no app top bar or tab bar. */
+/* Pure CSS (no effect) so the bars are gone on first paint and the scroll position never jumps. */
+@media (max-width: 767.98px) {
+  body:has([data-pushed-screen]) .app-phone-top,
+  body:has([data-pushed-screen]) .app-phone-nav { display: none; }
+  body:has([data-pushed-screen]) [data-shell="app"] > main { padding-bottom: 0; }
+  body:has([data-pushed-screen]) [data-shell="app"] { --chrome-top: calc(3.5rem + env(safe-area-inset-top)); }
+}
+
+/* Profile header: Instagram order on phones (avatar + stats, then name, bio, actions); avatar column on wider screens. */
+.profile-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "avatar stats" "name name" "about about" "actions actions";
+  align-items: center;
+  column-gap: 1.25rem;
+  row-gap: 0.875rem;
+}
+.profile-head--bare { grid-template-areas: "avatar stats" "name name" "actions actions"; }
+@media (min-width: 640px) {
+  .profile-head { grid-template-areas: "avatar name" "avatar stats" "avatar actions" "avatar about"; column-gap: 3.5rem; row-gap: 0.875rem; }
+  .profile-head--bare { grid-template-areas: "avatar name" "avatar stats" "avatar actions"; }
+}
+
+/* Double-tap like: a heart pops over the photo. */
+@keyframes heart-pop {
+  0% { transform: scale(0.2); opacity: 0; }
+  15% { transform: scale(1.15); opacity: 1; }
+  30% { transform: scale(0.95); }
+  45%, 80% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.1) translateY(-12px); opacity: 0; }
+}
+.heart-pop { animation: heart-pop 900ms var(--ease-out) forwards; }
 
 /* Subtle shimmer + glow on the marketing “Compare plans” button. */
 .btn-shimmer {

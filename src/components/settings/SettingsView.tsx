@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyRound, LockKeyhole, Shield, UserCheck, Users } from "lucide-react";
+import { KeyRound, LockKeyhole, Monitor, Moon, Palette, Shield, Sun, UserCheck, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FollowPolicy, ViewerDTO } from "@/lib/dto";
@@ -8,6 +8,9 @@ import { ApiError, api } from "@/lib/client";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { Tabs } from "@/components/ui/Tabs";
+import { applyTheme, useThemeMode, type ThemeMode } from "@/components/ThemeToggle";
+import { count } from "@/lib/plural";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { SettingRow, SettingsSection } from "./SettingsSection";
 
@@ -18,6 +21,7 @@ export function SettingsView({ viewer, pendingRequests }: { viewer: ViewerDTO; p
   const [pwOpen, setPwOpen] = useState(false);
   const toast = useToast();
   const router = useRouter();
+  const theme = useThemeMode();
 
   async function changePolicy(next: FollowPolicy) {
     if (next === policy || saving) return;
@@ -30,7 +34,7 @@ export function SettingsView({ viewer, pendingRequests }: { viewer: ViewerDTO; p
       toast.success(
         next === "open"
           ? approved > 0
-            ? `Anyone can follow you now. ${approved} pending request${approved === 1 ? " was" : "s were"} approved.`
+            ? `Anyone can follow you now. ${count(approved, "pending request")} ${approved === 1 ? "was" : "were"} approved.`
             : "Anyone can follow you now"
           : "New followers now need your approval",
       );
@@ -51,7 +55,7 @@ export function SettingsView({ viewer, pendingRequests }: { viewer: ViewerDTO; p
           htmlFor="set-follow"
           description={
             policy === "request"
-              ? `New followers need your approval. Requests show up in Notifications.${pending > 0 ? ` Switching to "Anyone can follow" approves your ${pending} pending request${pending === 1 ? "" : "s"}.` : ""}`
+              ? `New followers need your approval. Requests show up in Notifications.${pending > 0 ? ` Switching to "Anyone can follow" approves your ${count(pending, "pending request")}.` : ""}`
               : "Anyone can follow you right away."
           }
         >
@@ -74,6 +78,21 @@ export function SettingsView({ viewer, pendingRequests }: { viewer: ViewerDTO; p
             <KeyRound className="size-4" aria-hidden />
             Change password
           </Button>
+        </SettingRow>
+      </SettingsSection>
+      <SettingsSection title="Appearance" description="How nook looks on this device." icon={<Palette className="size-4" aria-hidden />}>
+        <SettingRow label="Theme" description={theme === "system" ? "Matches your device's light or dark setting." : `Always ${theme}.`}>
+          <Tabs<ThemeMode>
+            label="Theme"
+            spread
+            value={theme}
+            onChange={applyTheme}
+            options={[
+              { value: "light", label: <><Sun className="size-4" aria-hidden /> Light</> },
+              { value: "dark", label: <><Moon className="size-4" aria-hidden /> Dark</> },
+              { value: "system", label: <><Monitor className="size-4" aria-hidden /> Auto</> },
+            ]}
+          />
         </SettingRow>
       </SettingsSection>
       <ChangePasswordDialog open={pwOpen} onClose={() => setPwOpen(false)} />

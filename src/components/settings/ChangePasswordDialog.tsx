@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, FormError, Input } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import { count } from "@/lib/plural";
 
 export function ChangePasswordDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
@@ -32,7 +33,7 @@ function ChangePasswordForm({ onClose }: { onClose: () => void }) {
     setBusy(true);
     try {
       const { signedOutOthers } = await api<{ signedOutOthers: number }>("/api/me/password", { json: { currentPassword, newPassword } });
-      toast.success(signedOutOthers > 0 ? `Password changed. Signed out ${signedOutOthers} other session${signedOutOthers === 1 ? "" : "s"}.` : "Password changed");
+      toast.success(signedOutOthers > 0 ? `Password changed. Signed out ${count(signedOutOthers, "other session")}.` : "Password changed");
       onClose();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't change your password");

@@ -25,6 +25,7 @@ import { Menu } from "@/components/ui/Menu";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { VisibilityLock } from "@/components/ui/VisibilityLock";
 import { ItemCard } from "./ItemCard";
+import { count, plural } from "@/lib/plural";
 
 function SortableItem({
   id,
@@ -166,9 +167,9 @@ export function ShelfView({
           <p className="text-caption text-muted">
             {meta.label} ·{" "}
             {itemLimit !== undefined ? (
-              <span className={full ? "font-medium text-warning" : undefined} data-testid="item-count">{shelf.items.length}/{itemLimit} items{full ? " · full" : ""}</span>
+              <span className={full ? "font-medium text-warning" : undefined} data-testid="item-count">{shelf.items.length}/{itemLimit} {plural("item", itemLimit)}{full ? " · full" : ""}</span>
             ) : (
-              <>{shelf.items.length} {shelf.items.length === 1 ? "item" : "items"}</>
+              <>{count(shelf.items.length, "item")}</>
             )}
           </p>
         </div>

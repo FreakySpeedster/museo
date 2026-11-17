@@ -18,6 +18,7 @@ import { PhotoCarousel } from "@/components/profile/PhotoCarousel";
 import { ItemModal } from "@/components/profile/ItemModal";
 import { LikeButton } from "@/components/social/LikeButton";
 import { TagList } from "@/components/ui/Tags";
+import { count } from "@/lib/plural";
 
 type Scope = "following" | "global";
 interface Feed { items: TimelineEntry[]; nextCursor: string | null }
@@ -167,8 +168,9 @@ export function HomeFeed({
                   />
                   <Link
                     href={`/i/${e.id}`}
-                    className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-caption text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
-                    aria-label={`Comments, ${e.commentCount}`}
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2 text-caption text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                    aria-label={count(e.commentCount, "comment")}
+                    data-hit="compact"
                   >
                     <MessageCircle className="size-4" aria-hidden strokeWidth={1.8} />
                     <span>{e.commentCount}</span>
@@ -192,7 +194,7 @@ export function HomeFeed({
               )}
               {e.commentCount > 2 && (
                 <Link href={`/i/${e.id}`} className="block px-4 pb-4 text-caption text-muted hover:underline">
-                  View all {e.commentCount} comments
+                  View all {count(e.commentCount, "comment")}
                 </Link>
               )}
             </article>

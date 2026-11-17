@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Heart } from "lucide-react";
+import { count } from "@/lib/plural";
 import { useRouter } from "next/navigation";
 import type { ItemDTO, ShelfDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
@@ -8,6 +11,7 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import clsx from "clsx";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Clock, Eye, MoreHorizontal, RefreshCw } from "lucide-react";
 import { ItemBlogPosts } from "@/components/blog/ItemBlogPosts";
 import { LikeButton } from "@/components/social/LikeButton";
@@ -63,6 +67,8 @@ export function ItemBody({
   onUpdated,
   onDeleted,
   onNavigate,
+  actionsSlot,
+  docked = false,
 }: {
   it: ItemDTO;
   shelf: ShelfDTO | null;
@@ -71,6 +77,10 @@ export function ItemBody({
   onUpdated: (item: ItemDTO) => void;
   onDeleted: (item: ItemDTO) => void;
   onNavigate?: (item: ItemDTO) => void;
+  /** Phone item page: the header element the actions menu portals into. */
+  actionsSlot?: HTMLElement | null;
+  /** Phone item page: dock the comment composer to the bottom of the screen. */
+  docked?: boolean;
 }) {
   const toast = useToast();
   const router = useRouter();
@@ -97,6 +107,68 @@ export function ItemBody({
       live = false;
     };
   }, [it.id, isOwner]);
+
+  const [burst, setBurst] = useState(0);
+  const lastTap = useRef(0);
+  const liking = useRef(false);
+  /** Instagram double-tap: always likes (never unlikes) and pops a heart over the photo. */
+  async function doubleTapLike() {
+    setBurst((b) => b + 1);
+    if (!viewerId) return toast.info("Sign in to like this.");
+    if (it.likedByMe || liking.current) return;
+    liking.current = true;
+    onUpdated({ ...it, likedByMe: true, likeCount: it.likeCount + 1 });
+    try {
+      const r = await api<{ likeCount: number; likedByMe: boolean }>(`/api/items/${it.id}/like`, { method: "POST" });
+      onUpdated({ ...it, ...r });
+    } catch {
+      onUpdated(it);
+      toast.error("Couldn't like that");
+    } finally {
+      liking.current = false;
+    }
+  }
+  function onPhotoPointerUp(e: React.PointerEvent) {
+    if ((e.target as HTMLElement).closest("button,a")) return;
+    const now = e.timeStamp;
+    if (now - lastTap.current < 320) {
+      lastTap.current = 0;
+      void doubleTapLike();
+    } else lastTap.current = now;
+  }
+
+  async function copyLink() {
+    const link = `${window.location.origin}/i/${it.id}`;
+    try {
+      if (navigator.share && window.matchMedia("(pointer: coarse)").matches) await navigator.share({ title: it.title, url: link });
+      else {
+        await navigator.clipboard.writeText(link);
+        toast.success("Link copied");
+      }
+    } catch (e) {
+      if ((e as Error)?.name !== "AbortError") toast.info(link);
+    }
+  }
+
+  const actionItems = [
+    { label: "Edit", hidden: !isOwner, onSelect: () => setEditing(true) },
+    { label: "Change photo", hidden: !isOwner, onSelect: () => setPhotoOpen(true) },
+    { label: "Write about it", hidden: !isOwner, onSelect: () => router.push(`/blog/new?item=${it.id}`) },
+    { label: it.visibility === "private" ? "Make public" : "Make private", hidden: !isOwner, onSelect: () => void setVisibility(it.visibility === "private" ? "public" : "private") },
+    { label: "Share link", onSelect: () => void copyLink() },
+    { label: "Delete", danger: true, hidden: !isOwner, onSelect: () => setConfirming(true) },
+  ];
+  const actionsMenu = (
+    <Menu
+      label="Item actions"
+      items={actionItems}
+      trigger={({ props }) => (
+        <IconButton label="Item actions" {...props} className="size-11 text-foreground">
+          <MoreHorizontal className="size-5" aria-hidden />
+        </IconButton>
+      )}
+    />
+  );
 
   async function save() {
     setBusy(true);
@@ -141,9 +213,20 @@ export function ItemBody({
 
   return (
         <div className="grid gap-5 md:grid-cols-[1.1fr_1fr]">
-          <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-surface-hover md:aspect-[4/5]">
+          <div
+            className="relative aspect-square touch-manipulation select-none overflow-hidden rounded-2xl border border-border bg-surface-hover md:aspect-[4/5]"
+            onPointerUp={onPhotoPointerUp}
+            onDoubleClick={(e) => e.preventDefault()}
+            data-testid="item-photo"
+          >
             <PhotoCarousel item={it} eager />
+            {burst > 0 && (
+              <span key={burst} aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center">
+                <Heart className="heart-pop size-24 text-white drop-shadow-[0_6px_18px_rgb(0_0_0/0.35)]" fill="currentColor" strokeWidth={0} />
+              </span>
+            )}
           </div>
+          {actionsSlot && createPortal(actionsMenu, actionsSlot)}
           <div className="flex min-w-0 flex-col">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -153,23 +236,7 @@ export function ItemBody({
                   </p>
                 )}
               </div>
-              {isOwner && (
-                <Menu
-                  label="Item actions"
-                  items={[
-                    { label: "Edit", onSelect: () => setEditing(true) },
-                    { label: "Change photo", onSelect: () => setPhotoOpen(true) },
-                    { label: "Write about it", onSelect: () => router.push(`/blog/new?item=${it.id}`) },
-                    { label: it.visibility === "private" ? "Make public" : "Make private", onSelect: () => void setVisibility(it.visibility === "private" ? "public" : "private") },
-                    { label: "Delete", danger: true, onSelect: () => setConfirming(true) },
-                  ]}
-                  trigger={({ props }) => (
-                    <IconButton label="Item actions" size="sm" {...props}>
-                      <MoreHorizontal className="size-4" aria-hidden />
-                    </IconButton>
-                  )}
-                />
-              )}
+              <div className={clsx("-mr-2 -mt-2", actionsSlot !== undefined && "max-md:hidden")}>{actionsMenu}</div>
             </div>
             {editing ? (
               <div className="mt-3 space-y-3">
@@ -195,7 +262,7 @@ export function ItemBody({
                   <span aria-hidden className="px-0.5">·</span>
                   <span className="inline-flex items-center gap-1" data-testid="item-views" title={isOwner ? "Unique views from other people (your own views don't count)" : "Views"}>
                     <Eye className="size-4" aria-hidden />
-                    {views.toLocaleString()} <span>{views === 1 ? "view" : "views"}</span>
+                    {count(views, "view")}
                   </span>
                 </p>
                 <TagList tags={it.tags ?? []} className="mt-3" />
@@ -242,6 +309,7 @@ export function ItemBody({
                     commentCount={it.commentCount}
                     viewerId={viewerId}
                     onCountChange={(n) => onUpdated({ ...it, commentCount: n })}
+                    docked={docked}
                   />
                 </div>
                 {onNavigate && shelf && shelf.items.length > 1 && (

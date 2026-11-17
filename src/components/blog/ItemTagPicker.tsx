@@ -27,8 +27,39 @@ export function ItemThumbMini({ item, className }: { item: Pick<TaggedItemDTO, "
 }
 
 /** Tagged items as removable chips plus a picker dialog (your items first, or anything public on nook). */
-export function ItemTagPicker({ value, onChange }: { value: TaggedItemDTO[]; onChange: (items: TaggedItemDTO[]) => void }) {
+export function ItemTagPicker({ value, onChange, variant = "list" }: { value: TaggedItemDTO[]; onChange: (items: TaggedItemDTO[]) => void; variant?: "list" | "chips" }) {
   const [open, setOpen] = useState(false);
+  const dialog = (
+    <Modal open={open} onClose={() => setOpen(false)} title="Tag items" description={`Up to ${MAX_TAGGED_ITEMS} items`} size="md">
+      {open && <PickerBody value={value} onChange={onChange} onDone={() => setOpen(false)} />}
+    </Modal>
+  );
+  if (variant === "chips") {
+    // Phone composer: one scrolling row under the title. Tap a chip's x to untag, the dashed chip to add.
+    return (
+      <div className="no-scrollbar -mx-4 flex items-center gap-2 overflow-x-auto px-4 py-1" data-testid="tag-chips">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          disabled={value.length >= MAX_TAGGED_ITEMS}
+          data-testid="tag-items"
+          className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-dashed border-border px-3.5 text-meta font-medium text-muted transition-colors hover:text-foreground disabled:opacity-50"
+        >
+          <Plus className="size-4" aria-hidden /> {value.length ? "Tag" : "Tag items"}
+        </button>
+        {value.map((it) => (
+          <span key={it.id} className="inline-flex h-11 max-w-56 shrink-0 items-center gap-2 rounded-full border border-border bg-surface pl-1.5 text-meta">
+            <ItemThumbMini item={it} className="size-8 rounded-full" />
+            <span className="truncate font-medium">{it.title}</span>
+            <button type="button" aria-label={`Untag ${it.title}`} onClick={() => onChange(value.filter((v) => v.id !== it.id))} className="grid size-11 shrink-0 place-items-center rounded-full text-muted hover:text-foreground">
+              <X className="size-4" aria-hidden />
+            </button>
+          </span>
+        ))}
+        {dialog}
+      </div>
+    );
+  }
   return (
     <div>
       {value.length > 0 ? (
@@ -40,7 +71,7 @@ export function ItemTagPicker({ value, onChange }: { value: TaggedItemDTO[]; onC
                 <span className="block truncate text-meta font-medium">{it.title}</span>
                 <span className="block truncate text-caption text-muted">{it.collection} · @{it.username}</span>
               </span>
-              <button type="button" aria-label={`Untag ${it.title}`} onClick={() => onChange(value.filter((v) => v.id !== it.id))} className="grid size-8 place-items-center rounded-full text-muted hover:bg-surface-hover hover:text-foreground">
+              <button type="button" aria-label={`Untag ${it.title}`} onClick={() => onChange(value.filter((v) => v.id !== it.id))} data-hit="compact" className="grid size-8 place-items-center rounded-full text-muted hover:bg-surface-hover hover:text-foreground">
                 <X className="size-4" aria-hidden />
               </button>
             </li>
@@ -52,9 +83,7 @@ export function ItemTagPicker({ value, onChange }: { value: TaggedItemDTO[]; onC
       <Button variant="secondary" size="sm" className="mt-3 w-full" onClick={() => setOpen(true)} disabled={value.length >= MAX_TAGGED_ITEMS} data-testid="tag-items">
         <Plus className="size-4" aria-hidden /> {value.length ? "Tag more items" : "Tag items"}
       </Button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Tag items" description={`Up to ${MAX_TAGGED_ITEMS} items`} size="md">
-        {open && <PickerBody value={value} onChange={onChange} onDone={() => setOpen(false)} />}
-      </Modal>
+      {dialog}
     </div>
   );
 }

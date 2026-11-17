@@ -13,6 +13,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
+import { plural } from "@/lib/plural";
 
 export type ConnectionKind = "followers" | "following";
 
@@ -149,8 +150,8 @@ function FollowListBody({
             setCursor(null);
           }}
           options={[
-            { value: "followers", label: <><span className="font-semibold">{counts.followers}</span> followers</> },
-            { value: "following", label: <><span className="font-semibold">{counts.following}</span> following</> },
+            { value: "followers", label: <><span className="font-semibold">{counts.followers.toLocaleString("en-US")}</span> {plural("follower", counts.followers)}</> },
+            { value: "following", label: <><span className="font-semibold">{counts.following.toLocaleString("en-US")}</span> following</> },
           ]}
         />
         <label className="relative block">

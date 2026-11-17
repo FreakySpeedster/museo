@@ -6,6 +6,7 @@ import "./globals.css";
 import { Shell } from "@/components/Navbar";
 import { ToastProvider } from "@/components/ui/Toast";
 import { appUrl } from "@/lib/env";
+import { NavTracker } from "@/components/ui/PushedScreen";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl()),
@@ -15,6 +16,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#fafaf8" },
     { media: "(prefers-color-scheme: dark)", color: "#0c0c0b" },
@@ -33,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ToastProvider>
+          <NavTracker />
           <Shell>{children}</Shell>
         </ToastProvider>
       </body>

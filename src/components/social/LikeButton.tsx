@@ -5,6 +5,7 @@ import { Heart } from "lucide-react";
 import { useState } from "react";
 import { ApiError, api } from "@/lib/client";
 import { useToast } from "@/components/ui/Toast";
+import { count as countLabel } from "@/lib/plural";
 
 export function LikeButton({
   itemId,
@@ -62,9 +63,10 @@ export function LikeButton({
       type="button"
       onClick={toggle}
       aria-pressed={liked}
-      aria-label={liked ? "Unlike" : "Like"}
+      aria-label={`${liked ? "Unlike" : "Like"}, ${countLabel(count, "like")}`}
+      data-hit="compact"
       className={clsx(
-        "inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-caption transition-colors duration-[var(--duration-fast)] hover:bg-surface-hover",
+        "inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2 text-caption transition-colors duration-[var(--duration-fast)] hover:bg-surface-hover",
         liked ? "text-danger" : "text-muted hover:text-foreground",
         className,
       )}
