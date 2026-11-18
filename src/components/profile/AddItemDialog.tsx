@@ -11,8 +11,8 @@ import { MAX_REQUEST_BYTES } from "@/lib/client-image";
 import { categoryMeta } from "@/lib/categories";
 import { Button } from "@/components/ui/Button";
 import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
-import { Tabs } from "@/components/ui/Tabs";
-import { Modal } from "@/components/ui/Modal";
+import { Segmented } from "@/components/ui/Tabs";
+import { Modal, SheetFooter } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PhotoPicker, proxied, readPhotoFile, type PhotoCandidate } from "./PhotoPicker";
 
@@ -53,7 +53,7 @@ export function AddItemDialog({
   );
 }
 
-function AddItemForm({ shelf, onClose, onAdded, onLimit }: { shelf: ShelfDTO; onClose: () => void; onAdded: (item: ItemDTO) => void; onLimit?: () => void }) {
+function AddItemForm({ shelf, onAdded, onLimit }: { shelf: ShelfDTO; onClose: () => void; onAdded: (item: ItemDTO) => void; onLimit?: () => void }) {
   const [mode, setMode] = useState<"LINK" | "PHOTO">("LINK");
   const [url, setUrl] = useState("");
   const [result, setResult] = useState<{ url: string; preview: Preview | null } | null>(null);
@@ -186,10 +186,9 @@ function AddItemForm({ shelf, onClose, onAdded, onLimit }: { shelf: ShelfDTO; on
 
   return (
       <form onSubmit={submit} className="space-y-5" data-testid="add-item-form">
-        <Tabs
+        <Segmented
           label="Item type"
           spread
-          className="bg-surface-hover"
           value={mode}
           onChange={(m) => { setMode(m); setError(""); }}
           options={[
@@ -357,10 +356,9 @@ function AddItemForm({ shelf, onClose, onAdded, onLimit }: { shelf: ShelfDTO; on
         {error && (
           <FormError>{error}</FormError>
         )}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+        <SheetFooter>
           <Button type="submit" loading={busy} data-testid="add-item-submit">{busy ? (mode === "LINK" ? "Fetching preview…" : "Uploading…") : "Add to collection"}</Button>
-        </div>
+        </SheetFooter>
       </form>
   );
 }

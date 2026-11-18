@@ -7,7 +7,7 @@ import { toViewerDTO } from "@/lib/mappers";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { db } from "@/lib/db";
 
-type Props = { params: Promise<{ username: string }>; searchParams: Promise<{ page?: string; item?: string; view?: string }> };
+type Props = { params: Promise<{ username: string }>; searchParams: Promise<{ page?: string; item?: string; view?: string; edit?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
@@ -34,6 +34,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       priceLabel={process.env.PLUS_PRICE_LABEL || "$4 / month"}
       initialPageId={sp.page}
       initialItemId={sp.item}
+      initialEdit={sp.edit === "1"}
     />
   );
 }

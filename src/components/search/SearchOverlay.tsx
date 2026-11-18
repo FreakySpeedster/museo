@@ -1,5 +1,6 @@
 "use client";
 
+import { SearchSuggestions, rememberSearch } from "./SearchSuggestions";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
@@ -77,6 +78,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const total = hits.length + (q.trim() ? 1 : 0);
 
   function go(href: string) {
+    rememberSearch(q);
     onClose();
     router.push(href);
   }
@@ -164,6 +166,11 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             </li>
           )}
         </ul>
+        )}
+        {!q.trim() && (
+          <div className="max-h-[70dvh] overflow-y-auto border-t border-border px-4 py-4">
+            <SearchSuggestions onPick={(v) => setQ(v)} onNavigate={onClose} />
+          </div>
         )}
       </div>
     </div>,

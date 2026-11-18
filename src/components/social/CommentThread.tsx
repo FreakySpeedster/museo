@@ -278,7 +278,7 @@ function CommentRow({
                   r.mine ? "border-foreground/60 bg-foreground/10" : "border-border hover:bg-surface-hover",
                 )}
               >
-                <span className="text-[13px] leading-none">{r.emoji}</span>
+                <span className="text-caption leading-none">{r.emoji}</span>
                 {r.count}
               </button>
             ))}

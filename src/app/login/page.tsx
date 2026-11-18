@@ -10,5 +10,5 @@ export default async function LoginPage() {
   const user = await getCurrentUser();
   if (user) redirect(`/u/${user.username}`);
   const demo = await db.user.findUnique({ where: { email: "demo@shelfie.app" }, select: { id: true } });
-  return <AuthForm mode="login" demoHint={Boolean(demo)} />;
+  return <AuthForm mode="login" demoHint={Boolean(demo) && process.env.VERCEL_ENV !== "production"} />;
 }

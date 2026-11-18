@@ -2,8 +2,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { followingFeed, globalFeed } from "@/lib/services/feed";
 import { Landing } from "@/components/landing/Landing";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { HomeFeed } from "@/components/feed/HomeFeed";
-import { LinkButton } from "@/components/ui/Button";
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -14,17 +14,8 @@ export default async function Home() {
   const initial = scope === "following" ? await followingFeed(user.id) : await globalFeed(undefined, user.id);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-20 pt-10 sm:px-6">
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-meta text-muted">Welcome back</p>
-          <h1 className="text-title font-semibold">Hi {user.displayName.split(" ")[0]}</h1>
-          <p className="mt-1 text-body text-muted">Here’s what’s new across nook.</p>
-        </div>
-        <div className="flex gap-2">
-          <LinkButton href={`/u/${user.username}`}>My collections</LinkButton>
-        </div>
-      </div>
+    <div className="mx-auto max-w-2xl px-4 pb-20 sm:px-6">
+      <PageHeader eyebrow="Welcome back" title={`Hi ${user.displayName.split(" ")[0]}`} description="Here’s what’s new across nook." className="!mb-3 md:!mb-4" />
       <HomeFeed initialScope={scope} initial={initial} hasFollows={followCount > 0} viewerId={user.id} />
     </div>
   );

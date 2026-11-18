@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import clsx from "clsx";
 import { NotebookPen } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -10,6 +9,8 @@ import { listPosts } from "@/lib/services/blog";
 import { BlogFeed } from "@/components/blog/BlogFeed";
 import { WritePostButton } from "@/components/blog/WritePostButton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Tabs } from "@/components/ui/Tabs";
+import { LinkButton } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 
 type Props = { searchParams: Promise<{ view?: string; author?: string }> };
@@ -34,15 +35,10 @@ export default async function BlogPage({ searchParams }: Props) {
   const write = <WritePostButton plan={plan} stripeEnabled={stripeConfigured()} priceLabel={priceLabel} />;
   const query = mine ? "mine=1" : author ? `author=${encodeURIComponent(author)}` : "";
 
-  const tab = (href: string, label: string, on: boolean) => (
-    <Link href={href} aria-current={on ? "page" : undefined} className={clsx("inline-flex h-8 items-center rounded-full px-4 text-meta font-medium transition-colors", on ? "bg-foreground text-background" : "text-muted hover:text-foreground")}>
-      {label}
-    </Link>
-  );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4 pt-5 md:mb-8 md:pt-12">
         <div className="min-w-0">
           {authorUser ? (
             <Link href={`/u/${authorUser.username}`} className="mb-3 flex w-fit items-center gap-2.5">
@@ -51,27 +47,38 @@ export default async function BlogPage({ searchParams }: Props) {
             </Link>
           ) : null}
           <h1 className="text-title font-semibold tracking-tight">{authorUser ? `${authorUser.displayName}'s blog` : mine ? "Your posts" : "Blog"}</h1>
-          <p className="mt-1 max-w-xl text-muted">
+          <p className="mt-1 max-w-xl text-meta text-muted md:text-body">
             {authorUser ? "Reviews and stories about the things they collect." : mine ? "Drafts stay private until you publish them." : "Reviews and stories about the things people collect, written by nook Plus members."}
           </p>
         </div>
-        {(!authorUser || authorUser.id === viewer?.id) && write}
+        {viewer && (!authorUser || authorUser.id === viewer.id) && write}
       </header>
 
       {!author && viewer && (
-        <nav aria-label="Blog views" className="mt-6 inline-flex rounded-full border border-border bg-surface p-1">
-          {tab("/blog", "Latest", !mine)}
-          {tab("/blog?view=mine", "Your posts", mine)}
-        </nav>
+        <Tabs
+          label="Blog views"
+          className="-mx-4 -mt-2 sm:-mx-6"
+          value={mine ? "mine" : "latest"}
+          options={[
+            { value: "latest", label: "Latest", href: "/blog" },
+            { value: "mine", label: "Your posts", href: "/blog?view=mine" },
+          ]}
+        />
       )}
 
-      <div className="mt-8">
+      <div className="mt-6">
         {posts.length === 0 ? (
           <EmptyState
-            icon={<NotebookPen className="size-10" aria-hidden strokeWidth={1.5} />}
-            title={mine ? "You haven't written anything yet" : authorUser ? "No posts yet" : author ? "No one by that name" : "No posts yet"}
-            description={mine ? (plan === "plus" ? "Pick something from your collections and tell people what it's really like." : "Writing on your nook blog is part of nook Plus.") : "Check back soon."}
-            action={mine ? write : undefined}
+            icon={<NotebookPen aria-hidden />}
+            title={mine ? "You haven't written anything yet" : authorUser ? "No posts yet" : author ? "No one by that name" : "The first stories are on their way"}
+            description={
+              mine
+                ? plan === "plus" ? "Pick something from your collections and tell people what it's really like." : "Writing on your nook blog is part of nook Plus."
+                : authorUser ? "Published reviews and stories will show up here."
+                : !viewer ? "nook members write reviews of the things they collect. Browse collections while you wait."
+                : "Reviews from nook Plus members will appear here. Yours could be first."
+            }
+            action={mine ? write : !viewer ? <LinkButton href="/signup">Start your nook, free</LinkButton> : plan === "plus" && !authorUser ? write : undefined}
           />
         ) : (
           <BlogFeed key={query} initial={posts} initialCursor={nextCursor} query={query} showStatus={mine} />

@@ -37,6 +37,8 @@ export async function getProfile(username: string, viewerId?: string | null) {
     stats: { followers, following, items: itemCount, posts: blogCount },
     isFollowing: follow === "following",
     followState: follow,
+    /** Lets the follow button predict "following" vs "requested" optimistically. */
+    followPolicy: user.followPolicy as "open" | "request",
     isOwner,
   };
 }

@@ -147,3 +147,67 @@ export async function searchPage(q: string, type: SearchType, sort: SearchSort, 
   const slice = hits.slice(0, SEARCH_PAGE_SIZE);
   return { items: slice, nextCursor: hasMore ? String(offset + slice.length) : null };
 }
+
+type SuggestPersonRow = { id: string; username: string; displayName: string; avatarUrl: string | null; createdAt: Date; followers: bigint };
+type TrendingShelfRow = { id: string; name: string; category: string; createdAt: Date; username: string; pageId: string; cover: string | null; recent: bigint };
+
+/**
+ * Search's empty state: people worth following (most followed, not you, not already followed)
+ * and trending public collections (most items added or liked in the last 30 days).
+ */
+export async function searchSuggestions(viewerId?: string | null, limit = 6): Promise<{ people: SearchHit[]; collections: SearchHit[] }> {
+  const [people, shelves] = await Promise.all([
+    db.$queryRawUnsafe<SuggestPersonRow[]>(
+      `
+      SELECT u.id, u.username, u."displayName", u."avatarUrl", u."createdAt",
+        (SELECT COUNT(*) FROM "Follow" f WHERE f."followingId" = u.id) AS followers
+      FROM "User" u
+      WHERE u.id <> $1
+        AND NOT EXISTS (SELECT 1 FROM "Follow" f WHERE f."followerId" = $1 AND f."followingId" = u.id)
+      ORDER BY followers DESC, u."createdAt" DESC
+      LIMIT $2
+      `,
+      viewerId ?? "",
+      limit,
+    ),
+    db.$queryRawUnsafe<TrendingShelfRow[]>(
+      `
+      SELECT s.id, s.name, s.category, s."createdAt", u.username, p.id AS "pageId",
+        (SELECT i."imageUrl" FROM "Item" i WHERE i."shelfId" = s.id AND i.visibility = 'public' AND i."imageUrl" IS NOT NULL ORDER BY i."createdAt" DESC LIMIT 1) AS cover,
+        (SELECT COUNT(*) FROM "Item" i WHERE i."shelfId" = s.id AND i."createdAt" > now() - interval '30 days')
+          + (SELECT COUNT(*) FROM "ItemLike" l JOIN "Item" i ON i.id = l."itemId" WHERE i."shelfId" = s.id AND l."createdAt" > now() - interval '30 days') AS recent
+      FROM "Shelf" s
+      JOIN "Page" p ON p.id = s."pageId"
+      JOIN "User" u ON u.id = p."userId"
+      WHERE s.visibility = 'public' AND p.visibility = 'public' AND p."userId" <> $1
+        AND EXISTS (SELECT 1 FROM "Item" i WHERE i."shelfId" = s.id AND i.visibility = 'public')
+      ORDER BY recent DESC, s."createdAt" DESC
+      LIMIT $2
+      `,
+      viewerId ?? "",
+      limit,
+    ),
+  ]);
+  return {
+    people: people.map((r) => ({
+      kind: "person" as const,
+      id: r.id,
+      title: r.displayName,
+      subtitle: `@${r.username}`,
+      href: `/u/${r.username}`,
+      imageUrl: r.avatarUrl,
+      createdAt: r.createdAt.toISOString(),
+      score: Number(r.followers),
+    })),
+    collections: shelves.map((r) => ({
+      kind: "shelf" as const,
+      id: r.id,
+      title: r.name,
+      subtitle: `@${r.username}`,
+      href: `/u/${r.username}?page=${r.pageId}`,
+      imageUrl: r.cover,
+      createdAt: r.createdAt.toISOString(),
+      score: Number(r.recent),
+    })),
+  };
+}

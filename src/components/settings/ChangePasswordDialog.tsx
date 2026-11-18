@@ -3,8 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { ApiError, api } from "@/lib/client";
 import { Button } from "@/components/ui/Button";
-import { Field, FormError, Input } from "@/components/ui/Field";
-import { Modal } from "@/components/ui/Modal";
+import { Field, FormError, PasswordInput } from "@/components/ui/Field";
+import { Modal, SheetFooter } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { count } from "@/lib/plural";
 
@@ -44,19 +44,18 @@ function ChangePasswordForm({ onClose }: { onClose: () => void }) {
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
       <Field label="Current password" htmlFor="pw-current">
-        <Input id="pw-current" name="currentPassword" type="password" autoComplete="current-password" required autoFocus />
+        <PasswordInput id="pw-current" name="currentPassword" autoComplete="current-password" required autoFocus />
       </Field>
       <Field label="New password" htmlFor="pw-new" hint="min. 8 characters">
-        <Input id="pw-new" name="newPassword" type="password" autoComplete="new-password" required minLength={8} maxLength={128} />
+        <PasswordInput id="pw-new" name="newPassword" autoComplete="new-password" required minLength={8} maxLength={128} />
       </Field>
       <Field label="Confirm new password" htmlFor="pw-confirm">
-        <Input id="pw-confirm" name="confirm" type="password" autoComplete="new-password" required minLength={8} maxLength={128} />
+        <PasswordInput id="pw-confirm" name="confirm" autoComplete="new-password" required minLength={8} maxLength={128} />
       </Field>
       {error && <FormError>{error}</FormError>}
-      <div className="flex justify-end gap-2 pt-1">
-        <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>Cancel</Button>
+      <SheetFooter>
         <Button type="submit" loading={busy}>Update password</Button>
-      </div>
+      </SheetFooter>
     </form>
   );
 }

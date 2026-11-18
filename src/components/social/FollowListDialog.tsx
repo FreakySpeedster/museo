@@ -139,10 +139,10 @@ function FollowListBody({
 
   return (
     <div className="-mx-5 -my-5 flex h-[70dvh] flex-col sm:-mx-6 sm:h-[min(560px,75dvh)]">
-      <div className="space-y-3 border-b border-border px-5 pb-3 pt-4 sm:px-6">
+      <div className="space-y-3 border-b border-border px-5 pb-3 sm:px-6">
         <Tabs
           label="Connections"
-          spread
+          className="-mx-5 sm:-mx-6"
           value={kind}
           onChange={(k) => {
             setKind(k);
@@ -235,12 +235,16 @@ function ConnectionRow({
   async function toggle() {
     if (!signedIn) return router.push("/login");
     const undo = state !== "none";
-    setBusy(true);
+    const prev = state;
+    // Unfollow / cancel is optimistic; following waits briefly because it may become a request.
+    if (undo) onChange("none", prev);
+    else setBusy(true);
     try {
       const res = await api<{ state: ConnectionDTO["followState"] }>(`/api/users/${user.username}/follow`, { method: undo ? "DELETE" : "POST" });
-      onChange(res.state, state);
+      if (!undo) onChange(res.state, prev);
       if (res.state === "requested") toast.success(`Follow request sent to ${user.displayName}`);
     } catch (e) {
+      if (undo) onChange(prev, "none");
       toast.error(e instanceof ApiError ? e.message : "Couldn't update follow");
     } finally {
       setBusy(false);

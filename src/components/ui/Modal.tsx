@@ -105,6 +105,28 @@ export function Modal({
     [dismissible, onClose],
   );
 
+  // Phones: drag the handle / header down to dismiss (bottom-sheet gesture).
+  const drag = useRef<{ y: number; t: number; dy: number } | null>(null);
+  const onDragStart = (e: React.PointerEvent) => {
+    if (!dismissible || window.matchMedia("(min-width: 640px)").matches || (e.target as HTMLElement).closest("button")) return;
+    drag.current = { y: e.clientY, t: e.timeStamp, dy: 0 };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onDragMove = (e: React.PointerEvent) => {
+    if (!drag.current || !panel.current) return;
+    drag.current.dy = Math.max(0, e.clientY - drag.current.y);
+    panel.current.style.transform = `translateY(${drag.current.dy}px)`;
+  };
+  const onDragEnd = (e: React.PointerEvent) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d || !panel.current) return;
+    const fast = d.dy > 30 && d.dy / Math.max(1, e.timeStamp - d.t) > 0.6;
+    if (d.dy > 110 || fast) onClose();
+    else if (reducedMotion()) panel.current.style.transform = "";
+    else gsap.to(panel.current, { y: 0, duration: 0.25, ease: "power3.out", clearProps: "transform" });
+  };
+
   if (!visible) return null;
 
   const widths = { sm: "sm:max-w-md", md: "sm:max-w-lg", lg: "sm:max-w-2xl", xl: "sm:max-w-4xl" };
@@ -117,12 +139,13 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         className={clsx(
-          "relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-border bg-surface-raised shadow-lg sm:rounded-3xl",
+          "relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl border border-border bg-surface-raised shadow-lg sm:rounded-2xl",
           widths[size],
         )}
       >
-        <span aria-hidden className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border sm:hidden" />
-        <div className="flex items-start justify-between gap-4 border-b border-border px-5 pb-4 pt-2 sm:px-6 sm:pt-4">
+        <div onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd} className="shrink-0 max-sm:touch-none" data-testid="sheet-grabber">
+        <span aria-hidden className="mx-auto mt-2 block h-1 w-10 rounded-full bg-border sm:hidden" />
+        <div className="flex items-start justify-between gap-4 border-b border-border px-4 pb-4 pt-2 sm:px-6 sm:pt-4">
           <div>
             <h2 className="text-heading font-semibold tracking-tight">{title}</h2>
             {description && <p className="mt-1 text-meta text-muted">{description}</p>}
@@ -133,9 +156,30 @@ export function Modal({
             </IconButton>
           )}
         </div>
-        <div className="overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pb-5">{children}</div>
+        </div>
+        <div className="overflow-y-auto px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pb-5">{children}</div>
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** Bottom sheet on phones, centred dialog from `sm` up. Same component; the name reads better at call sites. */
+export const Sheet = Modal;
+
+/**
+ * Sticky action bar at the bottom of a sheet: on phones the primary action is full width in the thumb zone.
+ * Pass only the primary (and an optional destructive/secondary) action; the header × already cancels.
+ */
+export function SheetFooter({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div
+      className={clsx(
+        "sticky -bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-10 -mx-4 -mb-[calc(1.25rem+env(safe-area-inset-bottom))] mt-5 flex flex-col-reverse gap-2 border-t border-border bg-surface-raised px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 sm:static sm:-mx-6 sm:mb-[-1.25rem] sm:flex-row sm:justify-end sm:px-6 sm:pb-4 [&>*]:max-sm:w-full",
+        className,
+      )}
+    >
+      {children}
+    </div>
   );
 }

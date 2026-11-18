@@ -66,13 +66,13 @@ export function LikeButton({
       aria-label={`${liked ? "Unlike" : "Like"}, ${countLabel(count, "like")}`}
       data-hit="compact"
       className={clsx(
-        "inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2 text-caption transition-colors duration-[var(--duration-fast)] hover:bg-surface-hover",
+        "inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2 text-caption transition-transform active:scale-90 transition-colors duration-[var(--duration-fast)] hover:bg-surface-hover",
         liked ? "text-danger" : "text-muted hover:text-foreground",
         className,
       )}
     >
-      <Heart className="size-4" aria-hidden fill={liked ? "currentColor" : "none"} strokeWidth={1.8} />
-      <span>{count}</span>
+      <Heart key={liked ? "on" : "off"} className={clsx("size-5", liked && pending && "like-pop")} aria-hidden fill={liked ? "currentColor" : "none"} strokeWidth={1.75} />
+      {count > 0 && <span className="tabular-nums">{count}</span>}
     </button>
   );
 }

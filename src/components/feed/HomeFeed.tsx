@@ -4,14 +4,15 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ItemDTO, ShelfDTO, TimelineEntry } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
-import { ArrowUpRight, MessageCircle, Sprout } from "lucide-react";
+import { ArrowUp, ArrowUpRight, MessageCircle, Sprout } from "lucide-react";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
+import { FeedSkeleton } from "./FeedSkeleton";
 import { ensureScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { timeAgo } from "@/lib/time";
 import { Avatar } from "@/components/ui/Avatar";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
 import { PhotoCarousel } from "@/components/profile/PhotoCarousel";
@@ -87,6 +88,30 @@ export function HomeFeed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feed.nextCursor, scope]);
 
+  // "New posts" pill: poll quietly and count entries newer than the top of the feed.
+  const [fresh, setFresh] = useState(0);
+  const top = feed.items[0]?.id;
+  useEffect(() => {
+    if (!top) return;
+    const tick = async () => {
+      if (document.hidden) return;
+      try {
+        const res = await api<Feed>(`/api/feed?scope=${scope}`);
+        const i = res.items.findIndex((x) => x.id === top);
+        setFresh(i === -1 ? res.items.length : i);
+      } catch {
+        /* offline: try again next tick */
+      }
+    };
+    const t = window.setInterval(tick, 60_000);
+    return () => window.clearInterval(t);
+  }, [scope, top]);
+
+  async function refresh() {
+    setFresh(0);
+    await load(scope);
+  }
+
   function switchScope(s: Scope) {
     if (s === scope) return;
     setScope(s);
@@ -105,9 +130,26 @@ export function HomeFeed({
 
   return (
     <div ref={root}>
+      <PullToRefresh onRefresh={() => refresh()} />
+      {fresh > 0 && (
+        <div className="pointer-events-none sticky top-[calc(var(--chrome-top)+3.5rem)] z-30 -mb-10 flex h-10 justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: reducedMotion() ? "auto" : "smooth" });
+              void refresh();
+            }}
+            data-testid="new-posts"
+            className="pointer-events-auto inline-flex h-10 items-center gap-1.5 rounded-full bg-foreground px-4 text-meta font-semibold text-background shadow-lg transition-transform active:scale-95"
+          >
+            <ArrowUp className="size-4" aria-hidden /> {fresh > 9 ? "9+" : fresh} new {fresh === 1 ? "post" : "posts"}
+          </button>
+        </div>
+      )}
       <Tabs
         label="Feed"
-        className="mb-6"
+        sticky
+        className="-mx-4 mb-4 sm:-mx-6"
         value={scope}
         onChange={switchScope}
         options={[
@@ -117,12 +159,10 @@ export function HomeFeed({
       />
 
       {loading && feed.items.length === 0 ? (
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-96" />)}
-        </div>
+        <FeedSkeleton />
       ) : feed.items.length === 0 ? (
         <EmptyState
-          icon={<Sprout className="size-10" aria-hidden strokeWidth={1.6} />}
+          icon={<Sprout aria-hidden />}
           title={scope === "following" && !hasFollows ? "Your feed is quiet" : "Nothing here yet"}
           description="Follow collectors to see what they add, or browse everyone’s latest finds."
           action={<Button variant="secondary" onClick={() => switchScope("global")}>Browse everyone</Button>}
@@ -133,7 +173,7 @@ export function HomeFeed({
             <article key={e.id} data-feed-card className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
               <header className="flex items-center gap-3 px-4 pb-3 pt-4">
                 <Link href={`/u/${e.user.username}`} className="shrink-0">
-                  <Avatar name={e.user.displayName} username={e.user.username} avatarUrl={e.user.avatarUrl} size="sm" />
+                  <Avatar name={e.user.displayName} username={e.user.username} avatarUrl={e.user.avatarUrl} size={32} />
                 </Link>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-meta">
@@ -173,7 +213,7 @@ export function HomeFeed({
                     data-hit="compact"
                   >
                     <MessageCircle className="size-4" aria-hidden strokeWidth={1.8} />
-                    <span>{e.commentCount}</span>
+                    {e.commentCount > 0 && <span>{e.commentCount}</span>}
                   </Link>
                 </div>
                 {e.url && (

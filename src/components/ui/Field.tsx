@@ -1,4 +1,8 @@
+"use client";
+
 import clsx from "clsx";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 
 export const controlClass =
@@ -31,4 +35,23 @@ export function Input({ className, ...p }: InputHTMLAttributes<HTMLInputElement>
 
 export function Textarea({ className, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement> & { ref?: React.Ref<HTMLTextAreaElement> }) {
   return <textarea className={clsx(controlClass, "min-h-24 resize-y", className)} {...p} />;
+}
+
+/** Password field with a show / hide toggle (44px target inside the field). */
+export function PasswordInput({ className, ...p }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
+  const [shown, setShown] = useState(false);
+  return (
+    <div className="relative">
+      <input {...p} type={shown ? "text" : "password"} autoCapitalize="none" autoCorrect="off" spellCheck={false} className={clsx(controlClass, "pr-12", className)} />
+      <button
+        type="button"
+        onClick={() => setShown((v) => !v)}
+        aria-label={shown ? "Hide password" : "Show password"}
+        aria-pressed={shown}
+        className="absolute inset-y-0 right-0 grid w-12 place-items-center rounded-r-xl text-muted hover:text-foreground"
+      >
+        {shown ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
+      </button>
+    </div>
+  );
 }

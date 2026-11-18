@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { ApiError, api } from "@/lib/client";
 import { Button, LinkButton } from "../ui/Button";
-import { Field, FormError, Input } from "../ui/Field";
+import { Field, FormError, PasswordInput } from "../ui/Field";
 import { useToast } from "../ui/Toast";
 import { AuthCard } from "./AuthCard";
 
@@ -59,10 +59,10 @@ export function ResetPasswordForm({ token }: { token: string }) {
     <AuthCard icon={<LockKeyhole className="size-5" aria-hidden />} title="Choose a new password" description="You'll be signed in, and signed out everywhere else.">
       <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
         <Field label="New password" htmlFor="password" hint="min. 8 characters">
-          <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} maxLength={128} autoFocus />
+          <PasswordInput id="password" name="password" autoComplete="new-password" required minLength={8} maxLength={128} autoFocus />
         </Field>
         <Field label="Confirm new password" htmlFor="confirm">
-          <Input id="confirm" name="confirm" type="password" autoComplete="new-password" required minLength={8} maxLength={128} />
+          <PasswordInput id="confirm" name="confirm" autoComplete="new-password" required minLength={8} maxLength={128} />
         </Field>
         {error && <FormError>{error}</FormError>}
         <Button type="submit" loading={busy} className="w-full" size="lg">

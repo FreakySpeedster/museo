@@ -28,7 +28,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
           }}
           unread={unread}
         />
-        <main className="pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pl-[var(--nav-offset)]">{children}</main>
+        <main className="pb-[var(--tabbar-space)] md:pb-0 md:pl-[var(--nav-offset)]">{children}</main>
       </div>
     </SearchProvider>
   );

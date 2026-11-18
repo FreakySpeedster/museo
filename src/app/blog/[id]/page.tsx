@@ -58,7 +58,7 @@ export default async function PostPage({ params }: Props) {
       </div>
 
       <header>
-        <h1 className="text-balance text-title font-semibold leading-tight tracking-tight sm:text-[2.75rem]">{post.title}</h1>
+        <h1 className="text-balance text-title font-semibold leading-tight tracking-tight">{post.title}</h1>
         <Link href={`/u/${post.author.username}`} className="mt-6 flex w-fit items-center gap-3">
           <Avatar name={post.author.displayName} username={post.author.username} avatarUrl={post.author.avatarUrl} size="md" />
           <span>

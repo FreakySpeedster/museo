@@ -1,24 +1,25 @@
 "use client";
 
-import { KeyRound, LockKeyhole, Monitor, Moon, Palette, Shield, Sun, UserCheck, Users } from "lucide-react";
+import { AtSign, Gem, KeyRound, LogOut, Mail, Monitor, Moon, Palette, Pencil, Sun, UserCheck, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FollowPolicy, ViewerDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
-import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import { Button } from "@/components/ui/Button";
-import { Tabs } from "@/components/ui/Tabs";
+import { OptionSheet } from "@/components/ui/OptionSheet";
 import { applyTheme, useThemeMode, type ThemeMode } from "@/components/ThemeToggle";
 import { count } from "@/lib/plural";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
-import { SettingRow, SettingsSection } from "./SettingsSection";
+import { SettingsGroup, SettingsRow } from "./SettingsSection";
+
+const THEMES: Record<ThemeMode, string> = { light: "Light", dark: "Dark", system: "Automatic" };
+const POLICIES: Record<FollowPolicy, string> = { request: "Approval", open: "Anyone" };
 
 export function SettingsView({ viewer, pendingRequests }: { viewer: ViewerDTO; pendingRequests: number }) {
   const [policy, setPolicy] = useState<FollowPolicy>(viewer.followPolicy);
   const [pending, setPending] = useState(pendingRequests);
   const [saving, setSaving] = useState(false);
-  const [pwOpen, setPwOpen] = useState(false);
+  const [sheet, setSheet] = useState<null | "theme" | "privacy" | "password">(null);
   const toast = useToast();
   const router = useRouter();
   const theme = useThemeMode();
@@ -47,55 +48,71 @@ export function SettingsView({ viewer, pendingRequests }: { viewer: ViewerDTO; p
     }
   }
 
-  return (
-    <div className="flex flex-col gap-6">
-      <SettingsSection title="Privacy" description="Control who can follow you." icon={<Shield className="size-4" aria-hidden />}>
-        <SettingRow
-          label="Who can follow you"
-          htmlFor="set-follow"
-          description={
-            policy === "request"
-              ? `New followers need your approval. Requests show up in Notifications.${pending > 0 ? ` Switching to "Anyone can follow" approves your ${count(pending, "pending request")}.` : ""}`
-              : "Anyone can follow you right away."
-          }
-        >
-          <Select
-            id="set-follow"
-            label="Who can follow you"
-            value={policy}
-            onChange={(v) => void changePolicy(v as FollowPolicy)}
-            options={[
-              { value: "request", label: "Approve follow requests", icon: <UserCheck className="size-4 shrink-0 text-muted" aria-hidden /> },
-              { value: "open", label: "Anyone can follow", icon: <Users className="size-4 shrink-0 text-muted" aria-hidden /> },
-            ]}
-          />
-        </SettingRow>
-      </SettingsSection>
+  async function logout() {
+    try {
+      await api("/api/auth/logout", { method: "POST", json: {} });
+      router.push("/");
+      router.refresh();
+    } catch {
+      toast.error("Couldn't log out. Try again.");
+    }
+  }
 
-      <SettingsSection title="Security" description="Keep your account safe." icon={<LockKeyhole className="size-4" aria-hidden />}>
-        <SettingRow label="Password" description={`Signed in as ${viewer.email}. Changing it signs you out on every other device.`}>
-          <Button variant="secondary" className="w-full" onClick={() => setPwOpen(true)}>
-            <KeyRound className="size-4" aria-hidden />
-            Change password
-          </Button>
-        </SettingRow>
-      </SettingsSection>
-      <SettingsSection title="Appearance" description="How nook looks on this device." icon={<Palette className="size-4" aria-hidden />}>
-        <SettingRow label="Theme" description={theme === "system" ? "Matches your device's light or dark setting." : `Always ${theme}.`}>
-          <Tabs<ThemeMode>
-            label="Theme"
-            spread
-            value={theme}
-            onChange={applyTheme}
-            options={[
-              { value: "light", label: <><Sun className="size-4" aria-hidden /> Light</> },
-              { value: "dark", label: <><Moon className="size-4" aria-hidden /> Dark</> },
-              { value: "system", label: <><Monitor className="size-4" aria-hidden /> Auto</> },
-            ]}
-          />
-        </SettingRow>
-      </SettingsSection>
-      <ChangePasswordDialog open={pwOpen} onClose={() => setPwOpen(false)} />
+  return (
+    <div className="flex flex-col gap-7" data-testid="settings">
+      <SettingsGroup title="Appearance">
+        <SettingsRow icon={<Palette className="size-[18px]" aria-hidden />} label="Theme" value={THEMES[theme]} onClick={() => setSheet("theme")} testId="setting-theme" />
+      </SettingsGroup>
+
+      <SettingsGroup
+        title="Privacy"
+        footer={policy === "request" ? `New followers need your approval. Requests show up in Notifications.${pending > 0 ? ` Switching to "Anyone" approves your ${count(pending, "pending request")}.` : ""}` : "Anyone can follow you right away."}
+      >
+        <SettingsRow icon={<UserCheck className="size-[18px]" aria-hidden />} label="Who can follow you" value={POLICIES[policy]} onClick={() => setSheet("privacy")} testId="setting-privacy" />
+      </SettingsGroup>
+
+      <SettingsGroup title="Security" footer="Changing your password signs you out on every other device.">
+        <SettingsRow icon={<KeyRound className="size-[18px]" aria-hidden />} label="Change password" onClick={() => setSheet("password")} />
+      </SettingsGroup>
+
+      <SettingsGroup title="Plan & billing">
+        <SettingsRow icon={<Gem className="size-[18px]" aria-hidden />} label={viewer.subscribed ? "nook Plus" : "Free plan"} value={viewer.subscribed ? "Manage" : "Upgrade"} href="/pricing" />
+      </SettingsGroup>
+
+      <SettingsGroup title="Account">
+        <SettingsRow icon={<Pencil className="size-[18px]" aria-hidden />} label="Edit profile" href={`/u/${viewer.username}?edit=1`} />
+        <SettingsRow icon={<AtSign className="size-[18px]" aria-hidden />} label="Username" value={`@${viewer.username}`} />
+        <SettingsRow icon={<Mail className="size-[18px]" aria-hidden />} label="Email" value={viewer.email} />
+      </SettingsGroup>
+
+      <SettingsGroup>
+        <SettingsRow icon={<LogOut className="size-[18px]" aria-hidden />} label="Log out" onClick={logout} danger testId="setting-logout" />
+      </SettingsGroup>
+
+      <OptionSheet<ThemeMode>
+        open={sheet === "theme"}
+        onClose={() => setSheet(null)}
+        title="Theme"
+        value={theme}
+        onChange={applyTheme}
+        options={[
+          { value: "light", label: "Light", icon: <Sun className="size-[18px]" aria-hidden /> },
+          { value: "dark", label: "Dark", icon: <Moon className="size-[18px]" aria-hidden /> },
+          { value: "system", label: "Automatic", description: "Match your device", icon: <Monitor className="size-[18px]" aria-hidden /> },
+        ]}
+      />
+      <OptionSheet<FollowPolicy>
+        open={sheet === "privacy"}
+        onClose={() => setSheet(null)}
+        title="Who can follow you"
+        value={policy}
+        onChange={(v) => void changePolicy(v)}
+        options={[
+          { value: "request", label: "Approve follow requests", description: "You decide who follows you", icon: <UserCheck className="size-[18px]" aria-hidden /> },
+          { value: "open", label: "Anyone can follow", description: "No approval needed", icon: <Users className="size-[18px]" aria-hidden /> },
+        ]}
+      />
+      <ChangePasswordDialog open={sheet === "password"} onClose={() => setSheet(null)} />
     </div>
   );
 }

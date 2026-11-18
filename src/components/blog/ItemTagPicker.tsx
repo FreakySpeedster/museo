@@ -8,7 +8,7 @@ import { api } from "@/lib/client";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Tabs } from "@/components/ui/Tabs";
+import { Segmented } from "@/components/ui/Tabs";
 
 export const MAX_TAGGED_ITEMS = 12;
 
@@ -115,7 +115,7 @@ function PickerBody({ value, onChange, onDone }: { value: TaggedItemDTO[]; onCha
 
   return (
     <div className="space-y-3">
-      <Tabs label="Where to look" spread value={scope} onChange={(v) => { setScope(v); setResults(null); }} options={[{ value: "mine", label: "Your items" }, { value: "all", label: "All of nook" }]} />
+      <Segmented label="Where to look" spread value={scope} onChange={(v) => { setScope(v); setResults(null); }} options={[{ value: "mine", label: "Your items" }, { value: "all", label: "All of nook" }]} />
       <label className="relative block">
         <span className="sr-only">Search items</span>
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />

@@ -6,7 +6,7 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex select-none items-center justify-center gap-2 rounded-full font-medium transition-[color,background-color,border-color,filter] duration-[var(--duration-fast)] ease-[var(--ease-out)] disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex select-none items-center justify-center gap-2 rounded-full font-medium transition-[color,background-color,border-color,filter,transform] active:scale-[0.97] motion-reduce:active:scale-100 duration-[var(--duration-fast)] ease-[var(--ease-out)] disabled:pointer-events-none disabled:opacity-50";
 
 const variants: Record<Variant, string> = {
   primary: "bg-accent text-accent-contrast hover:bg-accent-hover active:bg-accent-pressed",
@@ -16,8 +16,8 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-8 px-3.5 text-meta",
-  md: "h-10 px-4 text-meta",
+  sm: "btn-sm h-8 px-3.5 text-meta",
+  md: "h-11 px-5 text-meta",
   lg: "h-12 px-6 text-body",
 };
 

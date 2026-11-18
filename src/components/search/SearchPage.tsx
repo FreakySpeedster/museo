@@ -3,13 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Package, Rows3, Search, UserRound } from "lucide-react";
+import { ArrowUpDown, Check, Package, Rows3, Search, UserRound, X } from "lucide-react";
 import type { SearchHit, SearchSort, SearchType } from "@/lib/dto";
 import { api } from "@/lib/client";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Menu } from "@/components/ui/Menu";
+import { Sheet } from "@/components/ui/Modal";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { SearchSuggestions, rememberSearch } from "./SearchSuggestions";
 import { Tabs } from "@/components/ui/Tabs";
 import { timeAgo } from "@/lib/time";
 
@@ -31,6 +33,7 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const timer = useRef<number>(0);
+  const [sortOpen, setSortOpen] = useState(false);
 
   function push(next: { q?: string; type?: SearchType; sort?: SearchSort }) {
     const nq = next.q ?? q;
@@ -81,64 +84,89 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
   const sortLabel = SORTS.find((s) => s.value === sort)?.label ?? "Relevance";
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-2xl px-4 pb-8 pt-4 sm:px-6 md:pt-8">
       <div className="flex items-center gap-2 field-shell rounded-full px-4 shadow-sm">
         <Search className="size-5 shrink-0 text-muted" aria-hidden />
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && rememberSearch(draft)}
           placeholder="Search people, items, and collections"
           className="h-12 w-full bg-transparent text-body outline-none placeholder:text-muted"
           autoComplete="off"
           spellCheck={false}
+          enterKeyHint="search"
+          inputMode="search"
           aria-label="Search"
         />
+        {draft && (
+          <button type="button" aria-label="Clear search" onClick={() => setDraft("")} className="-mr-3 grid size-11 shrink-0 place-items-center rounded-full text-muted hover:text-foreground">
+            <X className="size-4" aria-hidden />
+          </button>
+        )}
       </div>
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-        <Tabs
-          label="Result type"
-          value={type}
-          onChange={(v) => {
-            setType(v);
-            push({ type: v });
-          }}
-          options={[
-            { value: "all", label: "All" },
-            { value: "people", label: "People" },
-            { value: "items", label: "Items" },
-            { value: "shelves", label: "Collections" },
-          ]}
-        />
-        <Menu
-          label="Sort"
-          items={SORTS.map((s) => ({
-            label: s.label,
-            onSelect: () => {
-              setSort(s.value);
-              push({ sort: s.value });
-            },
-          }))}
-          trigger={({ props, open }) => (
-            <button
-              type="button"
-              className="inline-flex h-8 items-center gap-1 rounded-full border border-border bg-surface px-3 text-meta text-muted hover:text-foreground"
-              {...props}
-            >
-              {sortLabel}
-              <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
-            </button>
-          )}
-        />
-      </div>
-      <div className="mt-6 space-y-2">
-        {!q.trim() && <p className="text-body text-muted">Start typing to search nook.</p>}
+      {q.trim() && (
+        <div className="-mx-4 mt-3 flex items-center border-b border-border pr-2 sm:-mx-6">
+          <Tabs
+            label="Result type"
+            className="flex-1 border-b-0"
+            value={type}
+            onChange={(v) => {
+              setType(v);
+              push({ type: v });
+            }}
+            options={[
+              { value: "all", label: "All" },
+              { value: "people", label: "People" },
+              { value: "items", label: "Items" },
+              { value: "shelves", label: "Collections" },
+            ]}
+          />
+          <button
+            type="button"
+            onClick={() => setSortOpen(true)}
+            aria-label={`Sort: ${sortLabel}`}
+            className="grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-hover hover:text-foreground"
+            data-testid="sort-button"
+          >
+            <ArrowUpDown className="size-5" aria-hidden />
+          </button>
+        </div>
+      )}
+      <Sheet open={sortOpen} onClose={() => setSortOpen(false)} title="Sort results" size="sm">
+        <ul className="-mx-2" role="radiogroup" aria-label="Sort">
+          {SORTS.map((o) => (
+            <li key={o.value}>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={sort === o.value}
+                onClick={() => {
+                  setSort(o.value);
+                  push({ sort: o.value });
+                  setSortOpen(false);
+                }}
+                className="flex min-h-12 w-full items-center justify-between rounded-xl px-3 text-left text-body hover:bg-surface-hover"
+              >
+                {o.label}
+                {sort === o.value && <Check className="size-5" aria-hidden />}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Sheet>
+      <div className="mt-5 space-y-2">
+        {!q.trim() && <SearchSuggestions onPick={(v) => setDraft(v)} />}
+        {q.trim() && loading && items.length === 0 && (
+          <div className="space-y-2" aria-busy="true">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-[4.5rem] w-full rounded-2xl" />)}</div>
+        )}
         {q.trim() && items.length === 0 && !loading && (
-          <EmptyState icon={<Search className="size-10" aria-hidden />} title="No results" description="Try a different word or filter." />
+          <EmptyState icon={<Search className="size-6" aria-hidden />} title="No results" description="Try a different word or filter." />
         )}
         {items.map((h) => {
           const Icon = ICONS[h.kind];
           return (
-            <Link key={`${h.kind}-${h.id}`} href={h.href} className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 hover:bg-surface-hover">
+            <Link key={`${h.kind}-${h.id}`} href={h.href} onClick={() => rememberSearch(q)} className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 hover:bg-surface-hover">
               {h.kind === "person" ? (
                 <Avatar name={h.title} username={h.subtitle.replace(/^@/, "")} avatarUrl={h.imageUrl} size="md" />
               ) : h.imageUrl ? (
@@ -150,7 +178,7 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
                 </span>
               )}
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-heading font-semibold">{h.title}</span>
+                <span className="block truncate text-body font-semibold">{h.title}</span>
                 <span className="block truncate text-caption text-muted">
                   {h.subtitle} · {timeAgo(h.createdAt)}
                 </span>

@@ -13,6 +13,7 @@ import { UserMenu } from "./UserMenu";
 import { useSearch } from "./search/SearchProvider";
 import { Avatar } from "./ui/Avatar";
 import { CreateSheet } from "./create/CreateSheet";
+import { GlassTabBar } from "./GlassTabBar";
 import { CountBadge } from "./ui/CountBadge";
 import { useUnreadCount } from "./notifications/useUnreadCount";
 
@@ -31,14 +32,6 @@ interface Item {
   primary?: boolean;
   count?: number;
 }
-
-/** Phone tab: 44px+ target, 24px icon, one-word label that never wraps. */
-const tabClass = (active: boolean, primary?: boolean) =>
-  clsx(
-    "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 whitespace-nowrap text-micro transition-colors active:opacity-70",
-    active ? "font-semibold text-foreground" : "font-medium text-muted",
-    primary && !active && "text-accent",
-  );
 
 const PIN_KEY = "shelfie.nav-pinned";
 const OPEN_DELAY = 100;
@@ -136,12 +129,6 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
     ? primary.filter((it) => it.href === "/" || it.href === "/blog")
     : [primary[0], ...utility, ...guest];
   const onOwnProfile = Boolean(user) && path.toLowerCase().startsWith(mine.toLowerCase());
-  const tab = (it: Item) => (
-    <Link key={`tab-${it.href}`} href={it.href} aria-current={it.active ? "page" : undefined} className={tabClass(it.active, it.primary)}>
-      <it.icon className="size-6" aria-hidden strokeWidth={it.active ? 2.5 : 1.8} fill={it.active ? "currentColor" : "none"} fillOpacity={it.active ? 0.14 : 0} />
-      <span>{it.label}</span>
-    </Link>
-  );
 
   function onEnter() {
     window.clearTimeout(leaveTimer.current);
@@ -257,38 +244,26 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
         </div>
       </header>
 
-      <nav
-        aria-label="Primary"
-        data-testid="tab-bar"
-        className="app-phone-nav fixed inset-x-0 bottom-0 z-nav border-t border-border bg-[color-mix(in_srgb,var(--background)_92%,var(--surface))] pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
-      >
-        <div className="mx-auto flex h-14 max-w-lg items-stretch">
-          {tabs.slice(0, 1).map(tab)}
-          <button type="button" onClick={search.open} className={tabClass(path.startsWith("/search"))} aria-current={path.startsWith("/search") ? "page" : undefined}>
-            <Search className="size-6" aria-hidden strokeWidth={path.startsWith("/search") ? 2.5 : 1.8} />
-            <span>Search</span>
-          </button>
-          {user && (
-            <button type="button" onClick={() => setCreating(true)} className={tabClass(creating)} data-testid="tab-create" aria-haspopup="dialog">
-              <SquarePlus className="size-6" aria-hidden strokeWidth={creating ? 2.5 : 1.8} />
-              <span>Create</span>
-            </button>
-          )}
-          {tabs.slice(1).map(tab)}
-          {user && (
-            <Link href={mine} aria-current={onOwnProfile ? "page" : undefined} className={tabClass(onOwnProfile)} data-testid="tab-profile">
-              <Avatar
-                name={user.displayName}
-                username={user.username}
-                avatarUrl={user.avatarUrl}
-                size={24}
-                className={clsx(onOwnProfile && "ring-2 ring-foreground ring-offset-1 ring-offset-background")}
-              />
-              <span>Profile</span>
-            </Link>
-          )}
-        </div>
-      </nav>
+      {user ? (
+        <GlassTabBar
+          tabs={[
+            { key: "home", label: "Home", href: "/", active: path === "/", icon: (on) => <House className="size-6" aria-hidden strokeWidth={on ? 2.2 : 1.75} fill={on ? "currentColor" : "none"} fillOpacity={on ? 0.15 : 0} /> },
+            { key: "search", label: "Search", onClick: search.open, active: path.startsWith("/search"), icon: (on) => <Search className="size-6" aria-hidden strokeWidth={on ? 2.4 : 1.75} /> },
+            { key: "create", label: "Create", onClick: () => setCreating(true), active: creating, testId: "tab-create", icon: (on) => <SquarePlus className="size-6" aria-hidden strokeWidth={on ? 2.2 : 1.75} /> },
+            { key: "blog", label: "Blog", href: "/blog", active: path.startsWith("/blog"), icon: (on) => <NotebookPen className="size-6" aria-hidden strokeWidth={on ? 2.2 : 1.75} /> },
+            {
+              key: "profile",
+              label: "Profile",
+              href: mine,
+              active: onOwnProfile,
+              testId: "tab-profile",
+              icon: (on) => <Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={26} className={clsx("transition-shadow", on && "ring-2 ring-foreground ring-offset-2 ring-offset-transparent")} />,
+            },
+          ]}
+        />
+      ) : (
+        <GlassTabBar tabs={tabs.map((it) => ({ key: it.href, label: it.label, href: it.href, active: it.active, icon: (on: boolean) => <it.icon className="size-6" aria-hidden strokeWidth={on ? 2.2 : 1.75} /> }))} />
+      )}
       {user && <CreateSheet open={creating} onClose={() => setCreating(false)} username={user.username} subscribed={user.subscribed} />}
     </>
   );

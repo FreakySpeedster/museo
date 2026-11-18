@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { AvatarEditor } from "./AvatarEditor";
 import { CategoryPicker } from "@/components/ui/CategoryPicker";
 import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
-import { Modal } from "@/components/ui/Modal";
+import { Modal, SheetFooter } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { FREE_ITEMS_PER_SHELF, MAX_SHELVES_PER_PAGE } from "@/lib/limits";
 import { Toggle } from "@/components/ui/Toggle";
@@ -92,10 +92,9 @@ function PageForm({ page, onClose, onSaved, onPaywall }: { page: PageDTO | null;
       <Toggle checked={isPrivate} onChange={setPrivate} label={isPrivate ? "Private page" : "Public page"} />
       <p className="text-caption text-muted">Private pages and everything on them are hidden from everyone else.</p>
       <ErrorLine msg={error} />
-      <div className="flex justify-end gap-2 pt-1">
-        <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+      <SheetFooter>
         <Button type="submit" loading={busy}>{page ? "Save changes" : "Create page"}</Button>
-      </div>
+      </SheetFooter>
     </form>
   );
 }
@@ -126,7 +125,7 @@ export function ShelfDialog({
   );
 }
 
-function ShelfForm({ pageId, shelf, onClose, onSaved }: { pageId: string; shelf: ShelfDTO | null; onClose: () => void; onSaved: (shelf: ShelfDTO, created: boolean) => void }) {
+function ShelfForm({ pageId, shelf, onSaved }: { pageId: string; shelf: ShelfDTO | null; onClose: () => void; onSaved: (shelf: ShelfDTO, created: boolean) => void }) {
   const { busy, error, run } = useSubmit();
   const [category, setCategory] = useState("books");
   const [isPrivate, setPrivate] = useState(shelf?.visibility === "private");
@@ -154,10 +153,9 @@ function ShelfForm({ pageId, shelf, onClose, onSaved }: { pageId: string; shelf:
       <Toggle checked={isPrivate} onChange={setPrivate} label={isPrivate ? "Private collection" : "Public collection"} />
       <p className="text-caption text-muted">Private collections and their items are hidden from everyone else.</p>
       <ErrorLine msg={error} />
-      <div className="flex justify-end gap-2 pt-1">
-        <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+      <SheetFooter>
         <Button type="submit" loading={busy}>{shelf ? "Save" : "Create collection"}</Button>
-      </div>
+      </SheetFooter>
     </form>
   );
 }
@@ -220,7 +218,7 @@ export function ProfileDialog({
   );
 }
 
-function ProfileForm({ viewer, onClose, onSaved, onAvatar }: { viewer: ViewerDTO; onClose: () => void; onSaved: (u: ViewerDTO) => void; onAvatar: (u: ViewerDTO) => void }) {
+function ProfileForm({ viewer, onSaved, onAvatar }: { viewer: ViewerDTO; onClose: () => void; onSaved: (u: ViewerDTO) => void; onAvatar: (u: ViewerDTO) => void }) {
   const { busy, error, run } = useSubmit();
   const [links, setLinks] = useState<Record<string, string>>(() => {
     const out: Record<string, string> = {};
@@ -265,10 +263,9 @@ function ProfileForm({ viewer, onClose, onSaved, onAvatar }: { viewer: ViewerDTO
         ))}
       </div>
       <ErrorLine msg={error} />
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+      <SheetFooter>
         <Button type="submit" loading={busy}>Save</Button>
-      </div>
+      </SheetFooter>
     </form>
   );
 }
@@ -385,7 +382,7 @@ export function MoveShelfDialog({
   );
 }
 
-function MoveShelfBody({ shelf, pages, onClose, onMoved }: { shelf: ShelfDTO; pages: PageDTO[]; onClose: () => void; onMoved: (shelf: ShelfDTO, fromPageId: string) => void }) {
+function MoveShelfBody({ shelf, pages, onMoved }: { shelf: ShelfDTO; pages: PageDTO[]; onClose: () => void; onMoved: (shelf: ShelfDTO, fromPageId: string) => void }) {
   const { busy, error, run } = useSubmit();
   const [target, setTarget] = useState<string | null>(null);
   const options = pages
@@ -400,8 +397,7 @@ function MoveShelfBody({ shelf, pages, onClose, onMoved }: { shelf: ShelfDTO; pa
         <Select id="move-target" label="Destination page" value={target} options={options} onChange={setTarget} placeholder="Choose a page" />
       </Field>
       <div className="mt-4"><ErrorLine msg={error} /></div>
-      <div className="mt-5 flex justify-end gap-2">
-        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+      <SheetFooter>
         <Button
           disabled={!target}
           loading={busy}
@@ -414,7 +410,7 @@ function MoveShelfBody({ shelf, pages, onClose, onMoved }: { shelf: ShelfDTO; pa
         >
           Confirm
         </Button>
-      </div>
+      </SheetFooter>
     </>
   );
 }

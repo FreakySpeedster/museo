@@ -82,15 +82,20 @@ export function NotificationsList({ initial }: { initial: { notifications: Notif
   }
 
   if (list.length === 0) {
-    return <EmptyState icon={<Bell className="size-8" aria-hidden />} title="No notifications yet" description="When people like or comment on your items, or ask to follow you, it shows up here." />;
+    return <EmptyState icon={<Bell aria-hidden />} title="No notifications yet" description="When people like or comment on your items, or ask to follow you, it shows up here." />;
   }
 
-  const fresh = list.filter((n) => !n.read);
-  const earlier = list.filter((n) => n.read);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const weekAgo = startOfToday - 6 * 86_400_000;
+  const at = (n: NotificationDTO) => new Date(n.createdAt).getTime();
+  const today = list.filter((n) => at(n) >= startOfToday);
+  const week = list.filter((n) => at(n) < startOfToday && at(n) >= weekAgo);
+  const earlier = list.filter((n) => at(n) < weekAgo);
   const section = (title: string, rows: NotificationDTO[]) =>
     rows.length > 0 && (
       <section aria-label={title}>
-        <h2 className="mb-2 px-3 text-micro font-semibold uppercase tracking-wide text-muted">{title}</h2>
+        <h2 className="mb-1 px-3 text-body font-semibold">{title}</h2>
         <ul className="flex flex-col gap-0.5">
           {rows.map((n) => {
             const m = META[n.type];
@@ -113,8 +118,8 @@ export function NotificationsList({ initial }: { initial: { notifications: Notif
                 </div>
                 {requesting ? (
                   <div className="relative z-10 flex shrink-0 gap-1.5">
-                    <Button size="sm" loading={busy === n.id} disabled={busy !== null} onClick={() => respond(n, true)}>Accept</Button>
-                    <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => respond(n, false)}>Reject</Button>
+                    <Button size="sm" className="h-11 px-4" loading={busy === n.id} disabled={busy !== null} onClick={() => respond(n, true)} data-testid="accept-request">Accept</Button>
+                    <Button size="sm" variant="secondary" className="h-11 px-4" disabled={busy !== null} onClick={() => respond(n, false)}>Reject</Button>
                   </div>
                 ) : n.item?.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -130,7 +135,8 @@ export function NotificationsList({ initial }: { initial: { notifications: Notif
 
   return (
     <div className="flex flex-col gap-6">
-      {section("New", fresh)}
+      {section("Today", today)}
+      {section("This week", week)}
       {section("Earlier", earlier)}
       {cursor && (
         <div className="flex justify-center">

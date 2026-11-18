@@ -9,7 +9,7 @@ import { ApiError, api } from "@/lib/client";
 import { FREE_ITEMS_PER_SHELF, MAX_SHELVES_PER_PAGE, pageCreationGate } from "@/lib/limits";
 import { plural } from "@/lib/plural";
 import { ITEM_ADDED_EVENT, SHELF_SAVED_EVENT } from "@/components/create/CreateSheet";
-import { UnderlineTabs } from "@/components/ui/UnderlineTabs";
+import { Tabs } from "@/components/ui/Tabs";
 import { ProfilePosts } from "./ProfilePosts";
 import { FollowListDialog, type ConnectionKind } from "@/components/social/FollowListDialog";
 import { gsap, reducedMotion, useGSAP } from "@/lib/gsap";
@@ -35,6 +35,7 @@ interface Props {
     stats: { followers: number; following: number; items: number; posts?: number };
     isFollowing: boolean;
     followState: "none" | "requested" | "following";
+    followPolicy?: "open" | "request";
     isOwner: boolean;
   };
   viewer: ViewerDTO | null;
@@ -42,6 +43,7 @@ interface Props {
   priceLabel: string;
   initialPageId?: string;
   initialItemId?: string;
+  initialEdit?: boolean;
 }
 
 function subscribeSm(cb: () => void) {
@@ -50,7 +52,7 @@ function subscribeSm(cb: () => void) {
   return () => mq.removeEventListener("change", cb);
 }
 
-export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initialPageId, initialItemId }: Props) {
+export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initialPageId, initialItemId, initialEdit }: Props) {
   const router = useRouter();
   const toast = useToast();
   const { isOwner } = profile;
@@ -78,7 +80,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
   const [openItemId, setOpenItemId] = useState<string | null>(initialItemId ?? null);
   const [paywall, setPaywall] = useState<false | PaywallReason>(false);
   const [connections, setConnections] = useState<ConnectionKind | null>(null);
-  const [profileDialog, setProfileDialog] = useState(false);
+  const [profileDialog, setProfileDialog] = useState(Boolean(initialEdit && profile.isOwner));
   const [confirm, setConfirm] = useState<null | { kind: "shelf" | "page"; id: string; name: string }>(null);
   const [tab, setTab] = useState<"collections" | "posts">("collections");
   const showPostsTab = isOwner || (stats.posts ?? 0) > 0;
@@ -355,21 +357,21 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
     if (!viewer) return router.push(`/login`);
     const prev = followState;
     const undo = prev !== "none";
-    // Optimistic only for unfollow / cancel; following may turn into a request, so wait for the server.
-    if (undo) {
-      setFollowState("none");
-      if (prev === "following") setStats((s) => ({ ...s, followers: s.followers - 1 }));
-    }
+    // Optimistic: predict the result from the profile's follow policy, then reconcile with the server.
+    const predicted: typeof prev = undo ? "none" : profile.followPolicy === "open" ? "following" : "requested";
+    const delta = (s: typeof prev) => (s === "following" ? 1 : 0);
+    setFollowState(predicted);
+    setStats((s) => ({ ...s, followers: s.followers - delta(prev) + delta(predicted) }));
     try {
       const { state } = await api<{ state: typeof prev }>(`/api/users/${user.username}/follow`, { method: undo ? "DELETE" : "POST" });
-      if (!undo) {
+      if (state !== predicted) {
         setFollowState(state);
-        if (state === "following") setStats((s) => ({ ...s, followers: s.followers + 1 }));
-        else if (state === "requested") toast.success(`Follow request sent to ${user.displayName}`);
+        setStats((s) => ({ ...s, followers: s.followers - delta(predicted) + delta(state) }));
       }
+      if (!undo && state === "requested") toast.success(`Follow request sent to ${user.displayName}`);
     } catch (err) {
       setFollowState(prev);
-      if (prev === "following") setStats((s) => ({ ...s, followers: s.followers + 1 }));
+      setStats((s) => ({ ...s, followers: s.followers - delta(predicted) + delta(prev) }));
       toast.error(err instanceof ApiError ? err.message : "Couldn't update follow");
     }
   }
@@ -446,7 +448,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       </div>
 
       {showPostsTab && (
-        <UnderlineTabs
+        <Tabs
           label="Profile sections"
           value={tab}
           onChange={setTab}

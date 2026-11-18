@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Heart, Image as ImageIcon, Link2, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
 import type { ItemDTO } from "@/lib/dto";
 import { PhotoCarousel } from "./PhotoCarousel";
 import { VisibilityLock } from "@/components/ui/VisibilityLock";
@@ -37,19 +37,6 @@ export function ItemCard({ item, onOpen, dragging, grab }: { item: ItemDTO; onOp
               <span className="inline-flex items-center gap-1" title={count(item.commentCount, "comment")}>
                 <MessageCircle className="size-3.5" aria-hidden />{item.commentCount}
               </span>
-            )}
-          </p>
-          <p className="flex items-center gap-1 text-caption text-muted">
-            {item.type === "LINK" ? (
-              <>
-                <Link2 className="size-4 shrink-0" aria-hidden strokeWidth={2.2} />
-                <span className="truncate">{item.siteName ?? "Link"}</span>
-              </>
-            ) : (
-              <>
-                <ImageIcon className="size-4 shrink-0" aria-hidden strokeWidth={2.2} />
-                Photo
-              </>
             )}
           </p>
         </div>
