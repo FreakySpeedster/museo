@@ -18,7 +18,7 @@ export function Landing() {
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
           <p className="text-micro font-medium uppercase tracking-[0.2em] text-muted">Free to start</p>
           <Link href="/signup" className="group mt-4 flex items-end justify-between gap-6 border-b border-border pb-6">
-            <span className="cta-mega font-semibold">Start your nook.</span>
+            <span className="cta-mega font-semibold">Start your Museo.</span>
             <span className="mb-2 grid size-14 shrink-0 place-items-center rounded-full bg-foreground text-background transition-transform duration-500 group-hover:-rotate-45 sm:size-20">
               <ArrowRight className="size-6 sm:size-8" aria-hidden />
             </span>

@@ -16,7 +16,7 @@ export default async function NotificationsPage() {
   await markAllRead(viewer.id);
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 sm:px-6">
-      <PageHeader title="Notifications" description="Likes, comments and follow requests on your nook." />
+      <PageHeader title="Notifications" description="Likes, comments and follow requests on your collections." />
       <NotificationsList initial={initial} />
     </div>
   );

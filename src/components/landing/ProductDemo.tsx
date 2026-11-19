@@ -111,7 +111,7 @@ export function ProductDemo() {
   );
 
   return (
-    <div ref={root} className="overflow-hidden rounded-2xl border border-border bg-surface shadow-md" aria-label="A preview of a nook profile">
+    <div ref={root} className="overflow-hidden rounded-2xl border border-border bg-surface shadow-md" aria-label="A preview of a Museo profile">
       <div className="flex items-center gap-3 border-b border-border px-5 py-4">
         <div className="size-10 rounded-full bg-surface-hover" aria-hidden />
         <div>

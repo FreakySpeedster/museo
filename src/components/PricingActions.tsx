@@ -57,7 +57,7 @@ export function PricingActions({ signedIn, subscribed, stripeEnabled, status, ha
             window.location.href = url;
           } else {
             await api("/api/billing/demo-upgrade", { method: "POST", json: {} });
-            toast.success("nook Plus unlocked (demo mode)");
+            toast.success("Museo Plus unlocked (demo mode)");
             router.refresh();
           }
         })

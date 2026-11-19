@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: item.description || `${item.title} in ${item.shelf.name} · @${item.user.username}`,
       openGraph: {
         title: item.title,
-        description: item.description || `Saved by ${item.user.displayName} on nook`,
+        description: item.description || `Saved by ${item.user.displayName} on Museo`,
         images: item.imageUrl ? [item.imageUrl] : undefined,
       },
     };

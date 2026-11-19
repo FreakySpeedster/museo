@@ -1,6 +1,6 @@
-# nook
+# Museo
 
-**Show off what you collect.** nook is a social showcase app: build *pages*, stock them with *shelves*
+**Show off what you collect.** Museo is a social showcase app: build *pages*, stock them with *shelves*
 (each shelf holds one category), and drop in links or photos. Everything you add also lands on your public
 **timeline**, and in the home feed of people who follow you.
 
@@ -19,7 +19,7 @@ Built with **Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Prisma +
   - Photos: JPG/PNG/WebP/GIF up to 8 MB, validated by content (magic bytes), re-encoded (EXIF/GPS stripped) and stored under `UPLOAD_DIR`.
 - **Timeline** on every profile (chronological, grouped by day, infinite "load older") + a **home feed** (Following / Everyone).
 - **Page switcher** at the top of a profile; the URL keeps the selected page (`/u/name?page=…`).
-- **Paywall:** the first page is free; extra pages need **nook Plus**. Stripe Checkout + webhook when configured,
+- **Paywall:** the first page is free; extra pages need **Museo Plus**. Stripe Checkout + webhook when configured,
   otherwise a clearly-labelled **demo mode** upgrade.
 - **Public profiles** at `/u/[username]`, follow/unfollow, edit profile, edit/delete items, shelves and pages,
   drag-to-reorder items (plus = to buttons for touch & keyboard).
@@ -136,7 +136,7 @@ Sites that block datacenter IPs (Flipkart, Myntra, Etsy, Ajio from Vercel) can s
 1. **Database:** create a Postgres database (Vercel Marketplace > Neon, or any Postgres). Set `DATABASE_URL` (pooled) and
    `DIRECT_URL` (direct). With the Vercel-Neon integration map: `DATABASE_URL` = `POSTGRES_PRISMA_URL`/`POSTGRES_URL`, `DIRECT_URL` = `POSTGRES_URL_NON_POOLING`.
 2. **Storage:** Project > Storage > create a **Blob** store and connect it; `BLOB_READ_WRITE_TOKEN` is added automatically.
-   (Optional: without it, nook stores re-encoded images in the database `Asset` table, so uploads, avatars and thumbnails still work.) Seed images ship in `public/seed/`.
+   (Optional: without it, Museo stores re-encoded images in the database `Asset` table, so uploads, avatars and thumbnails still work.) Seed images ship in `public/seed/`.
 3. **Import the repo** in Vercel (framework: Next.js). The `vercel-build` script runs `prisma migrate deploy` on every deploy, so the schema
    is migrated automatically using `DIRECT_URL`. No `vercel.json` is needed. `postinstall` runs `prisma generate`.
 4. Set `APP_URL` to your production URL/custom domain (optional on `*.vercel.app`).

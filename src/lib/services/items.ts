@@ -20,7 +20,7 @@ export const MAX_ITEMS_PER_SHELF = PLUS_ITEMS_PER_SHELF;
 
 function gateError(gate: Exclude<ItemGate, { allowed: true }>) {
   return gate.reason === "ITEM_LIMIT"
-    ? new AppError("ITEM_LIMIT", `Free collections hold up to ${FREE_ITEMS_PER_SHELF} items. Upgrade to nook Plus for unlimited items.`, { limit: FREE_ITEMS_PER_SHELF })
+    ? new AppError("ITEM_LIMIT", `Free collections hold up to ${FREE_ITEMS_PER_SHELF} items. Upgrade to Museo Plus for unlimited items.`, { limit: FREE_ITEMS_PER_SHELF })
     : new AppError("UNPROCESSABLE", `A collection can hold at most ${PLUS_ITEMS_PER_SHELF} items`);
 }
 

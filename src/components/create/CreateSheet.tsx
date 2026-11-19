@@ -17,8 +17,8 @@ import { AddItemDialog } from "@/components/profile/AddItemDialog";
 import { ShelfDialog } from "@/components/profile/dialogs";
 
 /** Window events so an open profile can patch its state in place instead of refetching. */
-export const ITEM_ADDED_EVENT = "nook:item-added";
-export const SHELF_SAVED_EVENT = "nook:shelf-saved";
+export const ITEM_ADDED_EVENT = "museo:item-added";
+export const SHELF_SAVED_EVENT = "museo:shelf-saved";
 
 type Step = "menu" | "pick" | "page" | "upsell";
 
@@ -91,7 +91,7 @@ export function CreateSheet({ open, onClose, username, subscribed }: { open: boo
     }
   }
 
-  const title = step === "pick" ? "Add to which collection?" : step === "page" ? "Which page?" : step === "upsell" ? "nook Plus" : "Create";
+  const title = step === "pick" ? "Add to which collection?" : step === "page" ? "Which page?" : step === "upsell" ? "Museo Plus" : "Create";
   return (
     <>
       <Modal open={open} onClose={close} title={title} size="sm">
@@ -157,9 +157,9 @@ export function CreateSheet({ open, onClose, username, subscribed }: { open: boo
             <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-subtle text-foreground"><Gem className="size-6" aria-hidden /></span>
             <div>
               <p className="text-body font-semibold">Write posts and keep collecting</p>
-              <p className="mt-1 text-meta text-muted">nook Plus adds the blog, removes the {FREE_ITEMS_PER_SHELF}-item limit and gives you more pages.</p>
+              <p className="mt-1 text-meta text-muted">Museo Plus adds the blog, removes the {FREE_ITEMS_PER_SHELF}-item limit and gives you more pages.</p>
             </div>
-            <LinkButton href="/pricing" className="w-full" onClick={close}>See nook Plus</LinkButton>
+            <LinkButton href="/pricing" className="w-full" onClick={close}>See Museo Plus</LinkButton>
           </div>
         )}
       </Modal>

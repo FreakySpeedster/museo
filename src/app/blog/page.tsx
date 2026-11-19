@@ -19,8 +19,8 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const sp = await searchParams;
-  if (sp.author) return { title: `@${sp.author.toLowerCase()}'s blog`, description: `Reviews and stories by @${sp.author.toLowerCase()} on nook.` };
-  return { title: "Blog", description: "Reviews and stories about the things people collect on nook." };
+  if (sp.author) return { title: `@${sp.author.toLowerCase()}'s blog`, description: `Reviews and stories by @${sp.author.toLowerCase()} on Museo.` };
+  return { title: "Blog", description: "Reviews and stories about the things people collect on Museo." };
 }
 
 export default async function BlogPage({ searchParams }: Props) {
@@ -48,7 +48,7 @@ export default async function BlogPage({ searchParams }: Props) {
           ) : null}
           <h1 className="text-title font-semibold tracking-tight">{authorUser ? `${authorUser.displayName}'s blog` : mine ? "Your posts" : "Blog"}</h1>
           <p className="mt-1 max-w-xl text-meta text-muted md:text-body">
-            {authorUser ? "Reviews and stories about the things they collect." : mine ? "Drafts stay private until you publish them." : "Reviews and stories about the things people collect, written by nook Plus members."}
+            {authorUser ? "Reviews and stories about the things they collect." : mine ? "Drafts stay private until you publish them." : "Reviews and stories about the things people collect, written by Museo Plus members."}
           </p>
         </div>
         {viewer && (!authorUser || authorUser.id === viewer.id) && write}
@@ -73,12 +73,12 @@ export default async function BlogPage({ searchParams }: Props) {
             title={mine ? "You haven't written anything yet" : authorUser ? "No posts yet" : author ? "No one by that name" : "The first stories are on their way"}
             description={
               mine
-                ? plan === "plus" ? "Pick something from your collections and tell people what it's really like." : "Writing on your nook blog is part of nook Plus."
+                ? plan === "plus" ? "Pick something from your collections and tell people what it's really like." : "Writing on your Museo blog is part of Museo Plus."
                 : authorUser ? "Published reviews and stories will show up here."
-                : !viewer ? "nook members write reviews of the things they collect. Browse collections while you wait."
-                : "Reviews from nook Plus members will appear here. Yours could be first."
+                : !viewer ? "Museo members write reviews of the things they collect. Browse collections while you wait."
+                : "Reviews from Museo Plus members will appear here. Yours could be first."
             }
-            action={mine ? write : !viewer ? <LinkButton href="/signup">Start your nook, free</LinkButton> : plan === "plus" && !authorUser ? write : undefined}
+            action={mine ? write : !viewer ? <LinkButton href="/signup">Start your Museo, free</LinkButton> : plan === "plus" && !authorUser ? write : undefined}
           />
         ) : (
           <BlogFeed key={query} initial={posts} initialCursor={nextCursor} query={query} showStatus={mine} />

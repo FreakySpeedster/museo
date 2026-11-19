@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const POLL_MS = 60_000;
-export const READ_EVENT = "nook:notifications-read";
+export const READ_EVENT = "museo:notifications-read";
 
 /** Unread notification count: seeded by the server, refreshed on navigation, focus and a slow poll while visible. */
 export function useUnreadCount(initial: number) {

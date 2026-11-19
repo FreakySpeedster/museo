@@ -48,7 +48,7 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
         ? { email: f.get("email"), username: f.get("username"), displayName: String(f.get("displayName") || "") || undefined, password: f.get("password") }
         : { email: f.get("email"), password: f.get("password") };
       const { user } = await api<{ user: { username: string } }>(`/api/auth/${mode}`, { json: body });
-      toast.success(isSignup ? "Welcome to nook! Let’s start your first collection." : "Welcome back!");
+      toast.success(isSignup ? "Welcome to Museo! Let’s start your first collection." : "Welcome back!");
       router.push(`/u/${user.username}`);
       router.refresh();
     } catch (err) {
@@ -72,7 +72,7 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-var(--chrome-top))] max-w-md flex-col px-4 pb-10 pt-8 sm:justify-center sm:py-10">
       <Card className="max-sm:border-0 max-sm:bg-transparent max-sm:p-0 max-sm:shadow-none sm:p-8">
-        <h1 className="text-title font-semibold tracking-tight">{isSignup ? "Create your nook" : "Welcome back"}</h1>
+        <h1 className="text-title font-semibold tracking-tight">{isSignup ? "Join Museo" : "Welcome back"}</h1>
         <p className="mt-1 text-meta text-muted">{isSignup ? "Your first page is free. No card needed." : "Log in to get back to your collections."}</p>
         <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
           {isSignup && (
@@ -84,7 +84,7 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
             <Input id="email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} enterKeyHint="next" required placeholder="you@example.com" />
           </Field>
           {isSignup && (
-            <Field label="Username" htmlFor="username" hint={`nook.app/u/${username.trim().toLowerCase() || "username"}`}>
+            <Field label="Username" htmlFor="username" hint={`Your link: /u/${username.trim().toLowerCase() || "username"}`}>
               <div className="relative">
                 <Input
                   id="username"

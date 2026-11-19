@@ -133,12 +133,12 @@ export function Hero() {
         </h1>
 
         <p data-hero-fade className="mx-auto mt-8 max-w-md text-pretty text-center text-lede text-muted">
-          Pages and collections for the things you collect. Paste a link or snap a photo, and nook builds the collection.
+          Pages and collections for the things you collect. Paste a link or snap a photo, and Museo builds the collection.
         </p>
 
         <div data-hero-fade className="mt-10 flex flex-col items-center gap-3">
           <Link data-magnetic href="/signup" className="group inline-flex h-14 items-center gap-3 rounded-full bg-foreground pl-7 pr-2 text-body font-semibold text-background shadow-lg will-change-transform">
-            Start your nook, free
+            Start your Museo, free
             <span className="grid size-10 place-items-center rounded-full bg-background text-foreground transition-transform duration-300 group-hover:rotate-[-45deg]">
               <ArrowRight className="size-4" aria-hidden />
             </span>

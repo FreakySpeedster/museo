@@ -57,7 +57,7 @@ export function Tabs<T extends string>({
   );
 }
 
-/** In-form choice (pill segmented control): Link / Photo, Light / Dark / Auto, Your items / All of nook. */
+/** In-form choice (pill segmented control): Link / Photo, Light / Dark / Auto, Your items / All of Museo. */
 export function Segmented<T extends string>({
   value,
   onChange,

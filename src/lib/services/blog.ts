@@ -27,7 +27,7 @@ const itemSelect = {
 
 async function assertPlus(userId: string) {
   const u = await db.user.findUnique({ where: { id: userId }, select: { subscribed: true } });
-  if (!u?.subscribed) throw new AppError("PAYWALL", "The blog is a nook Plus feature.");
+  if (!u?.subscribed) throw new AppError("PAYWALL", "The blog is a Museo Plus feature.");
 }
 
 /** Items may be tagged when the author can see them (their own, or anyone's public items). */
@@ -193,7 +193,7 @@ export function publishedCount(userId: string) {
   return db.blogPost.count({ where: { userId, status: "published" } });
 }
 
-/** Items the author can tag: their own (default) or any visible item on nook. */
+/** Items the author can tag: their own (default) or any visible item on Museo. */
 export async function searchTaggableItems(userId: string, q: string, scope: "mine" | "all") {
   const term = q.trim().slice(0, 80);
   const where: Prisma.ItemWhereInput = {

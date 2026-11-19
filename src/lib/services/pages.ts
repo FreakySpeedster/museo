@@ -31,7 +31,7 @@ export async function createPage(userId: string, input: z.infer<typeof pageSchem
     const gate = pageCreationGate({ subscribed: user.subscribed, pageCount });
     if (!gate.allowed) {
       if (gate.reason === "PAYWALL") {
-        throw new AppError("PAYWALL", "Your first page is free. Upgrade to nook Plus to create more pages.");
+        throw new AppError("PAYWALL", "Your first page is free. Upgrade to Museo Plus to create more pages.");
       }
       throw new AppError("UNPROCESSABLE", "You've reached the maximum number of pages");
     }

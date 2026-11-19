@@ -210,11 +210,11 @@ export function PageShowcase() {
   );
 
   return (
-    <section ref={root} id="showcase" className="relative overflow-hidden border-t border-border" aria-label="Example nook profiles">
+    <section ref={root} id="showcase" className="relative overflow-hidden border-t border-border" aria-label="Example Museo profiles">
       <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:py-20">
         <div>
           <p className="text-micro font-medium uppercase tracking-[0.2em] text-muted">
-            <span data-deck-count>01</span> / {String(PAGES.length).padStart(2, "0")} — Live on nook
+            <span data-deck-count>01</span> / {String(PAGES.length).padStart(2, "0")} — Live on Museo
           </p>
           <h2 className="mt-4 text-title font-semibold tracking-tight">Every collection gets a little home.</h2>
           <p className="mt-4 max-w-md text-body text-muted">Records on rotation, the books on your nightstand, the plants you keep alive. Friends drop by, like a collection, leave a note.</p>

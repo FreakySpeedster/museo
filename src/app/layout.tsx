@@ -10,9 +10,9 @@ import { NavTracker } from "@/components/ui/PushedScreen";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl()),
-  title: { default: "nook — show off what you collect", template: "%s · nook" },
-  description: "nook is a home for your collections. Build pages, fill collections with links and photos, and share them with the world.",
-  openGraph: { title: "nook", description: "Show off what you collect.", type: "website" },
+  title: { default: "Museo — show off what you collect", template: "%s · Museo" },
+  description: "Museo is a home for your collections. Build pages, fill collections with links and photos, and share them with the world.",
+  openGraph: { title: "Museo", description: "Show off what you collect.", type: "website" },
 };
 
 export const viewport: Viewport = {

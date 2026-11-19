@@ -25,12 +25,12 @@ describe("password reset", () => {
   it("emails a link, stores only the hash, and is silent for unknown emails", async () => {
     const u = await newUser("rina");
     const mail = capture();
-    await requestPasswordReset("nobody@test.dev", "https://nook.test", mail.send);
+    await requestPasswordReset("nobody@test.dev", "https://museo.test", mail.send);
     expect(mail.sent).toHaveLength(0);
-    await requestPasswordReset("rina@test.dev", "https://nook.test", mail.send);
+    await requestPasswordReset("rina@test.dev", "https://museo.test", mail.send);
     expect(mail.sent).toHaveLength(1);
     expect(mail.sent[0].to).toBe("rina@test.dev");
-    expect(mail.sent[0].html).toContain("https://nook.test/reset-password?token=");
+    expect(mail.sent[0].html).toContain("https://museo.test/reset-password?token=");
     const token = mail.token();
     const rows = await db.passwordResetToken.findMany({ where: { userId: u.id } });
     expect(rows).toHaveLength(1);

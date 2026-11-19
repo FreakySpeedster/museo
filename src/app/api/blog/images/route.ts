@@ -5,7 +5,7 @@ import { uploadBlogImage } from "@/lib/services/blog";
 
 export const maxDuration = 30;
 
-/** multipart/form-data: file. Returns the stored image URL for the editor. nook Plus only. */
+/** multipart/form-data: file. Returns the stored image URL for the editor. Museo Plus only. */
 export const POST = route(
   async ({ req, user }) => {
     let form: FormData;

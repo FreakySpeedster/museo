@@ -42,12 +42,12 @@ export function BlogEditor({ initialHtml, onChange }: { initialHtml: string; onC
       Placeholder.configure({ placeholder: "Tell the story. What is it like, who is it for, would you buy it again?" }),
     ],
     content: initialHtml || "",
-    editorProps: { attributes: { class: "prose-nook", "aria-label": "Post body", role: "textbox", "aria-multiline": "true" } },
+    editorProps: { attributes: { class: "prose-museo", "aria-label": "Post body", role: "textbox", "aria-multiline": "true" } },
     onUpdate: ({ editor: e }) => onChange(e.isEmpty ? "" : e.getHTML()),
   });
 
   return (
-    <div className="nook-editor rounded-3xl border border-border bg-surface focus-within:border-accent/60 max-md:rounded-none max-md:border-0 max-md:bg-transparent">
+    <div className="museo-editor rounded-3xl border border-border bg-surface focus-within:border-accent/60 max-md:rounded-none max-md:border-0 max-md:bg-transparent">
       {editor ? <Toolbar editor={editor} /> : <div className="h-12 border-b border-border" />}
       <div className="py-5 md:px-8 md:py-7">
         <EditorContent editor={editor} />

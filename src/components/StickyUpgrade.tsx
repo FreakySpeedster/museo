@@ -19,7 +19,7 @@ export function StickyUpgrade({ targetId, price }: { targetId: string; price: st
       className={`fixed inset-x-0 bottom-[var(--tabbar-space)] z-30 px-4 pb-2 transition-[opacity,transform] duration-200 md:hidden ${show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"}`}
     >
       <div className="glass-bar mx-auto flex max-w-md items-center gap-3 rounded-full py-1.5 pl-5 pr-1.5">
-        <span className="min-w-0 flex-1 truncate text-meta"><span className="font-semibold">nook Plus</span> <span className="text-muted">· {price}</span></span>
+        <span className="min-w-0 flex-1 truncate text-meta"><span className="font-semibold">Museo Plus</span> <span className="text-muted">· {price}</span></span>
         <Button tabIndex={show ? 0 : -1} onClick={() => document.getElementById(targetId)?.querySelector<HTMLElement>("button, a")?.click()}>Get Plus</Button>
       </div>
     </div>

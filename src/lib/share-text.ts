@@ -1,7 +1,7 @@
 /** Plain-text list of a shelf's items for pasting anywhere (chat, notes, social). */
 export function shelfShareText(titles: string[], origin: string, username: string): string {
   const list = titles.map((t, i) => `${i + 1}. ${t.trim()}`).join("\n");
-  return `${list}\n\nShared from nook. Check out my nook profile -> ${origin.replace(/\/$/, "")}/u/${username}`;
+  return `${list}\n\nShared from Museo. Check out my Museo profile -> ${origin.replace(/\/$/, "")}/u/${username}`;
 }
 
 export async function copyText(text: string): Promise<boolean> {

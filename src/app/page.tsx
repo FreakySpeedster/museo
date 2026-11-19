@@ -16,7 +16,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-20 sm:px-6">
-      <PageHeader eyebrow="Welcome back" title={`Hi ${user.displayName.split(" ")[0]}`} description="Here’s what’s new across nook." className="!mb-3 md:!mb-4" />
+      <PageHeader eyebrow="Welcome back" title={`Hi ${user.displayName.split(" ")[0]}`} description="Here’s what’s new across Museo." className="!mb-3 md:!mb-4" />
       <HomeFeed initialScope={scope} initial={initial} hasFollows={followCount > 0} viewerId={user.id} chips={chips} />
     </div>
   );

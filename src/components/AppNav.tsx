@@ -158,7 +158,7 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
         className="app-nav-side fixed inset-y-0 left-0 z-nav hidden flex-col overflow-hidden border-r border-border bg-[color-mix(in_srgb,var(--background)_94%,var(--surface))] pb-3 pt-4 md:flex"
       >
         <div className="mb-3 flex h-12 items-center px-[var(--nav-inset)]" data-nav-item>
-          <Link href="/" aria-label="nook home" className="flex min-w-0 items-center rounded-lg">
+          <Link href="/" aria-label="Museo home" className="flex min-w-0 items-center rounded-lg">
             <span className="nav-icon-slot">
               <LogoMark className="size-7" />
             </span>
@@ -217,7 +217,7 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
 
       <header className="app-phone-top glass sticky top-0 z-nav border-b border-border/70 pt-[env(safe-area-inset-top)] md:hidden">
         <div className="flex h-12 items-center justify-between pl-4 pr-1.5">
-          <Link href="/" aria-label="nook home" className="flex items-center gap-2 font-semibold tracking-tight">
+          <Link href="/" aria-label="Museo home" className="flex items-center gap-2 font-semibold tracking-tight">
             <LogoMark className="size-7" />
             <Wordmark className="text-heading" />
           </Link>

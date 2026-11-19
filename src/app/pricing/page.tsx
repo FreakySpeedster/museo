@@ -42,9 +42,9 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
         </div>
         <div className="relative order-1 rounded-3xl border border-border bg-surface p-6 ring-1 ring-accent/30 sm:p-8 md:order-2">
           {user?.subscribed ? <YourPlan /> : <span className="absolute right-6 top-6 rounded-full bg-accent-subtle px-2.5 py-1 text-micro font-semibold uppercase tracking-wide text-accent">Plus</span>}
-          <p className="text-meta font-medium text-muted">nook Plus</p>
+          <p className="text-meta font-medium text-muted">Museo Plus</p>
           <p className="mt-1 text-title font-semibold tracking-tight">{price}</p>
-          <ul className="my-6 space-y-2.5 text-body"><Tick>Everything in Free</Tick><Tick><strong>Unlimited pages</strong></Tick><Tick><strong>Unlimited items</strong> per collection</Tick><Tick>Your nook blog, with tagged items</Tick><Tick>Move collections between pages</Tick><Tick>Cancel anytime</Tick></ul>
+          <ul className="my-6 space-y-2.5 text-body"><Tick>Everything in Free</Tick><Tick><strong>Unlimited pages</strong></Tick><Tick><strong>Unlimited items</strong> per collection</Tick><Tick>Your Museo blog, with tagged items</Tick><Tick>Move collections between pages</Tick><Tick>Cancel anytime</Tick></ul>
           <div id="plus-cta">
           <PricingActions signedIn={Boolean(user)} subscribed={Boolean(user?.subscribed)} stripeEnabled={stripe} status={user?.subscriptionStatus ?? "none"} hasCustomer={Boolean(user?.stripeCustomerId)} />
           </div>

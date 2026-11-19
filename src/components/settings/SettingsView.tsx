@@ -76,7 +76,7 @@ export function SettingsView({ viewer, pendingRequests }: { viewer: ViewerDTO; p
       </SettingsGroup>
 
       <SettingsGroup title="Plan & billing">
-        <SettingsRow icon={<Gem className="size-[18px]" aria-hidden />} label={viewer.subscribed ? "nook Plus" : "Free plan"} value={viewer.subscribed ? "Manage" : "Upgrade"} href="/pricing" />
+        <SettingsRow icon={<Gem className="size-[18px]" aria-hidden />} label={viewer.subscribed ? "Museo Plus" : "Free plan"} value={viewer.subscribed ? "Manage" : "Upgrade"} href="/pricing" />
       </SettingsGroup>
 
       <SettingsGroup title="Account">

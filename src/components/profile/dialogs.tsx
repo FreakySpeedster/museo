@@ -276,7 +276,7 @@ export type PaywallReason = "pages" | "items" | "blog";
 const PAYWALL_COPY: Record<PaywallReason, { title: string; description: string }> = {
   pages: { title: "Create more pages with Plus", description: "Your first page is free forever. Plus unlocks the rest." },
   items: { title: "This collection is full", description: `Free collections hold up to ${FREE_ITEMS_PER_SHELF} items. Plus removes the limit.` },
-  blog: { title: "Write on your nook blog", description: "Reviews and stories about the things you collect are a Plus feature." },
+  blog: { title: "Write on your Museo blog", description: "Reviews and stories about the things you collect are a Plus feature." },
 };
 
 export function PaywallDialog({
@@ -314,7 +314,7 @@ export function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: 
         return;
       }
       await api("/api/billing/demo-upgrade", { method: "POST", json: {} });
-      toast.success("nook Plus unlocked (demo mode)");
+      toast.success("Museo Plus unlocked (demo mode)");
       onUpgraded();
     });
   }
@@ -322,9 +322,9 @@ export function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: 
   const perks: Array<[LucideIcon, string, string]> = [
     [FileStack, "Unlimited pages", "Music, travel, sneakers… give every collection its own page."],
     [InfinityIcon, "Unlimited items per collection", `Free collections stop at ${FREE_ITEMS_PER_SHELF} items. Plus never does.`],
-    [NotebookPen, "Your nook blog", "Write reviews and stories, and tag the items they’re about."],
+    [NotebookPen, "Your Museo blog", "Write reviews and stories, and tag the items they’re about."],
     [FolderInput, "Move collections between pages", "Reorganise whenever your taste changes."],
-    [Heart, "Support an indie product", "Plus keeps nook ad-free and tracker-free."],
+    [Heart, "Support an indie product", "Plus keeps Museo ad-free and tracker-free."],
   ];
 
   return (
@@ -342,7 +342,7 @@ export function PaywallBody({ stripeEnabled, priceLabel, onClose, onUpgraded }: 
         </ul>
         <div className="flex items-end justify-between rounded-2xl border border-border bg-surface-hover p-4">
           <div>
-            <p className="text-meta text-muted">nook Plus</p>
+            <p className="text-meta text-muted">Museo Plus</p>
             <p className="text-title font-semibold tracking-tight">{priceLabel}</p>
           </div>
           <p className="text-caption text-muted">Cancel anytime</p>

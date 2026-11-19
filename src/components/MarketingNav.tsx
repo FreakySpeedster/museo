@@ -20,7 +20,7 @@ export function MarketingNav() {
         <Link
           href="/"
           className="flex items-center gap-2 font-semibold tracking-tight"
-          aria-label="nook home"
+          aria-label="Museo home"
           onClick={() => setOpen(false)}
         >
           <LogoMark className="size-7" />

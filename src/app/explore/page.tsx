@@ -5,7 +5,7 @@ import { exploreChips, exploreItems } from "@/lib/services/explore";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ExploreView } from "@/components/explore/ExploreView";
 
-export const metadata: Metadata = { title: "Explore", description: "What people are collecting on nook, ranked by how many own it." };
+export const metadata: Metadata = { title: "Explore", description: "What people are collecting on Museo, ranked by how many own it." };
 
 /** Public Explore (signed-out visitors and deep links). Signed-in people get it as a tab on Home. */
 export default async function ExplorePage() {

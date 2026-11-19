@@ -58,7 +58,7 @@ export function CollectSheet({ itemId, open, onClose, onCollected }: { itemId: s
       const next = [...(data?.owned ?? []), { shelfId: r.shelf.id, shelfName: r.shelf.name }];
       onCollected(next);
       toast.success(`Added to ${r.shelf.name}`);
-      window.dispatchEvent(new CustomEvent("nook:item-added"));
+      window.dispatchEvent(new CustomEvent("museo:item-added"));
       onClose();
     } catch (e) {
       if (e instanceof ApiError && e.code === "ITEM_LIMIT") setUpsell(true);
@@ -90,8 +90,8 @@ export function CollectSheet({ itemId, open, onClose, onCollected }: { itemId: s
           {upsell && (
             <div className="mb-3 rounded-2xl border border-border bg-surface-hover p-4" data-testid="collect-upsell">
               <p className="flex items-center gap-2 text-body font-semibold"><Gem className="size-5" aria-hidden /> That collection is full</p>
-              <p className="mt-1 text-meta text-muted">Free collections hold up to {data.limit} items. nook Plus removes the limit.</p>
-              <Link href="/pricing" className="mt-3 inline-flex h-11 items-center rounded-full bg-accent px-5 text-meta font-semibold text-accent-contrast">See nook Plus</Link>
+              <p className="mt-1 text-meta text-muted">Free collections hold up to {data.limit} items. Museo Plus removes the limit.</p>
+              <Link href="/pricing" className="mt-3 inline-flex h-11 items-center rounded-full bg-accent px-5 text-meta font-semibold text-accent-contrast">See Museo Plus</Link>
             </div>
           )}
           <div className="-mx-2">

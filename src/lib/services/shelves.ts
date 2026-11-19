@@ -44,11 +44,11 @@ export async function deleteShelf(userId: string, shelfId: string) {
   await releaseUploads(items.flatMap((i) => [i.imageUrl, i.faviconUrl, ...(i.images ?? [])]));
 }
 
-/** Move a whole shelf (with its items) to another of the owner's pages. nook Plus only; respects the target's shelf limit. */
+/** Move a whole shelf (with its items) to another of the owner's pages. Museo Plus only; respects the target's shelf limit. */
 export async function moveShelfToPage(userId: string, shelfId: string, targetPageId: string) {
   return db.$transaction(async (tx) => {
     const user = await tx.user.findUnique({ where: { id: userId }, select: { subscribed: true } });
-    if (!user?.subscribed) throw new AppError("PAYWALL", "Moving collections between pages is a nook Plus feature.");
+    if (!user?.subscribed) throw new AppError("PAYWALL", "Moving collections between pages is a Museo Plus feature.");
     const shelf = await tx.shelf.findUnique({ where: { id: shelfId }, include: { page: { select: { userId: true } } } });
     if (!shelf) throw new AppError("NOT_FOUND", "Collection not found");
     if (shelf.page.userId !== userId) throw new AppError("FORBIDDEN", "That collection belongs to someone else");

@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!hero) return { title: "Not found", robots: { index: false, follow: false } };
   return {
     title: hero.title,
-    description: `Owned by ${hero.owners} ${hero.owners === 1 ? "person" : "people"} on nook`,
+    description: `Owned by ${hero.owners} ${hero.owners === 1 ? "person" : "people"} on Museo`,
     openGraph: { title: hero.title, images: hero.imageUrl ? [hero.imageUrl] : undefined },
   };
 }

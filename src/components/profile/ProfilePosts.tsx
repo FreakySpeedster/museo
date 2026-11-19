@@ -32,8 +32,8 @@ export function ProfilePosts({ username, isOwner, subscribed }: { username: stri
         <EmptyState
           icon={<NotebookPen className="size-10" aria-hidden strokeWidth={1.5} />}
           title={isOwner ? "Write your first post" : "No posts yet"}
-          description={isOwner ? (subscribed ? "Review something you love and tag the items it's about." : "The blog is part of nook Plus: write reviews that show up on the items you tag.") : "Published posts will show up here."}
-          action={isOwner ? (subscribed ? <LinkButton href="/blog/new"><PenLine className="size-4" aria-hidden /> Write a post</LinkButton> : <LinkButton href="/pricing">See nook Plus</LinkButton>) : undefined}
+          description={isOwner ? (subscribed ? "Review something you love and tag the items it's about." : "The blog is part of Museo Plus: write reviews that show up on the items you tag.") : "Published posts will show up here."}
+          action={isOwner ? (subscribed ? <LinkButton href="/blog/new"><PenLine className="size-4" aria-hidden /> Write a post</LinkButton> : <LinkButton href="/pricing">See Museo Plus</LinkButton>) : undefined}
         />
       ) : (
         <BlogFeed initial={data.posts} initialCursor={data.nextCursor} query={query} />

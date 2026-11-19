@@ -7,10 +7,10 @@ import { useSyncExternalStore } from "react";
 function subscribe(cb: () => void) {
   const obs = new MutationObserver(cb);
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-  window.addEventListener("nook:theme", cb);
+  window.addEventListener("museo:theme", cb);
   return () => {
     obs.disconnect();
-    window.removeEventListener("nook:theme", cb);
+    window.removeEventListener("museo:theme", cb);
   };
 }
 const getDark = () => document.documentElement.classList.contains("dark");
@@ -36,7 +36,7 @@ export function applyTheme(mode: ThemeMode) {
     /* ignore */
   }
   document.documentElement.classList.toggle("dark", dark);
-  window.dispatchEvent(new Event("nook:theme"));
+  window.dispatchEvent(new Event("museo:theme"));
 }
 
 /** Current theme mode; re-reads whenever the `dark` class flips. */

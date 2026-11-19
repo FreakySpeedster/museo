@@ -1,8 +1,8 @@
 import Link from "next/link";
 import clsx from "clsx";
 
-/** Official nook mark. House follows currentColor; the brown dot is fixed in both themes. */
-export const NOOK_DOT = "#855E42";
+/** Official Museo mark. House follows currentColor; the brown dot is fixed in both themes. */
+export const BRAND_DOT = "#855E42";
 
 const HOUSE_PATH =
   "M21 286.246C9.40187 286.246 0 276.844 0 265.246V93.746C0 86.2437 4.00225 79.3111 10.5 75.5591L136.5 2.81334C142.998 -0.937781 151.002 -0.937781 157.5 2.81334L283.5 75.5591C289.998 79.3111 294 86.2437 294 93.746V215.246H245V109.912L147 53.3315L49 109.912V237.246H224V286.246H21Z";
@@ -14,18 +14,18 @@ export function LogoMark({ className = "size-8" }: { className?: string }) {
   return (
     <svg viewBox="0 0 294 287" className={className} aria-hidden fill="none">
       <path d={HOUSE_PATH} fill="currentColor" />
-      <path d={DOT_PATH} fill={NOOK_DOT} />
+      <path d={DOT_PATH} fill={BRAND_DOT} />
     </svg>
   );
 }
 
 export function Wordmark({ className }: { className?: string }) {
-  return <span className={clsx("font-wordmark", className)}>nook</span>;
+  return <span className={clsx("font-wordmark", className)}>Museo</span>;
 }
 
 export function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="nook home">
+    <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="Museo home">
       <LogoMark />
       <Wordmark className="text-heading" />
     </Link>

@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return { title: "Not found", robots: { index: false, follow: false } };
   return {
     title: post.title,
-    description: post.excerpt || `A post by ${post.author.displayName} on nook`,
+    description: post.excerpt || `A post by ${post.author.displayName} on Museo`,
     robots: post.status === "draft" ? { index: false } : undefined,
     openGraph: { type: "article", title: post.title, description: post.excerpt, images: post.coverUrl && post.coverUrl.startsWith("https://") ? [post.coverUrl] : undefined },
   };
@@ -71,7 +71,7 @@ export default async function PostPage({ params }: Props) {
         </Link>
       </header>
 
-      <div className="prose-nook mt-10" data-testid="post-body" dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
+      <div className="prose-museo mt-10" data-testid="post-body" dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
 
       {post.items.length > 0 && (
         <section className="mt-14 border-t border-border pt-8" aria-labelledby="tagged-heading">

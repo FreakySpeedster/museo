@@ -18,7 +18,7 @@ const optionalText = (max: number, label: string) =>
 
 export const RESERVED_USERNAMES = new Set([
   "admin", "api", "app", "login", "logout", "signup", "settings", "pricing", "billing",
-  "u", "i", "about", "help", "support", "explore", "feed", "search", "uploads", "shelfie", "nook", "static", "_next",
+  "u", "i", "about", "help", "support", "explore", "feed", "search", "uploads", "shelfie", "nook", "museo", "static", "_next",
 ]);
 
 export const usernameSchema = z

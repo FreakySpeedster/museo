@@ -8,9 +8,9 @@ import { api } from "@/lib/client";
 import { Avatar } from "@/components/ui/Avatar";
 import { Skeleton } from "@/components/ui/Skeleton";
 
-const KEY = "nook.recent-searches";
+const KEY = "museo.recent-searches";
 const MAX = 8;
-const EVENT = "nook:recent-searches";
+const EVENT = "museo:recent-searches";
 
 function read(): string {
   try {

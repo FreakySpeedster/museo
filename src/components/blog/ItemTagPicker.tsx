@@ -26,7 +26,7 @@ export function ItemThumbMini({ item, className }: { item: Pick<TaggedItemDTO, "
   );
 }
 
-/** Tagged items as removable chips plus a picker dialog (your items first, or anything public on nook). */
+/** Tagged items as removable chips plus a picker dialog (your items first, or anything public on Museo). */
 export function ItemTagPicker({ value, onChange, variant = "list" }: { value: TaggedItemDTO[]; onChange: (items: TaggedItemDTO[]) => void; variant?: "list" | "chips" }) {
   const [open, setOpen] = useState(false);
   const dialog = (
@@ -115,7 +115,7 @@ function PickerBody({ value, onChange, onDone }: { value: TaggedItemDTO[]; onCha
 
   return (
     <div className="space-y-3">
-      <Segmented label="Where to look" spread value={scope} onChange={(v) => { setScope(v); setResults(null); }} options={[{ value: "mine", label: "Your items" }, { value: "all", label: "All of nook" }]} />
+      <Segmented label="Where to look" spread value={scope} onChange={(v) => { setScope(v); setResults(null); }} options={[{ value: "mine", label: "Your items" }, { value: "all", label: "All of Museo" }]} />
       <label className="relative block">
         <span className="sr-only">Search items</span>
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />

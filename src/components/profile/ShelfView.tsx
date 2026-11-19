@@ -87,7 +87,7 @@ export function ShelfView({
   onReorder: (shelfId: string, items: ItemDTO[], commit: boolean) => void;
   onMoveShelf?: (shelf: ShelfDTO, dir: -1 | 1) => void;
   onToggleVisibility?: (shelf: ShelfDTO) => void;
-  /** nook Plus only: omit to hide the Move item entirely. */
+  /** Museo Plus only: omit to hide the Move item entirely. */
   onMoveToPage?: (shelf: ShelfDTO) => void;
   canMoveToPage?: boolean;
   /** Owner on the free plan: show "n/10" and nudge to Plus when full. */

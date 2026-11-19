@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!u) return { title: "Not found" };
   return {
     title: `${u.displayName} (@${u.username})`,
-    description: u.bio || `Browse ${u.displayName}'s collections on nook.`,
-    openGraph: { title: `${u.displayName}'s collections`, description: u.bio || "Collections on nook" },
+    description: u.bio || `Browse ${u.displayName}'s collections on Museo.`,
+    openGraph: { title: `${u.displayName}'s collections`, description: u.bio || "Collections on Museo" },
   };
 }
 

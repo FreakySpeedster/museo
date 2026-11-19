@@ -432,7 +432,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
             onClick={async () => {
               const link = `${window.location.origin}/u/${user.username}`;
               try {
-                if (navigator.share && window.matchMedia("(pointer: coarse)").matches) await navigator.share({ title: `${user.displayName} on nook`, url: link });
+                if (navigator.share && window.matchMedia("(pointer: coarse)").matches) await navigator.share({ title: `${user.displayName} on Museo`, url: link });
                 else {
                   await navigator.clipboard.writeText(link);
                   toast.success("Profile link copied");

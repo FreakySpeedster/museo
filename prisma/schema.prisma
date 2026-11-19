@@ -1,4 +1,4 @@
-// nook data model (PostgreSQL — works with Neon / Vercel Postgres / Supabase / any Postgres).
+// Museo data model (PostgreSQL — works with Neon / Vercel Postgres / Supabase / any Postgres).
 // DATABASE_URL: runtime connection (use the *pooled* URL on serverless).
 // DIRECT_URL:   direct (non-pooled) connection used by `prisma migrate`. Set it equal to DATABASE_URL if you have no pooler.
 generator client {
@@ -263,7 +263,7 @@ model ItemView {
   @@index([lastViewedAt])
 }
 
-/// Long-form posts (nook Plus). contentHtml is sanitized on write and again on render.
+/// Long-form posts (Museo Plus). contentHtml is sanitized on write and again on render.
 model BlogPost {
   id          String         @id @default(cuid())
   userId      String
