@@ -23,6 +23,10 @@ export const toItemDTO = (i: Item): ItemDTO => ({
   likedByMe: false,
   visibility: vis(i.visibility),
   viewCount: i.viewCount ?? 0,
+  imageWidth: i.imageWidth ?? null,
+  imageHeight: i.imageHeight ?? null,
+  canonicalKey: i.canonicalKey ?? null,
+  sourceItemId: i.sourceItemId ?? null,
 });
 
 export const toShelfDTO = (s: Shelf & { items?: Item[] }): ShelfDTO => ({

@@ -19,6 +19,13 @@ export interface ItemDTO {
   visibility: "public" | "private";
   /** Unique views from other people (24h dedupe). */
   viewCount: number;
+  /** Cover size in px when known (lets feeds reserve space). */
+  imageWidth: number | null;
+  imageHeight: number | null;
+  /** Groups the same thing across users (Explore). */
+  canonicalKey: string | null;
+  /** Set on copies made with "Add to my collection". */
+  sourceItemId: string | null;
 }
 
 export interface ShelfDTO {
@@ -59,6 +66,9 @@ export interface TimelineEntry extends ItemDTO {
   shelf: { id: string; name: string; category: string; visibility: "public" | "private" };
   page: { id: string; title: string; visibility: "public" | "private" };
   previewComments: CommentDTO[];
+  /** Viewer-relative extras on feed posts. */
+  collected?: Array<{ shelfId: string; shelfName: string }>;
+  canComment?: boolean;
 }
 
 export interface ViewerDTO extends PublicUser {

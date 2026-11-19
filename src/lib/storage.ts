@@ -18,7 +18,7 @@ export const blobEnabled = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 export const dbStorageEnabled = () => !blobEnabled() && (Boolean(process.env.VERCEL) || process.env.STORAGE_DRIVER === "db");
 export const storageDriver = () => (blobEnabled() ? "vercel-blob" : dbStorageEnabled() ? "database" : "local");
 
-const isBlobUrl = (url: string) => {
+export const isBlobUrl = (url: string) => {
   try {
     const u = new URL(url);
     return u.protocol === "https:" && /\.blob\.vercel-storage\.com$/.test(u.hostname);

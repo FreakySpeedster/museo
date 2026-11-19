@@ -14,6 +14,8 @@ export function LikeButton({
   onChange,
   signedIn,
   className,
+  hideCount,
+  iconClassName = "size-5",
 }: {
   itemId: string;
   likeCount: number;
@@ -21,6 +23,9 @@ export function LikeButton({
   signedIn: boolean;
   onChange?: (next: { likeCount: number; likedByMe: boolean }) => void;
   className?: string;
+  /** Posts show the count on its own line ("12 likes"). */
+  hideCount?: boolean;
+  iconClassName?: string;
 }) {
   const toast = useToast();
   const [count, setCount] = useState(likeCount);
@@ -71,8 +76,8 @@ export function LikeButton({
         className,
       )}
     >
-      <Heart key={liked ? "on" : "off"} className={clsx("size-5", liked && pending && "like-pop")} aria-hidden fill={liked ? "currentColor" : "none"} strokeWidth={1.75} />
-      {count > 0 && <span className="tabular-nums">{count}</span>}
+      <Heart key={liked ? "on" : "off"} className={clsx(iconClassName, liked && pending && "like-pop")} aria-hidden fill={liked ? "currentColor" : "none"} strokeWidth={1.75} />
+      {count > 0 && !hideCount && <span className="tabular-nums">{count}</span>}
     </button>
   );
 }

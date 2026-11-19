@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Heart } from "lucide-react";
+import { Compass, Heart } from "lucide-react";
+import Link from "next/link";
 import { count } from "@/lib/plural";
 import { useRouter } from "next/navigation";
-import type { ItemDTO, ShelfDTO } from "@/lib/dto";
+import type { ItemDTO, ShelfDTO, TimelineEntry } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Field, FormError, Input, Textarea } from "@/components/ui/Field";
@@ -15,6 +16,7 @@ import clsx from "clsx";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Clock, Eye, MoreHorizontal, RefreshCw } from "lucide-react";
 import { ItemBlogPosts } from "@/components/blog/ItemBlogPosts";
 import { LikeButton } from "@/components/social/LikeButton";
+import { CollectButton } from "@/components/collect/CollectButton";
 import { CommentThread } from "@/components/social/CommentThread";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { IconButton } from "@/components/ui/IconButton";
@@ -289,6 +291,19 @@ export function ItemBody({
                     likedByMe={it.likedByMe}
                     signedIn={Boolean(viewerId)}
                     onChange={(s) => onUpdated({ ...it, ...s })}
+                  />
+                  <span className="flex-1" />
+                  {it.canonicalKey && (
+                    <Link href={`/explore/item/${it.canonicalKey}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-caption font-medium text-muted hover:bg-surface-hover hover:text-foreground">
+                      <Compass className="size-4" aria-hidden /> Who else has it
+                    </Link>
+                  )}
+                  <CollectButton
+                    itemId={it.id}
+                    ownerId={isOwner ? (viewerId ?? "") : "someone-else"}
+                    viewerId={viewerId}
+                    collected={(it as Partial<TimelineEntry>).collected}
+                    onChange={(c) => onUpdated({ ...it, collected: c } as ItemDTO)}
                   />
                 </div>
                 <ItemBlogPosts itemId={it.id} />

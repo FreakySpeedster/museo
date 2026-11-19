@@ -100,6 +100,7 @@ model Shelf {
 
   @@index([pageId, position])
   @@index([visibility])
+  @@index([category])
 }
 
 model Item {
@@ -118,6 +119,15 @@ model Item {
   visibility    String         @default("public") // public | private
   position      Int            @default(0)
   viewCount     Int            @default(0) // unique views (24h dedupe), owner excluded
+  /// Cover photo size in px, so feeds can reserve the right space (filled on upload / lazily).
+  imageWidth    Int?
+  imageHeight   Int?
+  /// Groups "the same thing" across users: a hash of the normalised link URL, else of the normalised title. Copies inherit it.
+  canonicalKey  String?
+  /// Set when this item was added from someone else's post ("Add to my collection"); points at the original root item.
+  sourceItemId  String?
+  sourceItem    Item?          @relation("ItemCopies", fields: [sourceItemId], references: [id], onDelete: SetNull)
+  copies        Item[]         @relation("ItemCopies")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   shelf         Shelf          @relation(fields: [shelfId], references: [id], onDelete: Cascade)
@@ -132,6 +142,8 @@ model Item {
   @@index([userId, createdAt])
   @@index([createdAt])
   @@index([visibility])
+  @@index([canonicalKey, userId])
+  @@index([sourceItemId])
 }
 
 model ItemLike {
@@ -143,6 +155,7 @@ model ItemLike {
 
   @@id([userId, itemId])
   @@index([itemId])
+  @@index([createdAt])
 }
 
 model ItemComment {

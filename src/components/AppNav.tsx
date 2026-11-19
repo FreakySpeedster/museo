@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Bell, Gem, House, LayoutGrid, LogIn, NotebookPen, Pin, PinOff, Search, SquarePlus, UserPlus, type LucideIcon } from "lucide-react";
+import { Bell, Compass, Gem, House, LayoutGrid, LogIn, NotebookPen, Pin, PinOff, Search, SquarePlus, UserPlus, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -81,6 +81,7 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
 
   const primary: Item[] = [
     { href: "/", label: "Home", icon: House, active: path === "/" },
+    ...(!user ? [{ href: "/explore", label: "Explore", icon: Compass, active: path.startsWith("/explore") }] : []),
     ...(user ? [{ href: mine, label: "Profile", icon: LayoutGrid, active: path.toLowerCase().startsWith(mine.toLowerCase()) }] : []),
     { href: "/blog", label: "Blog", icon: NotebookPen, active: path.startsWith("/blog") },
     ...(user ? [{ href: "/notifications", label: "Notifications", icon: Bell, active: path.startsWith("/notifications"), count: unreadCount }] : []),
@@ -127,7 +128,7 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
   // Phones: Home · Search · Create · Blog · Profile. Notifications live in the top bar; the account menu on your own profile.
   const tabs: Item[] = user
     ? primary.filter((it) => it.href === "/" || it.href === "/blog")
-    : [primary[0], ...utility, ...guest];
+    : [primary[0], primary[1], ...utility, ...guest];
   const onOwnProfile = Boolean(user) && path.toLowerCase().startsWith(mine.toLowerCase());
 
   function onEnter() {

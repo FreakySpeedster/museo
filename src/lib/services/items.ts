@@ -1,7 +1,7 @@
 import { db } from "../db";
 import { canViewItem } from "../visibility";
 import { toTimelineEntry } from "../mappers";
-import { attachSocial } from "./social";
+import { decorateEntries } from "./feed";
 import { AppError } from "../errors";
 import { downloadImage, resolveLinkPreview, resolveThumbnail } from "../link-preview";
 
@@ -12,6 +12,8 @@ import { assertShelfOwner } from "./shelves";
 import type { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { advisoryLock } from "../locks";
+import { canonicalKeyFor } from "../canonical";
+import { probeImageDims } from "../image-dims";
 import { FREE_ITEMS_PER_SHELF, MAX_MANUAL_PHOTOS, PLUS_ITEMS_PER_SHELF, itemCreationGate, type ItemGate } from "../limits";
 
 export const MAX_ITEMS_PER_SHELF = PLUS_ITEMS_PER_SHELF;
@@ -33,7 +35,13 @@ export async function assertCanAddItem(userId: string, shelfId: string) {
 }
 
 /** Insert at the end of the collection under a per-collection lock, so the plan limit can't be raced past. */
-async function insertItem(userId: string, shelfId: string, data: Omit<Prisma.ItemUncheckedCreateInput, "position" | "shelfId" | "userId">) {
+export async function insertItem(userId: string, shelfId: string, data: Omit<Prisma.ItemUncheckedCreateInput, "position" | "shelfId" | "userId">) {
+  // Grouping key + cover size, so Explore can count owners and feeds can reserve the photo's space.
+  if (data.canonicalKey === undefined) data = { ...data, canonicalKey: canonicalKeyFor({ type: data.type, url: data.url, title: data.title }) };
+  if (data.imageWidth === undefined && data.imageUrl) {
+    const dims = await probeImageDims(data.imageUrl);
+    if (dims) data = { ...data, imageWidth: dims.width, imageHeight: dims.height };
+  }
   return db.$transaction(async (tx) => {
     await advisoryLock(tx, `shelf:${shelfId}`);
     const [user, itemCount] = await Promise.all([
@@ -113,6 +121,11 @@ export async function createPhotoItem(
   }
 }
 
+async function dimsData(url: string) {
+  const d = await probeImageDims(url);
+  return { imageWidth: d?.width ?? null, imageHeight: d?.height ?? null };
+}
+
 async function assertItemOwner(userId: string, itemId: string) {
   const item = await db.item.findUnique({ where: { id: itemId }, include: { shelf: { include: { page: true } } } });
   if (!item) throw new AppError("NOT_FOUND", "Item not found");
@@ -121,14 +134,31 @@ async function assertItemOwner(userId: string, itemId: string) {
 }
 
 export async function updateItem(userId: string, itemId: string, input: z.infer<typeof itemUpdateSchema>) {
-  await assertItemOwner(userId, itemId);
-  return db.item.update({ where: { id: itemId }, data: input });
+  const item = await assertItemOwner(userId, itemId);
+  // A renamed photo item is a different "thing"; copies keep the original's grouping.
+  const rekey = input.title && input.title !== item.title && item.type === "PHOTO" && !item.sourceItemId;
+  return db.item.update({ where: { id: itemId }, data: rekey ? { ...input, canonicalKey: canonicalKeyFor({ type: item.type, url: item.url, title: input.title! }) } : input });
+}
+
+/**
+ * Delete stored files no remaining item still points at. Copies made with "Add to my collection"
+ * share the original's photos, so a file is only removed once its last user is gone.
+ */
+export async function releaseUploads(urls: Array<string | null | undefined>) {
+  const list = [...new Set(urls.filter((u): u is string => Boolean(u)))];
+  if (list.length === 0) return;
+  const used = await db.item.findMany({
+    where: { OR: [{ imageUrl: { in: list } }, { faviconUrl: { in: list } }, { images: { hasSome: list } }] },
+    select: { imageUrl: true, faviconUrl: true, images: true },
+  });
+  const keep = new Set(used.flatMap((i) => [i.imageUrl, i.faviconUrl, ...i.images]));
+  await Promise.all(list.filter((u) => !keep.has(u)).map((u) => deleteUploadByUrl(u)));
 }
 
 export async function deleteItem(userId: string, itemId: string) {
   const item = await assertItemOwner(userId, itemId);
   await db.item.delete({ where: { id: itemId } });
-  await Promise.all([deleteUploadByUrl(item.imageUrl), deleteUploadByUrl(item.faviconUrl), ...item.images.map((u) => deleteUploadByUrl(u))]);
+  await releaseUploads([item.imageUrl, item.faviconUrl, ...item.images]);
 }
 
 export async function reorderItems(userId: string, shelfId: string, input: z.infer<typeof reorderSchema>) {
@@ -163,9 +193,9 @@ export async function refreshItemThumbnail(itemId: string, opts: { userId?: stri
   if (mode === "candidate" && !imageUrl) throw new AppError("UNPROCESSABLE", "That image couldn't be loaded");
   const updated = await db.item.update({
     where: { id: item.id },
-    data: { imageUrl: imageUrl ?? item.imageUrl, faviconUrl: item.faviconUrl ?? faviconUrl },
+    data: { imageUrl: imageUrl ?? item.imageUrl, faviconUrl: item.faviconUrl ?? faviconUrl, ...(imageUrl && imageUrl !== item.imageUrl ? await dimsData(imageUrl) : {}) },
   });
-  if (imageUrl && item.imageUrl && item.imageUrl !== imageUrl) await deleteUploadByUrl(item.imageUrl);
+  if (imageUrl && item.imageUrl && item.imageUrl !== imageUrl) await releaseUploads([item.imageUrl]);
   return updated;
 }
 
@@ -173,8 +203,8 @@ export async function refreshItemThumbnail(itemId: string, opts: { userId?: stri
 export async function setItemPhoto(userId: string, itemId: string, file: Buffer) {
   const item = await assertItemOwner(userId, itemId);
   const imageUrl = await saveUploadedImage(file);
-  const updated = await db.item.update({ where: { id: item.id }, data: { imageUrl } });
-  await deleteUploadByUrl(item.imageUrl);
+  const updated = await db.item.update({ where: { id: item.id }, data: { imageUrl, ...(await dimsData(imageUrl)) } });
+  await releaseUploads([item.imageUrl]);
   return updated;
 }
 
@@ -226,6 +256,6 @@ export async function getVisibleItem(id: string, viewerId?: string | null) {
     },
   });
   if (!item || !canViewItem(item, viewerId)) throw new AppError("NOT_FOUND", "That item is gone.");
-  const [entry] = await attachSocial([toTimelineEntry(item)], viewerId);
+  const [entry] = await decorateEntries([toTimelineEntry(item)], viewerId);
   return entry;
 }

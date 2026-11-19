@@ -2,7 +2,7 @@ import { db } from "../db";
 import { advisoryLock } from "../locks";
 import { AppError } from "../errors";
 import { canAddShelf, MAX_SHELVES_PER_PAGE } from "../limits";
-import { deleteUploadByUrl } from "../uploads";
+import { releaseUploads } from "./items";
 import { shelfSchema, shelfUpdateSchema } from "../validation";
 import type { z } from "zod";
 
@@ -39,9 +39,9 @@ export async function updateShelf(userId: string, shelfId: string, input: z.infe
 
 export async function deleteShelf(userId: string, shelfId: string) {
   await assertShelfOwner(userId, shelfId);
-  const items = await db.item.findMany({ where: { shelfId }, select: { imageUrl: true, faviconUrl: true } });
+  const items = await db.item.findMany({ where: { shelfId }, select: { imageUrl: true, faviconUrl: true, images: true } });
   await db.shelf.delete({ where: { id: shelfId } });
-  await Promise.all(items.flatMap((i) => [deleteUploadByUrl(i.imageUrl), deleteUploadByUrl(i.faviconUrl)]));
+  await releaseUploads(items.flatMap((i) => [i.imageUrl, i.faviconUrl, ...(i.images ?? [])]));
 }
 
 /** Move a whole shelf (with its items) to another of the owner's pages. nook Plus only; respects the target's shelf limit. */

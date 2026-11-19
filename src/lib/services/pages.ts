@@ -2,7 +2,7 @@ import { db } from "../db";
 import { advisoryLock } from "../locks";
 import { AppError } from "../errors";
 import { pageCreationGate } from "../limits";
-import { deleteUploadByUrl } from "../uploads";
+import { releaseUploads } from "./items";
 import { pageSchema, pageUpdateSchema } from "../validation";
 import type { z } from "zod";
 
@@ -52,9 +52,9 @@ export async function deletePage(userId: string, pageId: string) {
   if ((await db.page.count({ where: { userId } })) <= 1) {
     throw new AppError("UNPROCESSABLE", "You need at least one page. Edit it instead, or create another first.");
   }
-  const items = await db.item.findMany({ where: { shelf: { pageId } }, select: { imageUrl: true, faviconUrl: true } });
+  const items = await db.item.findMany({ where: { shelf: { pageId } }, select: { imageUrl: true, faviconUrl: true, images: true } });
   await db.page.delete({ where: { id: pageId } });
-  await Promise.all(items.flatMap((i) => [deleteUploadByUrl(i.imageUrl), deleteUploadByUrl(i.faviconUrl)]));
+  await releaseUploads(items.flatMap((i) => [i.imageUrl, i.faviconUrl, ...(i.images ?? [])]));
 }
 
 export async function reorderPages(userId: string, pageIds: string[]) {
