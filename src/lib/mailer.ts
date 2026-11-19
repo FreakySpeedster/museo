@@ -77,8 +77,8 @@ export function passwordResetEmail(to: string, name: string, link: string): Mail
 /** Absolute URL of the PNG mark for email headers (most mail clients block SVG). */
 function logoSrc(link: string) {
   try {
-    return `${new URL(link).origin}/brand/museo-mark-light@2x.png`;
+    return `${new URL(link).origin}/brand/museo-mark-light-2x.png`;
   } catch {
-    return "/brand/museo-mark-light@2x.png";
+    return "/brand/museo-mark-light-2x.png";
   }
 }
