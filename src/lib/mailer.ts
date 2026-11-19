@@ -64,7 +64,7 @@ export function passwordResetEmail(to: string, name: string, link: string): Mail
   const html = `<!doctype html><html><body style="margin:0;background:#fafaf8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#171513">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafaf8;padding:40px 16px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border:1px solid #e7e5e1;border-radius:24px;padding:36px 32px">
-<tr><td style="font-size:22px;font-weight:700;letter-spacing:-0.02em">Museo</td></tr>
+<tr><td style="font-size:22px;font-weight:700;letter-spacing:-0.02em"><img src="${esc(logoSrc(link))}" width="55" height="28" alt="" style="vertical-align:middle;border:0;margin-right:8px">Museo</td></tr>
 <tr><td style="padding-top:28px;font-size:20px;font-weight:600;letter-spacing:-0.01em">Reset your password</td></tr>
 <tr><td style="padding-top:12px;font-size:15px;line-height:1.6;color:#5c5852">Hi ${esc(name)}, someone (hopefully you) asked to reset the password for your Museo account. This link works once and expires in 1 hour.</td></tr>
 <tr><td style="padding-top:28px"><a href="${esc(link)}" style="display:inline-block;background:#000000;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 28px;border-radius:999px">Choose a new password</a></td></tr>
@@ -72,4 +72,13 @@ export function passwordResetEmail(to: string, name: string, link: string): Mail
 <tr><td style="padding-top:24px;border-top:1px solid #efede9;margin-top:24px;font-size:13px;line-height:1.6;color:#5c5852">If you didn't ask for this, ignore this email. Your password won't change.</td></tr>
 </table></td></tr></table></body></html>`;
   return { to, subject: "Reset your Museo password", html, text };
+}
+
+/** Absolute URL of the PNG mark for email headers (most mail clients block SVG). */
+function logoSrc(link: string) {
+  try {
+    return `${new URL(link).origin}/brand/museo-mark-light@2x.png`;
+  } catch {
+    return "/brand/museo-mark-light@2x.png";
+  }
 }

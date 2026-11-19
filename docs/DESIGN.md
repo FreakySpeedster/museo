@@ -14,7 +14,7 @@ Use these tokens and primitives for every new screen and component. Do not inven
 
 ## Brand
 
-The official mark is a peaked house outline, open at the bottom-right, plus a brown dot. The house uses `fill="currentColor"` so it is black in light and white in dark. The dot (`#855E42`) stays that colour in both themes. The wordmark is lowercase **Museo**, including in titles and metadata. Source: `public/logo.svg`.
+The official mark is a brush-script **m** with a dot (artwork 508x261, no text): black letter + `#855E42` dot on light, white letter + `#996844` dot on dark. In the app it is inline SVG (`LogoMark`): the letter uses `currentColor` and the dot `var(--brand-dot)`, both switched by the theme class, so there is no flash. The text wordmark **Museo** (Unbounded) sits beside the mark in top bars; the collapsed desktop rail shows the mark alone. Sources: `public/brand/museo-mark-light.svg`, `public/brand/museo-mark-dark.svg` (+ `@2x.png` for email).
 
 ## Tokens
 

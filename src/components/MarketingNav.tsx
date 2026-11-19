@@ -23,8 +23,8 @@ export function MarketingNav() {
           aria-label="Museo home"
           onClick={() => setOpen(false)}
         >
-          <LogoMark className="size-7" />
-          <Wordmark className="text-body" />
+          <LogoMark className="h-[1.375rem] -translate-y-px" />
+          <Wordmark className="text-heading leading-none" />
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
           {links.map((l) => (

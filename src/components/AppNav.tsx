@@ -160,7 +160,7 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
         <div className="mb-3 flex h-12 items-center px-[var(--nav-inset)]" data-nav-item>
           <Link href="/" aria-label="Museo home" className="flex min-w-0 items-center rounded-lg">
             <span className="nav-icon-slot">
-              <LogoMark className="size-7" />
+              <LogoMark className="h-5" />
             </span>
             <Wordmark className="nav-label whitespace-nowrap pr-3 text-heading" />
           </Link>
@@ -218,8 +218,8 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
       <header className="app-phone-top glass sticky top-0 z-nav border-b border-border/70 pt-[env(safe-area-inset-top)] md:hidden">
         <div className="flex h-12 items-center justify-between pl-4 pr-1.5">
           <Link href="/" aria-label="Museo home" className="flex items-center gap-2 font-semibold tracking-tight">
-            <LogoMark className="size-7" />
-            <Wordmark className="text-heading" />
+            <LogoMark className="h-[1.375rem] -translate-y-px" />
+            <Wordmark className="text-heading leading-none" />
           </Link>
           <div className="flex items-center">
             {user ? (
