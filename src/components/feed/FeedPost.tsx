@@ -131,7 +131,7 @@ export function FeedPost({ entry, viewerId, onPatch, eager }: { entry: TimelineE
         />
       </header>
 
-      <PostMedia item={e} eager={eager} onDoubleTap={doubleTapLike} className="-mx-4 !w-[calc(100%+2rem)] sm:mx-0 sm:!w-full sm:rounded-2xl" />
+      <PostMedia item={e} hint={{ category: e.shelf.category, collection: e.shelf.name }} eager={eager} onDoubleTap={doubleTapLike} className="-mx-4 !w-[calc(100%+2rem)] sm:mx-0 sm:!w-full sm:rounded-2xl" />
 
       <div className="-mx-2 flex items-center pt-1.5">
         <LikeButton

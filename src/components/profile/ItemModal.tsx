@@ -221,7 +221,7 @@ export function ItemBody({
             onDoubleClick={(e) => e.preventDefault()}
             data-testid="item-photo"
           >
-            <PhotoCarousel item={it} eager />
+            <PhotoCarousel item={it} eager hint={shelf ? { category: shelf.category, collection: shelf.name } : undefined} />
             {burst > 0 && (
               <span key={burst} aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center">
                 <Heart className="heart-pop size-24 text-white drop-shadow-[0_6px_18px_rgb(0_0_0/0.35)]" fill="currentColor" strokeWidth={0} />

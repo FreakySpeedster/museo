@@ -1,7 +1,8 @@
 "use client";
 
+import { ItemImage } from "@/components/art/ItemImage";
 import clsx from "clsx";
-import { Check, Image as ImageIcon, Plus, Search, X } from "lucide-react";
+import { Check, Plus, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { TaggedItemDTO } from "@/lib/dto";
 import { api } from "@/lib/client";
@@ -12,16 +13,10 @@ import { Segmented } from "@/components/ui/Tabs";
 
 export const MAX_TAGGED_ITEMS = 12;
 
-export function ItemThumbMini({ item, className }: { item: Pick<TaggedItemDTO, "imageUrl" | "faviconUrl" | "title">; className?: string }) {
-  const src = item.imageUrl ?? item.faviconUrl;
+export function ItemThumbMini({ item, className }: { item: Pick<TaggedItemDTO, "id" | "imageUrl" | "title" | "collection">; className?: string }) {
   return (
     <span className={clsx("grid shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-surface-hover", className)}>
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt="" className={item.imageUrl ? "h-full w-full object-cover" : "size-1/2 object-contain"} loading="lazy" />
-      ) : (
-        <ImageIcon className="size-4 text-muted" aria-hidden />
-      )}
+      <ItemImage src={item.imageUrl} alt="" art={{ seed: item.id, title: item.title, collection: item.collection }} className="h-full w-full object-cover" loading="lazy" />
     </span>
   );
 }

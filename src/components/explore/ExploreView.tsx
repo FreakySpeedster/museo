@@ -118,7 +118,7 @@ function Tile({ card, eager }: { card: ExploreCard; eager?: boolean }) {
   return (
     <Link href={`/explore/item/${card.key}`} className="group mb-4 block break-inside-avoid" data-testid="explore-tile">
       <div className="relative overflow-hidden rounded-2xl bg-surface-hover" style={{ aspectRatio: String(tileRatio(card.imageWidth, card.imageHeight)) }}>
-        <ItemThumb item={{ id: card.itemId, imageUrl: card.imageUrl, faviconUrl: card.faviconUrl, title: card.title, siteName: card.siteName, type: card.type }} eager={eager} className="transition-transform duration-300 group-hover:scale-[1.03]" />
+        <ItemThumb item={{ id: card.itemId, imageUrl: card.imageUrl, faviconUrl: card.faviconUrl, title: card.title, siteName: card.siteName, type: card.type }} hint={{ category: card.category }} eager={eager} className="transition-transform duration-300 group-hover:scale-[1.03]" />
         {card.mine && (
           <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-micro font-semibold text-white backdrop-blur" title="In your collection">
             <BookmarkCheck className="size-3.5" aria-hidden /> Yours

@@ -1,5 +1,6 @@
 "use client";
 
+import { ArtHint } from "@/components/art/FallbackArt";
 import { useCallback, useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import {
   DndContext,
@@ -214,6 +215,7 @@ export function ShelfView({
           action={isOwner ? <Button size="sm" onClick={() => onAddItem(shelf)}>Add the first item</Button> : undefined}
         />
       ) : (
+        <ArtHint category={shelf.category} collection={shelf.name}>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext items={shelf.items.map((i) => i.id)} strategy={rectSortingStrategy}>
             <div ref={grid} className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
@@ -236,6 +238,7 @@ export function ShelfView({
             </div>
           </SortableContext>
         </DndContext>
+        </ArtHint>
       )}
       <hr data-plank className="!mt-8 border-0 border-t border-border" aria-hidden />
     </section>

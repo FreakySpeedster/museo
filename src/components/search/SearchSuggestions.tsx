@@ -1,5 +1,6 @@
 "use client";
 
+import { ItemImage } from "@/components/art/ItemImage";
 import { Clock, Flame, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -130,10 +131,7 @@ export function SearchSuggestions({ onPick, onNavigate }: { onPick: (q: string) 
               <li key={c.id}>
                 <Link href={c.href} onClick={onNavigate} className="group block overflow-hidden rounded-2xl border border-border bg-surface">
                   <span className="block aspect-[4/3] overflow-hidden bg-surface-hover">
-                    {c.imageUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.imageUrl} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                    )}
+                    <ItemImage src={c.imageUrl} alt="" art={{ seed: c.id, title: c.title, collection: c.title }} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                   </span>
                   <span className="block p-2.5">
                     <span className="block truncate text-meta font-semibold">{c.title}</span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { ItemImage } from "@/components/art/ItemImage";
 import { TagInput } from "@/components/ui/Tags";
 import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent } from "react";
@@ -214,17 +215,13 @@ function AddItemForm({ shelf, onAdded, onLimit }: { shelf: ShelfDTO; onClose: ()
                 {preview && (
                   <div data-testid="link-preview" className="overflow-hidden rounded-2xl border border-border bg-surface-hover">
                     <div className="grid aspect-[16/10] place-items-center overflow-hidden bg-surface sm:aspect-[16/7]">
-                      {ownUrl || pick || preview.image || preview.favicon ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          data-testid="link-preview-image"
-                          src={ownUrl ?? shownSrc(preview, pick)}
-                          alt=""
-                          className={clsx("h-full w-full", ownUrl || pick || preview.image ? "object-contain" : "max-w-24 object-contain p-4")}
-                        />
-                      ) : (
-                        <ImageIcon className="size-8 text-muted" aria-hidden />
-                      )}
+                      <ItemImage
+                        data-testid="link-preview-image"
+                        src={ownUrl ?? (pick || preview.image ? shownSrc(preview, pick) : null)}
+                        alt=""
+                        art={{ seed: preview.url, title: preview.title || preview.siteName || "Link preview", caption: preview.siteName, category: shelf.category, collection: shelf.name }}
+                        className="h-full w-full object-contain"
+                      />
                     </div>
                     <div className="min-w-0 p-3">
                       <p className="line-clamp-2 text-meta font-semibold">{preview.title || preview.siteName}</p>

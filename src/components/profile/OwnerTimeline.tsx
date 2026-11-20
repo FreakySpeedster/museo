@@ -55,7 +55,7 @@ export function OwnerTimeline({ username, initial }: { username: string; initial
         return (
           <Link key={e.id} href={`/i/${e.id}`} className="flex gap-4 overflow-hidden rounded-2xl border border-border bg-surface p-3 hover:bg-surface-hover">
             <div className="relative size-20 shrink-0 overflow-hidden rounded-xl sm:size-24">
-              <ItemThumb item={e} />
+              <ItemThumb item={e} hint={{ category: e.shelf.category, collection: e.shelf.name }} />
             </div>
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1.5 text-meta font-semibold">

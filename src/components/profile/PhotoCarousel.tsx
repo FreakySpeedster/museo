@@ -2,8 +2,10 @@
 
 import clsx from "clsx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef, useState, type MouseEvent } from "react";
+import { useCallback, useRef, useState, type MouseEvent } from "react";
 import type { ItemDTO } from "@/lib/dto";
+import { ItemImage } from "@/components/art/ItemImage";
+import type { ArtHintValue } from "@/lib/fallback-art";
 import { ItemThumb } from "./ItemThumb";
 
 type CarouselItem = Pick<ItemDTO, "imageUrl" | "faviconUrl" | "title" | "siteName" | "type" | "id"> & { images?: string[] };
@@ -12,16 +14,23 @@ export function galleryOf(item: CarouselItem): string[] {
   return item.imageUrl ? [item.imageUrl, ...(item.images ?? []).filter((u) => u !== item.imageUrl)] : [];
 }
 
+/** The gallery minus photos that failed to load or were removed upstream; `fail` drops one. */
+export function useGallery(item: CarouselItem) {
+  const [failed, setFailed] = useState<string[]>([]);
+  const fail = useCallback((src: string) => setFailed((f) => (f.includes(src) ? f : [...f, src])), []);
+  return { photos: galleryOf(item).filter((u) => !failed.includes(u)), fail };
+}
+
 /**
  * Instagram-style swipeable photos: native scroll-snap for touch swipes, arrows on hover for mouse users,
  * and dots marking the active photo. Falls back to the single-thumbnail renderer for one photo or none.
  */
-export function PhotoCarousel({ item, eager, className, fit = "cover" }: { item: CarouselItem; eager?: boolean; className?: string; fit?: "cover" | "contain" }) {
-  const photos = galleryOf(item);
+export function PhotoCarousel({ item, eager, className, fit = "cover", hint }: { item: CarouselItem; eager?: boolean; className?: string; fit?: "cover" | "contain"; hint?: ArtHintValue }) {
+  const { photos, fail } = useGallery(item);
   const track = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
 
-  if (photos.length <= 1) return <ItemThumb item={item} eager={eager} className={className} />;
+  if (photos.length <= 1) return <ItemThumb item={item} src={photos[0] ?? null} onFail={fail} hint={hint} eager={eager} className={className} />;
 
   function onScroll() {
     const el = track.current;
@@ -53,14 +62,13 @@ export function PhotoCarousel({ item, eager, className, fit = "cover" }: { item:
         style={{ scrollbarWidth: "none" }}
       >
         {photos.map((src, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <ItemImage
             key={src}
             src={src}
             alt={i === 0 ? item.title : `${item.title}, photo ${i + 1}`}
+            art={{ seed: item.id, caption: item.siteName, ...hint }}
+            onFail={fail}
             loading={eager && i === 0 ? "eager" : "lazy"}
-            draggable={false}
-            referrerPolicy="no-referrer"
             className={clsx("h-full w-full shrink-0 snap-center snap-always", fit === "contain" ? "object-contain" : "object-cover")}
           />
         ))}

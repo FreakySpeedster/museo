@@ -1,5 +1,6 @@
 "use client";
 
+import { ItemImage } from "@/components/art/ItemImage";
 import { SearchSuggestions, rememberSearch } from "./SearchSuggestions";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -136,9 +137,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 >
                   {h.kind === "person" ? (
                     <Avatar name={h.title} username={h.subtitle.replace(/^@/, "")} avatarUrl={h.imageUrl} size="sm" />
-                  ) : h.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={h.imageUrl} alt="" className="size-8 rounded-md object-cover" />
+                  ) : h.kind === "item" || h.imageUrl ? (
+                    <ItemImage src={h.imageUrl} alt="" art={{ seed: h.id, title: h.title, collection: h.subtitle }} className="size-8 shrink-0 rounded-md object-cover" />
                   ) : (
                     <span className="grid size-8 place-items-center rounded-md bg-surface-hover text-muted">
                       <Icon className="size-4" aria-hidden />

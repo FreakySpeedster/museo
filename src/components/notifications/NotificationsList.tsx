@@ -1,5 +1,6 @@
 "use client";
 
+import { ItemImage } from "@/components/art/ItemImage";
 import clsx from "clsx";
 import { Bell, Heart, MessageCircle, Reply, UserCheck, UserPlus, type LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -121,9 +122,8 @@ export function NotificationsList({ initial }: { initial: { notifications: Notif
                     <Button size="sm" className="h-11 px-4" loading={busy === n.id} disabled={busy !== null} onClick={() => respond(n, true)} data-testid="accept-request">Accept</Button>
                     <Button size="sm" variant="secondary" className="h-11 px-4" disabled={busy !== null} onClick={() => respond(n, false)}>Reject</Button>
                   </div>
-                ) : n.item?.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={n.item.imageUrl} alt="" className="size-11 shrink-0 rounded-lg border border-border object-cover" loading="lazy" />
+                ) : n.item ? (
+                  <ItemImage src={n.item.imageUrl} alt="" art={{ seed: n.item.id, title: n.item.title }} className="size-11 shrink-0 rounded-lg border border-border object-cover" loading="lazy" />
                 ) : null}
                 {!n.read && <span className="absolute left-0.5 top-1/2 size-1.5 -translate-y-1/2 rounded-full bg-danger" aria-label="New" />}
               </li>

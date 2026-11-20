@@ -1,5 +1,6 @@
 "use client";
 
+import { ItemImage } from "@/components/art/ItemImage";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -170,9 +171,8 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
             <Link key={`${h.kind}-${h.id}`} href={h.href} onClick={() => rememberSearch(q)} className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-surface-hover sm:mx-0 sm:rounded-2xl sm:border sm:border-border sm:bg-surface sm:p-3">
               {h.kind === "person" ? (
                 <Avatar name={h.title} username={h.subtitle.replace(/^@/, "")} avatarUrl={h.imageUrl} size="md" />
-              ) : h.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={h.imageUrl} alt="" className="size-12 rounded-lg object-cover" />
+              ) : h.kind === "item" || h.imageUrl ? (
+                <ItemImage src={h.imageUrl} alt="" art={{ seed: h.id, title: h.title, collection: h.subtitle }} className="size-12 shrink-0 rounded-lg object-cover" />
               ) : (
                 <span className="grid size-12 place-items-center rounded-lg bg-surface-hover text-muted">
                   <Icon className="size-5" aria-hidden />

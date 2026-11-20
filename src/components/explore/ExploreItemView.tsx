@@ -62,6 +62,7 @@ export function ExploreItemView({ hero, initial, viewerId }: { hero: Hero; initi
         <div className="mx-auto w-full max-w-md">
           <PostMedia
             item={{ id: hero.itemId, title: hero.title, imageUrl: hero.imageUrl, images: [], faviconUrl: hero.faviconUrl, siteName: hero.siteName, type: hero.type, imageWidth: hero.imageWidth, imageHeight: hero.imageHeight }}
+            hint={{ category: hero.category }}
             eager
             className="rounded-3xl shadow-lg"
           />

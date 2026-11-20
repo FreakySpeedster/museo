@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Layers, NotebookPen } from "lucide-react";
 import type { BlogPostSummaryDTO } from "@/lib/dto";
 import { Avatar } from "@/components/ui/Avatar";
+import { ItemImage } from "@/components/art/ItemImage";
 import { Badge } from "@/components/ui/Badge";
 import { count } from "@/lib/plural";
 
@@ -13,8 +14,7 @@ export function PostCard({ post, showStatus = false }: { post: BlogPostSummaryDT
     <article className="group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-surface transition-shadow hover:shadow-lg" data-testid="post-card">
       <div className="aspect-[16/9] overflow-hidden bg-surface-hover">
         {post.coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+          <ItemImage src={post.coverUrl} alt="" art={{ seed: post.id, title: post.title, motif: "pencil" }} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
         ) : (
           <div className="grid h-full place-items-center bg-accent-subtle/60">
             <NotebookPen className="size-9 text-accent" aria-hidden strokeWidth={1.5} />

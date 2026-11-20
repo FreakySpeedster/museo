@@ -5,7 +5,9 @@ import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { useRef, useState, type MouseEvent } from "react";
 import type { ItemDTO } from "@/lib/dto";
 import { ItemThumb } from "@/components/profile/ItemThumb";
-import { galleryOf } from "@/components/profile/PhotoCarousel";
+import { useGallery } from "@/components/profile/PhotoCarousel";
+import { ItemImage } from "@/components/art/ItemImage";
+import type { ArtHintValue } from "@/lib/fallback-art";
 
 /** Portrait 4:5 to landscape 1.91:1: photos show at their own shape, but the scroll never gets a giant or a sliver. */
 export const MIN_RATIO = 4 / 5;
@@ -18,11 +20,11 @@ type MediaItem = Pick<ItemDTO, "id" | "title" | "imageUrl" | "images" | "favicon
  * Full-bleed post media. Space is reserved from the stored cover size (no layout shift); older rows without a
  * size measure the first photo once it loads. Multi-photo posts swipe with dots; double-tap fires `onDoubleTap`.
  */
-export function PostMedia({ item, onDoubleTap, eager, className }: { item: MediaItem; onDoubleTap?: () => void; eager?: boolean; className?: string }) {
-  const photos = galleryOf(item);
+export function PostMedia({ item, onDoubleTap, eager, className, hint }: { item: MediaItem; onDoubleTap?: () => void; eager?: boolean; className?: string; hint?: ArtHintValue }) {
+  const { photos, fail } = useGallery(item);
   const stored = clampRatio(item.imageWidth, item.imageHeight);
   const [measured, setMeasured] = useState<number | null>(null);
-  const ratio = stored ?? measured ?? (photos.length ? 1 : MAX_RATIO);
+  const ratio = stored ?? measured ?? 1;
   const [index, setIndex] = useState(0);
   const [burst, setBurst] = useState(0);
   const track = useRef<HTMLDivElement>(null);
@@ -56,7 +58,7 @@ export function PostMedia({ item, onDoubleTap, eager, className }: { item: Media
       data-testid="post-media"
     >
       {photos.length === 0 ? (
-        <ItemThumb item={item} />
+        <ItemThumb item={item} src={null} hint={hint} />
       ) : (
         <div
           ref={track}
@@ -68,15 +70,13 @@ export function PostMedia({ item, onDoubleTap, eager, className }: { item: Media
           style={{ scrollbarWidth: "none" }}
         >
           {photos.map((src, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <ItemImage
               key={src}
               src={src}
               alt={i === 0 ? item.title : `${item.title}, photo ${i + 1}`}
+              art={{ seed: item.id, caption: item.siteName, ...hint }}
+              onFail={fail}
               loading={eager && i === 0 ? "eager" : "lazy"}
-              decoding="async"
-              draggable={false}
-              referrerPolicy="no-referrer"
               onLoad={i === 0 && !stored ? (e) => setMeasured(clampRatio(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)) : undefined}
               className="h-full w-full shrink-0 snap-center snap-always object-cover"
             />
