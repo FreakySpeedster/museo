@@ -10,7 +10,7 @@ const isSvg = (src: string) => /^data:image\/svg|\.svg(\?|#|$)/i.test(src);
 
 /**
  * The one way to render an item photo. Missing URL, a load error, or an image that already failed before
- * hydration (complete with no pixels) all swap to the category artwork, so a broken-image icon never shows.
+ * hydration (confirmed by a probe load) all swap to the category artwork, so a broken-image icon never shows.
  */
 export function ItemImage({ src, alt, art, onFail, className, ...img }: ImgProps & { src: string | null | undefined; alt: string; art: Omit<ArtSpec, "title"> & { title?: string }; onFail?: (src: string) => void }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
@@ -24,7 +24,15 @@ export function ItemImage({ src, alt, art, onFail, className, ...img }: ImgProps
 
   const ref = useCallback(
     (el: HTMLImageElement | null) => {
-      if (el && src && el.complete && el.naturalWidth === 0 && !isSvg(src)) fail();
+      // Lazy, not-yet-started images report complete with no pixels on mobile browsers (iOS Safari), so this
+      // signal alone is ambiguous. Confirm with a one-off probe and only fall back if that load really errors.
+      if (!el || !src || isSvg(src) || !el.complete || el.naturalWidth !== 0) return;
+      const probe = new Image();
+      probe.referrerPolicy = "no-referrer";
+      probe.onerror = () => {
+        if (el.isConnected && el.naturalWidth === 0) fail();
+      };
+      probe.src = src;
     },
     [src, fail],
   );
