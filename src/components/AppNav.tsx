@@ -249,7 +249,7 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
         <GlassTabBar
           tabs={[
             { key: "home", label: "Home", href: "/", active: path === "/", icon: (on) => <House className="size-6" aria-hidden strokeWidth={on ? 2.2 : 1.75} fill={on ? "currentColor" : "none"} fillOpacity={on ? 0.15 : 0} /> },
-            { key: "search", label: "Search", onClick: search.open, active: path.startsWith("/search"), icon: (on) => <Search className="size-6" aria-hidden strokeWidth={on ? 2.4 : 1.75} /> },
+            { key: "search", label: "Search", href: "/search", active: path.startsWith("/search"), icon: (on) => <Search className="size-6" aria-hidden strokeWidth={on ? 2.4 : 1.75} /> },
             { key: "create", label: "Create", onClick: () => setCreating(true), active: creating, testId: "tab-create", icon: (on) => <SquarePlus className="size-6" aria-hidden strokeWidth={on ? 2.2 : 1.75} /> },
             { key: "blog", label: "Blog", href: "/blog", active: path.startsWith("/blog"), icon: (on) => <NotebookPen className="size-6" aria-hidden strokeWidth={on ? 2.2 : 1.75} /> },
             {

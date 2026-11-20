@@ -84,15 +84,16 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
   const sortLabel = SORTS.find((s) => s.value === sort)?.label ?? "Relevance";
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-8 pt-4 sm:px-6 md:pt-8">
-      <div className="flex items-center gap-2 field-shell rounded-full px-4 shadow-sm">
+    <div className="mx-auto max-w-2xl px-4 pb-8 pt-3 sm:px-6 md:pt-8">
+      <div className="flex items-center gap-2 field-shell rounded-full px-4 sm:shadow-sm">
         <Search className="size-5 shrink-0 text-muted" aria-hidden />
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && rememberSearch(draft)}
           placeholder="Search people, items, and collections"
-          className="h-12 w-full bg-transparent text-body outline-none placeholder:text-muted"
+          autoFocus={!initialQ}
+          className="h-11 w-full bg-transparent sm:h-12 text-body outline-none placeholder:text-muted"
           autoComplete="off"
           spellCheck={false}
           enterKeyHint="search"
@@ -155,7 +156,7 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
           ))}
         </ul>
       </Sheet>
-      <div className="mt-5 space-y-2">
+      <div className="mt-3 space-y-0 sm:mt-5 sm:space-y-2">
         {!q.trim() && <SearchSuggestions onPick={(v) => setDraft(v)} />}
         {q.trim() && loading && items.length === 0 && (
           <div className="space-y-2" aria-busy="true">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-[4.5rem] w-full rounded-2xl" />)}</div>
@@ -166,7 +167,7 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
         {items.map((h) => {
           const Icon = ICONS[h.kind];
           return (
-            <Link key={`${h.kind}-${h.id}`} href={h.href} onClick={() => rememberSearch(q)} className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 hover:bg-surface-hover">
+            <Link key={`${h.kind}-${h.id}`} href={h.href} onClick={() => rememberSearch(q)} className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-surface-hover sm:mx-0 sm:rounded-2xl sm:border sm:border-border sm:bg-surface sm:p-3">
               {h.kind === "person" ? (
                 <Avatar name={h.title} username={h.subtitle.replace(/^@/, "")} avatarUrl={h.imageUrl} size="md" />
               ) : h.imageUrl ? (
