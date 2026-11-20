@@ -535,13 +535,19 @@ body[data-modal="open"] .app-phone-nav { visibility: hidden; pointer-events: non
 .glass-capsule {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5), inset 0 0 0 1px color-mix(in srgb, var(--foreground) 6%, transparent);
-  transition: transform 420ms cubic-bezier(0.32, 1.25, 0.5, 1), width 420ms cubic-bezier(0.32, 1.25, 0.5, 1), opacity 200ms;
+  /* Short spring-ish slide, transform only (width snaps; tabs are equal width). */
+  transition: transform 180ms cubic-bezier(0.3, 1.3, 0.5, 1), opacity 120ms;
+  will-change: transform;
 }
+/* Tabs: no 300ms double-tap wait, no grey iOS tap flash; the icon itself gives press feedback. */
+.tab-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; transition: color 120ms; }
+.tab-press { transition: transform 120ms cubic-bezier(0.3, 1.3, 0.5, 1); }
+.tab-btn:active .tab-press { transform: scale(0.92); transition-duration: 60ms; }
 .dark .glass-capsule { background: rgb(255 255 255 / 0.12); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14); }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass-bar { background: color-mix(in srgb, var(--background) 96%, var(--surface)); }
 }
-@media (prefers-reduced-motion: reduce) { .glass-capsule { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .glass-capsule, .tab-press { transition: none; } .tab-btn:active .tab-press { transform: none; } }
 
 /* Pure CSS (no effect) so the bars are gone on first paint and the scroll position never jumps. */
 @media (max-width: 767.98px) {
@@ -694,6 +700,12 @@ body[data-modal="open"] .app-phone-nav { visibility: hidden; pointer-events: non
 
 /* Tiptap editor surface */
 .museo-editor .ProseMirror { outline: none; min-height: 18rem; }
+/* Phones: formatting bar docked above the keyboard (translateY by the keyboard inset, compositor-only). */
+@media (max-width: 767.98px) {
+  .editor-dock { transform: translate3d(0, calc(-1 * var(--kb, 0px)), 0); will-change: transform; }
+  .editor-dock button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  html:has(.editor-dock) { scroll-padding-bottom: 8rem; }
+}
 .museo-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: var(--muted);
@@ -704,6 +716,11 @@ body[data-modal="open"] .app-phone-nav { visibility: hidden; pointer-events: non
 
 /* Icon system: Lucide at one stroke weight everywhere (explicit heavier strokes for check marks stay). */
 .lucide[stroke-width="2"] { stroke-width: 1.75; }
+
+/* iOS Safari zooms into any focused field under 16px: keep typing surfaces at 16px+ on touch screens. */
+@media (pointer: coarse) {
+  :is(input, textarea, select):is(.text-meta, .text-caption, .text-micro, .text-sm, .text-xs) { font-size: 1rem; }
+}
 
 /* Small (32px) buttons keep their look but get a 44px touch target on phones. */
 @media (pointer: coarse) {

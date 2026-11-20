@@ -11,7 +11,7 @@ import { REACTION_EMOJIS } from "@/lib/validation";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { FormError, Textarea } from "@/components/ui/Field";
-import { useKeyboardInset } from "@/lib/use-keyboard-inset";
+import { useKeyboard } from "@/lib/use-keyboard-inset";
 import { useToast } from "@/components/ui/Toast";
 
 type Lists = { comments: CommentDTO[]; canComment: boolean; reason: string | null };
@@ -30,7 +30,7 @@ export function CommentThread({
   /** Phones: pin a one-line composer to the bottom of the screen, riding above the keyboard. */
   docked?: boolean;
 }) {
-  const keyboard = useKeyboardInset();
+  const keyboard = useKeyboard();
   const toast = useToast();
   const [comments, setComments] = useState<CommentDTO[] | null>(null);
   const [canComment, setCanComment] = useState(false);
@@ -167,11 +167,12 @@ export function CommentThread({
       <form
         onSubmit={submit}
         data-testid="comment-composer"
-        style={docked ? ({ "--kb": `${keyboard}px` } as React.CSSProperties) : undefined}
+        style={docked ? ({ "--kb": `${keyboard.inset}px` } as React.CSSProperties) : undefined}
         className={clsx(
           "mt-4 space-y-2",
           docked &&
-            "max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--kb)] max-md:z-nav max-md:mt-0 max-md:border-t max-md:border-border max-md:bg-background/95 max-md:px-4 max-md:pt-2 max-md:backdrop-blur max-md:pb-[calc(0.5rem+env(safe-area-inset-bottom))]",
+            "editor-dock max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-nav max-md:mt-0 max-md:border-t max-md:border-border max-md:bg-background/95 max-md:px-4 max-md:pt-2 max-md:backdrop-blur",
+          docked && (keyboard.open ? "max-md:pb-2" : "max-md:pb-[calc(0.5rem+env(safe-area-inset-bottom))]"),
         )}
       >
         {replyTo && (

@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { useKeyboardInset } from "@/lib/use-keyboard-inset";
+import { useKeyboard } from "@/lib/use-keyboard-inset";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
@@ -12,7 +12,8 @@ import {
   AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, ChevronDown, Code, Highlighter, ImagePlus, Italic, Link2, List, ListOrdered,
   Minus, Quote, Redo2, RemoveFormatting, SquareCode, Strikethrough, Underline, Undo2, Unlink, type LucideIcon,
 } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { ApiError, api } from "@/lib/client";
 import { readPhotoFile } from "@/components/profile/PhotoPicker";
 import { Menu } from "@/components/ui/Menu";
@@ -27,8 +28,13 @@ const BLOCKS = [
   { id: "h4", label: "Heading 4" },
 ] as const;
 
+/** Room kept clear under the caret on phones: docked toolbar (44px row + optional link row) plus breathing space. */
+const PHONE_CARET_MARGIN = 128;
+const isPhone = () => typeof window !== "undefined" && window.matchMedia("(max-width: 767.98px)").matches;
+
 /** Rich text editor for blog posts (Tiptap, free extensions only). Emits HTML; the server sanitizes it. */
 export function BlogEditor({ initialHtml, onChange }: { initialHtml: string; onChange: (html: string) => void }) {
+  const phone = isPhone();
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -42,7 +48,11 @@ export function BlogEditor({ initialHtml, onChange }: { initialHtml: string; onC
       Placeholder.configure({ placeholder: "Tell the story. What is it like, who is it for, would you buy it again?" }),
     ],
     content: initialHtml || "",
-    editorProps: { attributes: { class: "prose-museo", "aria-label": "Post body", role: "textbox", "aria-multiline": "true" } },
+    editorProps: {
+      attributes: { class: "prose-museo", "aria-label": "Post body", role: "textbox", "aria-multiline": "true" },
+      // ProseMirror measures against the visual viewport, so this keeps the caret above the docked toolbar.
+      ...(phone ? { scrollMargin: { top: 16, bottom: PHONE_CARET_MARGIN, left: 0, right: 0 }, scrollThreshold: { top: 16, bottom: PHONE_CARET_MARGIN, left: 0, right: 0 } } : {}),
+    },
     onUpdate: ({ editor: e }) => onChange(e.isEmpty ? "" : e.getHTML()),
   });
 
@@ -57,10 +67,13 @@ export function BlogEditor({ initialHtml, onChange }: { initialHtml: string; onC
 }
 
 function Toolbar({ editor }: { editor: Editor }) {
-  const keyboard = useKeyboardInset();
+  const keyboard = useKeyboard();
   const toast = useToast();
   const fileInput = useRef<HTMLInputElement>(null);
+  const urlInput = useRef<HTMLInputElement>(null);
   const [bar, setBar] = useState<null | "link" | "image">(null);
+  // Phones only: secondary rows that replace popover menus, so picking a style never closes the keyboard.
+  const [tray, setTray] = useState<null | "style" | "image">(null);
   const [url, setUrl] = useState("");
   const [uploading, setUploading] = useState(false);
 
@@ -80,6 +93,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       codeBlock: e.isActive("codeBlock"),
       align: (["left", "center", "right", "justify"] as const).find((a) => e.isActive({ textAlign: a })) ?? "left",
       block: e.isActive("heading", { level: 1 }) ? "h1" : e.isActive("heading", { level: 2 }) ? "h2" : e.isActive("heading", { level: 3 }) ? "h3" : e.isActive("heading", { level: 4 }) ? "h4" : "p",
+      focused: e.isFocused,
       canUndo: e.can().undo(),
       canRedo: e.can().redo(),
     }),
@@ -87,9 +101,17 @@ function Toolbar({ editor }: { editor: Editor }) {
 
   const chain = () => editor.chain().focus();
 
+  // Keyboard just opened (or the bar grew): bring the caret back above the docked toolbar.
+  useEffect(() => {
+    if (keyboard.open && editor.isFocused) editor.commands.scrollIntoView();
+  }, [keyboard.open, editor]);
+
   function openBar(kind: "link" | "image") {
     setUrl(kind === "link" ? (editor.getAttributes("link").href ?? "") : "");
-    setBar(kind);
+    setTray(null);
+    // Commit synchronously and focus inside the tap handler: iOS only keeps the keyboard up for focus() within the gesture.
+    flushSync(() => setBar(kind));
+    urlInput.current?.focus();
   }
 
   function applyUrl() {
@@ -102,6 +124,11 @@ function Toolbar({ editor }: { editor: Editor }) {
       chain().setImage({ src: v }).run();
     }
     setBar(null);
+  }
+
+  function closeBar() {
+    setBar(null);
+    editor.commands.focus();
   }
 
   async function upload(file: File | undefined) {
@@ -124,22 +151,43 @@ function Toolbar({ editor }: { editor: Editor }) {
   const setBlock = (id: (typeof BLOCKS)[number]["id"]) =>
     id === "p" ? chain().setParagraph().run() : chain().setHeading({ level: Number(id.slice(1)) as 1 | 2 | 3 | 4 }).run();
 
+  // With the keyboard up for another field (title, tags), formatting is noise: tuck the bar away.
+  const hidden = keyboard.open && !s.focused && !bar;
+
   return (
     <div
       data-testid="editor-toolbar"
-      style={{ "--kb": `${keyboard}px` } as React.CSSProperties}
-      className="sticky top-0 z-10 rounded-t-3xl border-b border-border bg-surface/95 backdrop-blur max-md:fixed max-md:inset-x-0 max-md:bottom-[var(--kb)] max-md:top-auto max-md:z-nav max-md:flex max-md:flex-col-reverse max-md:rounded-none max-md:border-b-0 max-md:border-t max-md:bg-background/95 max-md:pb-[env(safe-area-inset-bottom)]"
+      data-docked={keyboard.open ? "keyboard" : undefined}
+      style={{ "--kb": `${keyboard.inset}px` } as React.CSSProperties}
+      className={clsx(
+        "sticky top-0 z-10 rounded-t-3xl border-b border-border bg-surface/95 backdrop-blur",
+        "editor-dock max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:top-auto max-md:z-nav max-md:flex max-md:flex-col-reverse max-md:rounded-none max-md:border-b-0 max-md:border-t max-md:bg-background/95",
+        // The keyboard covers the home indicator, so the safe-area gap only applies while it is closed.
+        !keyboard.open && "max-md:pb-[env(safe-area-inset-bottom)]",
+        hidden && "max-md:invisible",
+      )}
     >
-      <div role="toolbar" aria-label="Formatting" className="no-scrollbar flex flex-wrap items-center gap-0.5 px-2 py-1.5 max-md:flex-nowrap max-md:overflow-x-auto max-md:py-0.5 sm:px-3">
+      <div role="toolbar" aria-label="Formatting" className="no-scrollbar flex flex-wrap items-center gap-0.5 px-2 py-1.5 max-md:flex-nowrap max-md:overflow-x-auto max-md:overscroll-x-contain max-md:py-0 sm:px-3">
         <Tool icon={Undo2} label="Undo" onClick={() => chain().undo().run()} disabled={!s.canUndo} />
         <Tool icon={Redo2} label="Redo" onClick={() => chain().redo().run()} disabled={!s.canRedo} />
         <Sep />
+        <button
+          type="button"
+          aria-label="Text style"
+          aria-expanded={tray === "style"}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setTray(tray === "style" ? null : "style")}
+          className="inline-flex h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-2.5 text-meta font-medium text-foreground md:hidden"
+        >
+          {BLOCKS.find((b) => b.id === s.block)?.label}
+          <ChevronDown className={clsx("size-3.5 text-muted transition-transform", tray === "style" && "rotate-180")} aria-hidden />
+        </button>
         <Menu
           label="Text style"
           align="start"
           items={BLOCKS.map((b) => ({ label: b.label, onSelect: () => setBlock(b.id) }))}
           trigger={({ props }) => (
-            <button type="button" {...props} className="inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-2.5 text-meta font-medium text-foreground hover:bg-surface-hover max-md:h-11">
+            <button type="button" {...props} className="inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-2.5 text-meta font-medium text-foreground hover:bg-surface-hover max-md:hidden">
               {BLOCKS.find((b) => b.id === s.block)?.label}
               <ChevronDown className="size-3.5 text-muted" aria-hidden />
             </button>
@@ -166,6 +214,17 @@ function Toolbar({ editor }: { editor: Editor }) {
         <Tool icon={AlignJustify} label="Justify" active={s.align === "justify"} onClick={() => chain().setTextAlign("justify").run()} />
         <Sep />
         <Tool icon={Minus} label="Divider" onClick={() => chain().setHorizontalRule().run()} />
+        <button
+          type="button"
+          aria-label="Insert image"
+          aria-expanded={tray === "image"}
+          disabled={uploading}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setTray(tray === "image" ? null : "image")}
+          className={clsx(toolClass(tray === "image" || bar === "image"), "md:hidden")}
+        >
+          <ImagePlus className="size-5" aria-hidden />
+        </button>
         <Menu
           label="Insert image"
           align="start"
@@ -174,7 +233,7 @@ function Toolbar({ editor }: { editor: Editor }) {
             { label: "Image from a link", onSelect: () => openBar("image") },
           ]}
           trigger={({ props }) => (
-            <button type="button" {...props} aria-label="Insert image" title="Insert image" disabled={uploading} className={toolClass(bar === "image")}>
+            <button type="button" {...props} aria-label="Insert image" title="Insert image" disabled={uploading} className={clsx(toolClass(bar === "image"), "max-md:hidden")}>
               <ImagePlus className="size-4" aria-hidden />
             </button>
           )}
@@ -183,9 +242,26 @@ function Toolbar({ editor }: { editor: Editor }) {
         {uploading && <span className="ml-1 text-caption text-muted">Uploading…</span>}
         <input ref={fileInput} type="file" accept="image/*" className="sr-only" tabIndex={-1} onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }} />
       </div>
+      {tray && (
+        <div role="group" aria-label={tray === "style" ? "Text style" : "Insert image"} className="no-scrollbar flex items-center gap-1.5 overflow-x-auto border-b border-border px-2 py-1.5 md:hidden">
+          {tray === "style"
+            ? BLOCKS.map((b) => (
+                <Chip key={b.id} active={s.block === b.id} onClick={() => { setBlock(b.id); setTray(null); }}>
+                  {b.label}
+                </Chip>
+              ))
+            : (
+              <>
+                <Chip onClick={() => { setTray(null); fileInput.current?.click(); }}>Upload an image</Chip>
+                <Chip onClick={() => openBar("image")}>Image from a link</Chip>
+              </>
+            )}
+        </div>
+      )}
       {bar && (
-        <div className="flex flex-wrap items-center gap-2 border-t border-border px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 border-t border-border px-3 py-2 max-md:flex-nowrap max-md:border-b max-md:border-t-0">
           <input
+            ref={urlInput}
             autoFocus
             type="url"
             inputMode="url"
@@ -196,14 +272,14 @@ function Toolbar({ editor }: { editor: Editor }) {
                 e.preventDefault();
                 applyUrl();
               }
-              if (e.key === "Escape") setBar(null);
+              if (e.key === "Escape") closeBar();
             }}
             placeholder={bar === "link" ? "Paste a link" : "https://… image link"}
             aria-label={bar === "link" ? "Link address" : "Image address"}
             className="h-9 min-w-0 flex-1 rounded-full border border-border bg-surface-hover px-3.5 text-meta outline-none focus:border-accent focus:bg-surface"
           />
           <Button size="sm" onClick={applyUrl}>{bar === "link" ? (url.trim() ? "Apply" : "Remove link") : "Insert"}</Button>
-          <Button size="sm" variant="ghost" onClick={() => setBar(null)}>Cancel</Button>
+          <Button size="sm" variant="ghost" onClick={closeBar}>Cancel</Button>
         </div>
       )}
     </div>
@@ -220,7 +296,25 @@ function Tool({ icon: Icon, label, onClick, active, disabled, shortcut }: { icon
   const hint = shortcut ? `${label} (${shortcut.replace("Mod", typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl")})` : label;
   return (
     <button type="button" aria-label={label} aria-pressed={active ?? undefined} title={hint} onMouseDown={(e) => e.preventDefault()} onClick={onClick} disabled={disabled} className={toolClass(active)}>
-      <Icon className="size-4" aria-hidden />
+      <Icon className="size-4 max-md:size-5" aria-hidden />
+    </button>
+  );
+}
+
+/** Phone tray option: a 44px pill that keeps editor focus (and so the keyboard) when tapped. */
+function Chip({ children, active, onClick }: { children: ReactNode; active?: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active ?? undefined}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      className={clsx(
+        "inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-meta font-medium transition-colors",
+        active ? "bg-foreground text-background" : "bg-surface-hover text-foreground",
+      )}
+    >
+      {children}
     </button>
   );
 }
