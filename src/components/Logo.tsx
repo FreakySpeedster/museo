@@ -29,7 +29,7 @@ export function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="Museo home">
       <LogoMark />
-      <Wordmark className="text-heading" />
+      <Wordmark />
     </Link>
   );
 }

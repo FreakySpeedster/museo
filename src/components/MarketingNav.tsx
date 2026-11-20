@@ -24,7 +24,7 @@ export function MarketingNav() {
           onClick={() => setOpen(false)}
         >
           <LogoMark className="h-[1.375rem] -translate-y-px" />
-          <Wordmark className="text-heading leading-none" />
+          <Wordmark />
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
           {links.map((l) => (

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Unbounded } from "next/font/google";
+import { Alexandria } from "next/font/google";
 import "./globals.css";
 import { Shell } from "@/components/Navbar";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -25,13 +25,13 @@ export const viewport: Viewport = {
   ],
 };
 
-const unbounded = Unbounded({ subsets: ["latin"], variable: "--font-unbounded", display: "swap" });
+const alexandria = Alexandria({ subsets: ["latin"], weight: ["600"], variable: "--font-alexandria", display: "swap" });
 
 const bootScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);if(localStorage.getItem('shelfie.nav-pinned')==='1')document.documentElement.setAttribute('data-nav-pinned','true')}catch(e){}})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} ${unbounded.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} ${alexandria.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>

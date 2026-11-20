@@ -162,7 +162,7 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
             <span className="nav-icon-slot">
               <LogoMark className="h-5" />
             </span>
-            <Wordmark className="nav-label whitespace-nowrap pr-3 text-heading" />
+            <Wordmark className="nav-label whitespace-nowrap pr-3" />
           </Link>
         </div>
         <nav className="flex flex-col gap-1" aria-label="Primary">
@@ -219,7 +219,7 @@ export function AppNav({ user, unread = 0 }: { user: NavUser | null; unread?: nu
         <div className="flex h-12 items-center justify-between pl-4 pr-1.5">
           <Link href="/" aria-label="Museo home" className="flex items-center gap-2 font-semibold tracking-tight">
             <LogoMark className="h-[1.375rem] -translate-y-px" />
-            <Wordmark className="text-heading leading-none" />
+            <Wordmark />
           </Link>
           <div className="flex items-center">
             {user ? (
