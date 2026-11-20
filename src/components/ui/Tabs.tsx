@@ -27,7 +27,7 @@ export function Tabs<T extends string>({
     <div
       role="tablist"
       aria-label={label}
-      className={clsx("flex border-b border-border", sticky && "glass sticky top-[var(--chrome-top)] z-30", className)}
+      className={clsx("flex border-b border-border", sticky && "glass sticky top-[var(--chrome-top)] z-30 tabs-sticky", className)}
     >
       {options.map((opt) => {
         const on = value === opt.value;
