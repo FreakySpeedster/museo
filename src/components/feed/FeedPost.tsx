@@ -1,5 +1,6 @@
 "use client";
 
+import { LinkEditedLabel, OutboundLink } from "@/components/out/OutboundLink";
 import clsx from "clsx";
 import { ArrowUpRight, Compass, Link2, MessageCircle, MoreHorizontal, Send, SquareArrowOutUpRight } from "lucide-react";
 import Link from "next/link";
@@ -175,9 +176,12 @@ export function FeedPost({ entry, viewerId, onPatch, eager }: { entry: TimelineE
         )}
         {(e.tags?.length ?? 0) > 0 && <TagList tags={e.tags} />}
         {e.url && (
-          <a href={e.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="inline-flex max-w-full items-center gap-1 text-caption font-medium text-muted hover:text-foreground">
-            <span className="truncate">{e.siteName ?? "Visit link"}</span> <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
-          </a>
+          <p className="flex max-w-full items-center gap-1.5 text-caption text-muted">
+            <OutboundLink itemId={e.id} className="inline-flex min-w-0 items-center gap-1 font-medium hover:text-foreground">
+              <span className="truncate">{e.siteName ?? "Visit link"}</span> <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />
+            </OutboundLink>
+            {e.urlEditedAt && <><span aria-hidden>·</span><LinkEditedLabel at={e.urlEditedAt} className="shrink-0" /></>}
+          </p>
         )}
 
         {preview.length > 0 && (

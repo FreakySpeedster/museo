@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidCategory } from "./categories";
+import { REPORT_REASONS } from "./link-policy";
 
 const trimmed = (min: number, max: number, label: string) =>
   z
@@ -112,11 +113,14 @@ export const itemCreateLinkSchema = itemTextSchema.extend({
 });
 
 export const itemUpdateSchema = z.object({
+  url: z.string().trim().min(1, "Link is required").max(2048, "That link is too long").optional(),
   title: trimmed(1, 120, "Title").optional(),
   description: optionalText(500, "Description").optional(),
   tags: tagsSchema.optional(),
   visibility: visibilitySchema.optional(),
 });
+
+export const reportSchema = z.object({ reason: z.enum(REPORT_REASONS) });
 
 export const reorderSchema = z.object({
   itemIds: z.array(z.string().min(1).max(40)).min(1).max(500),

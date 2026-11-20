@@ -39,12 +39,13 @@ model User {
   following Follow[]          @relation("follower")
   followers Follow[]          @relation("following")
 
-  sentFollowRequests     FollowRequest[] @relation("requester")
-  receivedFollowRequests FollowRequest[] @relation("requestTarget")
-  notifications          Notification[]  @relation("recipient")
-  actedNotifications     Notification[]  @relation("actor")
+  sentFollowRequests     FollowRequest[]      @relation("requester")
+  receivedFollowRequests FollowRequest[]      @relation("requestTarget")
+  notifications          Notification[]       @relation("recipient")
+  actedNotifications     Notification[]       @relation("actor")
   blogPosts              BlogPost[]
   passwordResets         PasswordResetToken[]
+  itemReports            ItemReport[]
 }
 
 model Session {
@@ -126,6 +127,14 @@ model Item {
   canonicalKey  String?
   /// Set when this item was added from someone else's post ("Add to my collection"); points at the original root item.
   sourceItemId  String?
+  /// First link the item was posted with; kept when the owner edits the URL (audit trail for scam swaps).
+  originalUrl   String?
+  /// Set when the owner changed the link after posting ("Link edited").
+  urlEditedAt   DateTime?
+  /// Link reputation: null = checked clean, "unverified" = the safety check could not run (fail-open).
+  linkCheck     String?
+  /// Distinct "Report link" reports; at REPORT_HIDE_THRESHOLD the link is gated behind a warning.
+  reportCount   Int            @default(0)
   sourceItem    Item?          @relation("ItemCopies", fields: [sourceItemId], references: [id], onDelete: SetNull)
   copies        Item[]         @relation("ItemCopies")
   createdAt     DateTime       @default(now())
@@ -137,6 +146,7 @@ model Item {
   notifications Notification[]
   views         ItemView[]
   blogTags      BlogPostItem[]
+  reports       ItemReport[]
 
   @@index([shelfId, position])
   @@index([userId, createdAt])
@@ -144,6 +154,19 @@ model Item {
   @@index([visibility])
   @@index([canonicalKey, userId])
   @@index([sourceItemId])
+}
+
+model ItemReport {
+  id         String   @id @default(cuid())
+  itemId     String
+  reporterId String
+  reason     String // scam | malware | spam | other
+  createdAt  DateTime @default(now())
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  reporter   User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([reporterId, itemId])
+  @@index([itemId])
 }
 
 model ItemLike {

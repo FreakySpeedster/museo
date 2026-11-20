@@ -28,6 +28,17 @@ import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { timeAgo } from "@/lib/time";
 import { PhotoCarousel } from "./PhotoCarousel";
 import { TagInput, TagList } from "@/components/ui/Tags";
+import { OptionSheet } from "@/components/ui/OptionSheet";
+import { LinkEditedLabel, OutboundLink } from "@/components/out/OutboundLink";
+import type { ReportReason } from "@/lib/link-policy";
+import { ShieldAlert } from "lucide-react";
+
+const REPORT_OPTIONS: Array<{ value: ReportReason; label: string; description: string }> = [
+  { value: "scam", label: "Scam or phishing", description: "Fake shop, asks for passwords, codes or payment" },
+  { value: "malware", label: "Malware or unsafe download", description: "Tries to install something or hijack the browser" },
+  { value: "spam", label: "Spam or misleading", description: "Link doesn't match the post, or is an ad" },
+  { value: "other", label: "Something else", description: "Another reason this link shouldn't be here" },
+];
 
 const fullDate = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" });
 
@@ -92,6 +103,8 @@ export function ItemBody({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [title, setTitle] = useState(it.title);
+  const [link, setLink] = useState(it.url ?? "");
+  const [reporting, setReporting] = useState(false);
   const [description, setDescription] = useState(it.description);
   const [tags, setTags] = useState<string[]>(it.tags ?? []);
   const idx = shelf ? shelf.items.findIndex((i) => i.id === it.id) : -1;
@@ -158,6 +171,7 @@ export function ItemBody({
     { label: "Write about it", hidden: !isOwner, onSelect: () => router.push(`/blog/new?item=${it.id}`) },
     { label: it.visibility === "private" ? "Make public" : "Make private", hidden: !isOwner, onSelect: () => void setVisibility(it.visibility === "private" ? "public" : "private") },
     { label: "Share link", onSelect: () => void copyLink() },
+    { label: "Report link", hidden: isOwner || !it.url, onSelect: () => (viewerId ? setReporting(true) : toast.info("Sign in to report this.")) },
     { label: "Delete", danger: true, hidden: !isOwner, onSelect: () => setConfirming(true) },
   ];
   const actionsMenu = (
@@ -176,14 +190,29 @@ export function ItemBody({
     setBusy(true);
     setError("");
     try {
-      const { item: updated } = await api<{ item: ItemDTO }>(`/api/items/${it.id}`, { method: "PATCH", json: { title, description, tags } });
+      const linkChanged = it.type === "LINK" && link.trim() !== (it.url ?? "");
+      const { item: updated } = await api<{ item: ItemDTO }>(`/api/items/${it.id}`, {
+        method: "PATCH",
+        json: { title, description, tags, ...(linkChanged ? { url: link.trim() } : {}) },
+      });
       onUpdated(updated);
       setEditing(false);
-      toast.success("Saved");
+      setTitle(updated.title);
+      setLink(updated.url ?? "");
+      toast.success(linkChanged ? "Link updated" : "Saved");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Couldn't save");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function report(reason: ReportReason) {
+    try {
+      const r = await api<{ alreadyReported: boolean }>(`/api/items/${it.id}/report`, { json: { reason } });
+      toast.success(r.alreadyReported ? "You already reported this link" : "Thanks. We'll warn people before they open it.");
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : "Couldn't send the report");
     }
   }
 
@@ -242,13 +271,29 @@ export function ItemBody({
             </div>
             {editing ? (
               <div className="mt-3 space-y-3">
+                {it.type === "LINK" && (
+                  <Field label="Link" htmlFor="edit-link" hint="Changing the link refreshes the photo and source.">
+                    <Input
+                      id="edit-link"
+                      type="url"
+                      inputMode="url"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      value={link}
+                      maxLength={2048}
+                      onChange={(e) => setLink(e.target.value)}
+                      data-testid="edit-link"
+                    />
+                  </Field>
+                )}
                 <Field label="Title" htmlFor="edit-title"><Input id="edit-title" data-autofocus value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} /></Field>
                 <Field label="Thoughts" htmlFor="edit-desc"><Textarea id="edit-desc" rows={5} value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} /></Field>
                 <Field label="Tags" htmlFor="edit-tags"><TagInput id="edit-tags" value={tags} onChange={setTags} /></Field>
                 {error && <FormError>{error}</FormError>}
                 <div className="flex gap-2">
                   <Button onClick={save} loading={busy} size="sm">Save</Button>
-                  <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setTitle(it.title); setDescription(it.description); setTags(it.tags ?? []); }}>Cancel</Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setTitle(it.title); setLink(it.url ?? ""); setDescription(it.description); setTags(it.tags ?? []); }}>Cancel</Button>
                 </div>
               </div>
             ) : (
@@ -274,15 +319,14 @@ export function ItemBody({
                   <p className="mt-4 text-meta italic text-muted">No thoughts yet.</p>
                 )}
                 {it.url && (
-                  <a
-                    href={it.url}
-                    target="_blank"
-                    rel="noopener noreferrer nofollow ugc"
-                    className={buttonClass("primary", "md", "mt-5 w-fit max-w-full")}
-                  >
-                    <span className="truncate">Visit {it.siteName ?? "link"}</span>
-                    <ArrowUpRight className="size-4 shrink-0" aria-hidden />
-                  </a>
+                  <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <OutboundLink itemId={it.id} className={buttonClass(it.linkFlag === "reported" ? "secondary" : "primary", "md", "w-fit max-w-full")} data-testid="visit-link">
+                      {it.linkFlag === "reported" && <ShieldAlert className="size-4 shrink-0 text-danger" aria-hidden />}
+                      <span className="truncate">Visit {it.siteName ?? "link"}</span>
+                      <ArrowUpRight className="size-4 shrink-0" aria-hidden />
+                    </OutboundLink>
+                    <LinkEditedLabel at={it.urlEditedAt} className="text-caption text-muted" />
+                  </div>
                 )}
                 <div className="mt-5 flex items-center gap-1">
                   <LikeButton
@@ -307,6 +351,14 @@ export function ItemBody({
                   />
                 </div>
                 <ItemBlogPosts itemId={it.id} />
+                <OptionSheet<ReportReason | "">
+                  open={reporting}
+                  onClose={() => setReporting(false)}
+                  title="Report link"
+                  value=""
+                  options={REPORT_OPTIONS}
+                  onChange={(r) => r && void report(r)}
+                />
                 {photoOpen && <div className="mt-4"><ItemPhotoEditor it={it} onUpdated={(u) => { onUpdated(u); setPhotoOpen(false); }} onCancel={() => setPhotoOpen(false)} /></div>}
                 {confirming && (
                   <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-danger/40 bg-danger-subtle p-3">

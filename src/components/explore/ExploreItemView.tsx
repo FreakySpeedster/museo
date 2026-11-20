@@ -1,5 +1,6 @@
 "use client";
 
+import { OutboundLink } from "@/components/out/OutboundLink";
 import { ArrowUpRight, BookmarkCheck, Heart } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { PublicUser, TimelineEntry } from "@/lib/dto";
@@ -73,9 +74,9 @@ export function ExploreItemView({ hero, initial, viewerId }: { hero: Hero; initi
           </p>
           <h1 className="mt-1 text-balance text-title font-semibold leading-tight tracking-tight">{hero.title}</h1>
           {url && (
-            <a href={url} target="_blank" rel="noopener noreferrer nofollow ugc" className="mt-1 inline-flex items-center gap-1 text-meta text-muted hover:text-foreground">
+            <OutboundLink itemId={rep!.id} className="mt-1 inline-flex items-center gap-1 text-meta text-muted hover:text-foreground">
               {hero.siteName ?? "Visit link"} <ArrowUpRight className="size-4" aria-hidden />
-            </a>
+            </OutboundLink>
           )}
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-meta text-muted">
             <OwnersStack users={hero.ownerPreview} total={hero.owners} size={24} long />

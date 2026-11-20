@@ -14,6 +14,9 @@ import type { Prisma } from "@prisma/client";
 import { advisoryLock } from "../locks";
 import { canonicalKeyFor } from "../canonical";
 import { probeImageDims } from "../image-dims";
+import { assertReputation, validateDestination, validateItemUrl } from "../net/url-safety";
+import { REPORT_HIDE_THRESHOLD, URL_EDIT_LIMIT, type ReportReason } from "../link-policy";
+import { rateLimit } from "../rate-limit";
 import { FREE_ITEMS_PER_SHELF, MAX_MANUAL_PHOTOS, PLUS_ITEMS_PER_SHELF, itemCreationGate, type ItemGate } from "../limits";
 
 export const MAX_ITEMS_PER_SHELF = PLUS_ITEMS_PER_SHELF;
@@ -54,6 +57,18 @@ export async function insertItem(userId: string, shelfId: string, data: Omit<Pri
   });
 }
 
+/**
+ * Shared create/edit gate: validate the pasted link, follow it to its real destination (expanding short links),
+ * re-validate that destination and run the reputation check on both. Returns the preview for the destination.
+ */
+async function resolveSafeLink(raw: string, opts: { fresh?: boolean } = {}) {
+  const pasted = validateItemUrl(raw).toString();
+  const resolved = await resolveLinkPreview(pasted, opts);
+  const dest = validateDestination(resolved.preview.url).toString();
+  const linkCheck = await assertReputation([pasted, dest]);
+  return { resolved: { ...resolved, preview: { ...resolved.preview, url: dest } }, linkCheck };
+}
+
 export async function createLinkItem(
   userId: string,
   shelfId: string,
@@ -63,8 +78,8 @@ export async function createLinkItem(
   await assertShelfOwner(userId, shelfId);
   await assertCanAddItem(userId, shelfId);
   // The user's own photo wins; then a candidate they picked; otherwise the best verified image from the page.
+  const { resolved, linkCheck } = await resolveSafeLink(input.url);
   const own = opts.photo ? await saveUploadedImage(opts.photo) : null;
-  const resolved = await resolveLinkPreview(input.url);
   const { preview } = resolved;
   const thumb = own ? { imageUrl: own, faviconUrl: (await resolveThumbnail({ ...resolved, best: null, alternatives: [] })).faviconUrl } : await resolveThumbnail(resolved, { prefer: opts.imageUrl });
   const { imageUrl, faviconUrl } = thumb;
@@ -88,6 +103,8 @@ export async function createLinkItem(
   return insertItem(userId, shelfId, {
     type: "LINK",
     url: preview.url,
+    originalUrl: preview.url,
+    linkCheck,
     imageUrl,
     images,
     faviconUrl,
@@ -138,6 +155,67 @@ export async function updateItem(userId: string, itemId: string, input: z.infer<
   // A renamed photo item is a different "thing"; copies keep the original's grouping.
   const rekey = input.title && input.title !== item.title && item.type === "PHOTO" && !item.sourceItemId;
   return db.item.update({ where: { id: itemId }, data: rekey ? { ...input, canonicalKey: canonicalKeyFor({ type: item.type, url: item.url, title: input.title! }) } : input });
+}
+
+/**
+ * Owner changes a link item's source URL. Same safety gate as create; the photo, favicon and source are
+ * re-fetched from the new page, the first URL is kept in originalUrl and the post shows "Link edited".
+ * The title follows the new page unless the owner typed a new one in the same edit.
+ */
+export async function updateItemUrl(userId: string, itemId: string, rawUrl: string, opts: { title?: string } = {}) {
+  const item = await assertItemOwner(userId, itemId);
+  if (item.type !== "LINK") throw new AppError("BAD_REQUEST", "Only link posts have a link to edit");
+  const pasted = validateItemUrl(rawUrl).toString();
+  if (pasted === item.url) return { item, changed: false };
+  const rl = await rateLimit(`item-url-edit:${userId}`, URL_EDIT_LIMIT.max, URL_EDIT_LIMIT.windowMs);
+  if (!rl.ok) throw new AppError("RATE_LIMITED", `You've changed links a lot recently. Try again in ${Math.ceil(rl.retryAfter / 60)} min.`);
+  const { resolved, linkCheck } = await resolveSafeLink(pasted, { fresh: true });
+  const { preview } = resolved;
+  if (preview.url === item.url) return { item, changed: false };
+  const { imageUrl, faviconUrl } = await resolveThumbnail(resolved);
+  let host = preview.siteName;
+  try {
+    host = host || new URL(preview.url).hostname.replace(/^www\./, "");
+  } catch {
+    /* ignore */
+  }
+  const ownTitle = opts.title?.trim() && opts.title.trim() !== item.title ? opts.title.trim() : null;
+  const title = (ownTitle || preview.title || item.title).slice(0, 120);
+  const updated = await db.item.update({
+    where: { id: item.id },
+    data: {
+      url: preview.url,
+      originalUrl: item.originalUrl ?? item.url,
+      urlEditedAt: new Date(),
+      linkCheck,
+      title,
+      siteName: host || null,
+      faviconUrl,
+      imageUrl,
+      images: [],
+      ...(imageUrl ? await dimsData(imageUrl) : { imageWidth: null, imageHeight: null }),
+      ...(item.sourceItemId ? {} : { canonicalKey: canonicalKeyFor({ type: "LINK", url: preview.url, title }) }),
+    },
+  });
+  await releaseUploads([item.imageUrl, item.faviconUrl, ...item.images].filter((u) => u !== imageUrl && u !== faviconUrl));
+  return { item: updated, changed: true };
+}
+
+/**
+ * "Report link": one report per person per item (repeats are no-ops). Owners can't report themselves.
+ * At REPORT_HIDE_THRESHOLD distinct reports the link is gated behind a warning interstitial.
+ */
+export async function reportItemLink(userId: string, itemId: string, reason: ReportReason) {
+  const item = await db.item.findUnique({ where: { id: itemId }, include: { shelf: { include: { page: true } } } });
+  if (!item || !canViewItem(item, userId)) throw new AppError("NOT_FOUND", "That item is gone.");
+  if (item.userId === userId) throw new AppError("BAD_REQUEST", "You can't report your own post");
+  return db.$transaction(async (tx) => {
+    const created = await tx.itemReport.createMany({ data: [{ itemId, reporterId: userId, reason }], skipDuplicates: true });
+    const row = created.count
+      ? await tx.item.update({ where: { id: itemId }, data: { reportCount: { increment: 1 } }, select: { reportCount: true } })
+      : await tx.item.findUniqueOrThrow({ where: { id: itemId }, select: { reportCount: true } });
+    return { reported: true, alreadyReported: created.count === 0, hidden: row.reportCount >= REPORT_HIDE_THRESHOLD };
+  });
 }
 
 /**

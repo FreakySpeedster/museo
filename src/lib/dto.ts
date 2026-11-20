@@ -26,6 +26,10 @@ export interface ItemDTO {
   canonicalKey: string | null;
   /** Set on copies made with "Add to my collection". */
   sourceItemId: string | null;
+  /** When the owner last changed the link ("Link edited"). */
+  urlEditedAt?: string | null;
+  /** Why the outbound link gets a warning: reported by several people, or the safety check couldn't run. */
+  linkFlag?: "reported" | "unverified" | null;
 }
 
 export interface ShelfDTO {

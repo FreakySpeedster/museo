@@ -1,6 +1,13 @@
 import type { Item, Shelf, Page, User, Prisma } from "@prisma/client";
 import type { ItemDTO, PageDTO, PublicUser, ShelfDTO, TimelineEntry, ViewerDTO } from "./dto";
 import { normalizeSocialLinks } from "./social-links";
+import { REPORT_HIDE_THRESHOLD } from "./link-policy";
+
+/** Outbound-link warning state (see link-policy). */
+export function linkFlagOf(i: { reportCount?: number | null; linkCheck?: string | null }): "reported" | "unverified" | null {
+  if ((i.reportCount ?? 0) >= REPORT_HIDE_THRESHOLD) return "reported";
+  return i.linkCheck === "unverified" ? "unverified" : null;
+}
 
 const vis = (v?: string | null): "public" | "private" => (v === "private" ? "private" : "public");
 
@@ -27,6 +34,8 @@ export const toItemDTO = (i: Item): ItemDTO => ({
   imageHeight: i.imageHeight ?? null,
   canonicalKey: i.canonicalKey ?? null,
   sourceItemId: i.sourceItemId ?? null,
+  urlEditedAt: i.urlEditedAt ? i.urlEditedAt.toISOString() : null,
+  linkFlag: linkFlagOf(i),
 });
 
 export const toShelfDTO = (s: Shelf & { items?: Item[] }): ShelfDTO => ({
