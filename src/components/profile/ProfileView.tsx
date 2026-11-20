@@ -384,10 +384,10 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
       {/* ---------------------------------------------------------- header (Instagram layout) */}
       <div ref={header} data-testid="profile-header" className={clsx("profile-head py-5 sm:py-10 md:mx-auto md:max-w-3xl", !(user.bio || user.socialLinks?.length > 0) && "profile-head--bare")}>
         <span data-avatar className="inline-block justify-self-center [grid-area:avatar]">
-          <Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={wide ? 160 : 84} className="shadow-xl ring-4 ring-surface" />
+          <Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={wide ? 144 : 84} className="shadow-xl ring-4 ring-surface" />
         </span>
         <div data-head className="min-w-0 [grid-area:name]">
-          <h1 className="truncate text-body font-semibold tracking-tight sm:text-title">{user.displayName}</h1>
+          <h1 className="truncate text-body font-semibold tracking-tight sm:text-heading">{user.displayName}</h1>
           <p className="truncate text-meta text-muted">@{user.username}</p>
         </div>
         <div data-head className="grid grid-cols-3 [grid-area:stats] sm:flex sm:gap-8" data-testid="profile-stats">
@@ -397,7 +397,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
         </div>
         {(user.bio || user.socialLinks?.length > 0) && (
           <div data-head className="min-w-0 space-y-3 [grid-area:about]">
-            {user.bio && <p className="max-w-lg whitespace-pre-line text-meta text-foreground/85 sm:text-body">{user.bio}</p>}
+            {user.bio && <p className="max-w-lg whitespace-pre-line text-meta text-foreground/85">{user.bio}</p>}
             {user.socialLinks?.length > 0 && (
               <div className="-ml-1.5 flex flex-wrap gap-0.5">
                 {user.socialLinks.map((l) => (

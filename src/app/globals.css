@@ -557,8 +557,10 @@ body[data-modal="open"] .app-phone-nav { visibility: hidden; pointer-events: non
 }
 .profile-head--bare { grid-template-areas: "avatar stats" "name name" "actions actions"; }
 @media (min-width: 640px) {
-  .profile-head { grid-template-areas: "avatar name" "avatar stats" "avatar actions" "avatar about"; column-gap: 3.5rem; row-gap: 0.875rem; }
-  .profile-head--bare { grid-template-areas: "avatar name" "avatar stats" "avatar actions"; }
+  /* Avatar top-aligned with the name; text column reads name, stats, bio, then actions. */
+  .profile-head { grid-template-areas: "avatar name" "avatar stats" "avatar about" "avatar actions"; grid-template-rows: auto auto auto 1fr; align-items: start; column-gap: 2.5rem; row-gap: 1rem; }
+  .profile-head--bare { grid-template-areas: "avatar name" "avatar stats" "avatar actions"; grid-template-rows: auto auto 1fr; }
+  .profile-head [data-avatar] { align-self: start; }
 }
 
 /* Double-tap like: a heart pops over the photo. */
