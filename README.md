@@ -6,7 +6,6 @@
 
 Built with **Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Prisma + PostgreSQL · GSAP**.
 
-![landing](screenshots/01-landing.png)
 
 ## Features
 
