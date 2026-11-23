@@ -9,6 +9,7 @@ import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { FeedSkeleton } from "./FeedSkeleton";
 import { FeedPost } from "./FeedPost";
 import { ExploreView } from "@/components/explore/ExploreView";
+import { PeopleSuggestions } from "@/components/discover/DiscoverRail";
 import { ensureScrollTrigger, gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -152,16 +153,19 @@ export function HomeFeed({
       />
 
       {scope === "explore" ? (
-        <ExploreView chips={chips} stickyTop="top-[calc(var(--chrome-top)+3rem)]" />
+        <ExploreView chips={chips} stickyTop="top-[calc(var(--chrome-top)+3rem)]" signedIn />
       ) : loading && feed.items.length === 0 ? (
         <FeedSkeleton />
       ) : feed.items.length === 0 ? (
-        <EmptyState
-          icon={<Sprout aria-hidden />}
-          title={hasFollows ? "Nothing new yet" : "Your feed is quiet"}
-          description="Follow collectors to see what they add here, or explore what people are collecting."
-          action={<Button variant="secondary" onClick={() => switchScope("explore")}>Explore</Button>}
-        />
+        <>
+          <EmptyState
+            icon={<Sprout aria-hidden />}
+            title={hasFollows ? "Nothing new yet" : "Your feed is quiet"}
+            description="Follow collectors to see what they add here, or explore what people are collecting."
+            action={<Button variant="secondary" onClick={() => switchScope("explore")}>Explore</Button>}
+          />
+          <PeopleSuggestions signedIn className="mt-2" />
+        </>
       ) : (
         <div data-testid="feed">
           {feed.items.map((e, i) => (

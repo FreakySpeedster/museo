@@ -5,6 +5,7 @@ import { publicUserSelect, toPublicUser, toTimelineEntry } from "../mappers";
 import { itemVisibleWhere } from "../visibility";
 import type { PublicUser, TimelineEntry } from "../dto";
 import { decorateEntries, ownedCopiesForKey } from "./explore-helpers";
+import { savedIdsFor } from "./saves";
 
 /**
  * Explore: item-focused discovery. Public items are grouped by canonicalKey ("the same thing") and ranked by
@@ -64,6 +65,8 @@ export interface ExploreCard {
   likes: number;
   ownerPreview: PublicUser[];
   mine: boolean;
+  /** The representative post is on the viewer's private Want list (signed-in viewers only). */
+  savedByMe?: boolean;
 }
 
 /** Categories and tags of the viewer's collections, most-used first. */
@@ -172,6 +175,7 @@ async function cardsFor(ranked: Array<{ k: string; owners: number; likes: number
   ]);
   const repBy = new Map(reps.map((r) => [r.k, r]));
   const mineSet = new Set(mine.map((m) => m.canonicalKey));
+  const saved = await savedIdsFor(viewerId, reps.map((r) => r.id));
   return ranked.flatMap((r) => {
     const rep = repBy.get(r.k);
     if (!rep) return [];
@@ -191,6 +195,7 @@ async function cardsFor(ranked: Array<{ k: string; owners: number; likes: number
         likes: r.likes,
         ownerPreview: people.filter((p) => p.k === r.k).map((p) => toPublicUser(p)),
         mine: mineSet.has(r.k),
+        ...(viewerId ? { savedByMe: saved.has(rep.id) } : {}),
       } satisfies ExploreCard,
     ];
   });

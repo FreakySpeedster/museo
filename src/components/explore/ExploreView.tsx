@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { BookmarkCheck, Compass, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, BookmarkCheck, Compass, Sparkles, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ExploreCard, ExploreChip } from "@/lib/services/explore";
@@ -12,6 +12,9 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { ItemThumb } from "@/components/profile/ItemThumb";
 import { OwnersStack } from "./OwnersStack";
+import { SaveButton } from "@/components/saves/SaveButton";
+import { DiscoverRail, SectionHead } from "@/components/discover/DiscoverRail";
+import { isTopicSlug } from "@/lib/topics";
 
 interface Page { items: ExploreCard[]; nextOffset: number | null; personal: boolean; fallback: boolean }
 
@@ -22,7 +25,17 @@ const tileRatio = (w: number | null, h: number | null) => (w && h ? Math.min(4 /
  * Explore: item-focused discovery, not a post feed. Category chips across the top ("For you" first),
  * then a masonry of things people collect, ranked by how many own them.
  */
-export function ExploreView({ chips, initial, stickyTop = "top-[var(--chrome-top)]" }: { chips: ExploreChip[]; initial?: Page; stickyTop?: string }) {
+export function ExploreView({
+  chips,
+  initial,
+  stickyTop = "top-[var(--chrome-top)]",
+  signedIn = false,
+}: {
+  chips: ExploreChip[];
+  initial?: Page;
+  stickyTop?: string;
+  signedIn?: boolean;
+}) {
   const [chip, setChip] = useState(chips[0]?.id ?? "trending");
   const [page, setPage] = useState<Page | null>(initial ?? null);
   const [loading, setLoading] = useState(!initial);
@@ -61,6 +74,8 @@ export function ExploreView({ chips, initial, stickyTop = "top-[var(--chrome-top
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page?.nextOffset, chip]);
 
+  const overview = chip === "for-you" || chip === "trending";
+
   function pick(c: string) {
     if (c === chip) return;
     setChip(c);
@@ -95,6 +110,29 @@ export function ExploreView({ chips, initial, stickyTop = "top-[var(--chrome-top
         </div>
       </div>
 
+      {/* Discovery rail on the overview chips; kept mounted so switching chips doesn't refetch it. */}
+      <DiscoverRail signedIn={signedIn} className={clsx(!overview && "hidden")} />
+      {overview ? (
+        <div className="mt-8">
+          <SectionHead title="Most collected" />
+        </div>
+      ) : (
+        isTopicSlug(chip) && (
+          <Link
+            href={`/topics/${chip}`}
+            data-testid="open-topic"
+            className="mt-4 flex min-h-11 items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 text-meta transition-colors hover:bg-surface-hover"
+          >
+            <CategoryIcon category={chip} className="size-5 shrink-0" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">{chips.find((c) => c.id === chip)?.label ?? "Topic"}</span>
+              <span className="block text-caption text-muted">Top collections and collectors</span>
+            </span>
+            <ArrowRight className="size-4 shrink-0 text-muted" aria-hidden />
+          </Link>
+        )
+      )}
+
       {page?.fallback && page.items.length > 0 && (
         <p className="mt-4 text-meta text-muted">Not much in your categories yet, so here’s what’s trending everywhere.</p>
       )}
@@ -104,8 +142,8 @@ export function ExploreView({ chips, initial, stickyTop = "top-[var(--chrome-top
       ) : page && page.items.length === 0 ? (
         <EmptyState icon={<Compass aria-hidden />} title="Nothing trending here yet" description="When more people collect in this category, the most-owned things show up here." />
       ) : (
-        <div className="mt-4 columns-2 gap-3 md:columns-3" data-testid="explore-grid">
-          {page?.items.map((c, i) => <Tile key={c.key} card={c} eager={i < 4} />)}
+        <div className={clsx("columns-2 gap-3 md:columns-3", overview ? "mt-0" : "mt-4")} data-testid="explore-grid">
+          {page?.items.map((c, i) => <Tile key={c.key} card={c} eager={i < 4} signedIn={signedIn} />)}
         </div>
       )}
       <div ref={sentinel} className="h-8" aria-hidden />
@@ -114,9 +152,10 @@ export function ExploreView({ chips, initial, stickyTop = "top-[var(--chrome-top
   );
 }
 
-function Tile({ card, eager }: { card: ExploreCard; eager?: boolean }) {
+function Tile({ card, eager, signedIn }: { card: ExploreCard; eager?: boolean; signedIn: boolean }) {
   return (
-    <Link href={`/explore/item/${card.key}`} className="group mb-4 block break-inside-avoid" data-testid="explore-tile">
+    <div className="relative mb-4 break-inside-avoid">
+    <Link href={`/explore/item/${card.key}`} className="group block" data-testid="explore-tile">
       <div className="relative overflow-hidden rounded-2xl bg-surface-hover" style={{ aspectRatio: String(tileRatio(card.imageWidth, card.imageHeight)) }}>
         <ItemThumb item={{ id: card.itemId, imageUrl: card.imageUrl, faviconUrl: card.faviconUrl, title: card.title, siteName: card.siteName, type: card.type }} hint={{ category: card.category }} eager={eager} className="transition-transform duration-300 group-hover:scale-[1.03]" />
         {card.mine && (
@@ -128,6 +167,8 @@ function Tile({ card, eager }: { card: ExploreCard; eager?: boolean }) {
       <p className="mt-2 line-clamp-2 text-meta font-semibold leading-snug">{card.title}</p>
       <OwnersStack users={card.ownerPreview} total={card.owners} size={18} className="mt-1 text-caption text-muted" />
     </Link>
+    <SaveButton itemId={card.itemId} savedByMe={card.savedByMe} signedIn={signedIn} variant="overlay" className="absolute right-0.5 top-0.5" />
+    </div>
   );
 }
 
