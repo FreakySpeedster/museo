@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { AppError } from "@/lib/errors";
 import { getPost } from "@/lib/services/blog";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { ItemThumbMini } from "@/components/blog/ItemTagPicker";
@@ -59,16 +60,18 @@ export default async function PostPage({ params }: Props) {
 
       <header>
         <h1 className="text-balance text-title font-semibold leading-tight tracking-tight">{post.title}</h1>
-        <Link href={`/u/${post.author.username}`} className="mt-6 flex w-fit items-center gap-3">
-          <Avatar name={post.author.displayName} username={post.author.username} avatarUrl={post.author.avatarUrl} size="md" />
+        <div className="mt-6 flex w-fit items-center gap-3">
+          <Link href={`/u/${post.author.username}`} className="shrink-0 rounded-full">
+            <Avatar name={post.author.displayName} username={post.author.username} avatarUrl={post.author.avatarUrl} size="md" />
+          </Link>
           <span>
-            <span className="block text-meta font-semibold">{post.author.displayName}</span>
+            <UserName user={post.author} size="lg" nameClassName="text-meta font-semibold" />
             <span className="block text-caption text-muted">
               @{post.author.username}
               {post.publishedAt && <> · <time dateTime={post.publishedAt}>{postDate(post.publishedAt)}</time></>}
             </span>
           </span>
-        </Link>
+        </div>
       </header>
 
       <div className="prose-museo mt-10" data-testid="post-body" dangerouslySetInnerHTML={{ __html: post.contentHtml }} />

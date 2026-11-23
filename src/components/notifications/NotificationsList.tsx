@@ -9,6 +9,7 @@ import type { NotificationDTO, NotificationType } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { timeAgo } from "@/lib/time";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
@@ -111,8 +112,8 @@ export function NotificationsList({ initial }: { initial: { notifications: Notif
                   </span>
                 </span>
                 <div className="min-w-0 flex-1 text-meta">
-                  <p className="line-clamp-2 text-muted">
-                    <span className="font-semibold text-foreground">{n.actor.displayName}</span> {message(n)}
+                  <p className="relative z-10 line-clamp-2 text-muted">
+                    <UserName user={n.actor} size="sm" nameClassName="font-semibold text-foreground" /> {message(n)}
                   </p>
                   {n.excerpt && <p className="mt-0.5 line-clamp-1 text-foreground">“{n.excerpt}”</p>}
                   <p className="mt-0.5 text-caption text-muted">{timeAgo(n.createdAt)}</p>

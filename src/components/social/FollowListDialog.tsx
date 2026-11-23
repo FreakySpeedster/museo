@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ConnectionDTO } from "@/lib/dto";
 import { ApiError, api } from "@/lib/client";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -253,13 +254,15 @@ function ConnectionRow({
 
   return (
     <li className="flex items-center gap-3 rounded-2xl px-3 py-2 transition-colors hover:bg-surface-hover">
-      <Link href={`/u/${user.username}`} onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl">
-        <Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={44} />
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <Link href={`/u/${user.username}`} onClick={onNavigate} className="shrink-0 rounded-full">
+          <Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={44} />
+        </Link>
         <span className="min-w-0">
-          <span className="block truncate text-meta font-semibold">{user.username}</span>
+          <UserName user={user} label="username" nameClassName="text-meta font-semibold" className="min-w-0" />
           <span className="block truncate text-caption text-muted">{user.displayName}</span>
         </span>
-      </Link>
+      </div>
       {!user.isViewer && (
         <Button
           size="sm"

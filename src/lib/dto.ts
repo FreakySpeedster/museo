@@ -63,6 +63,8 @@ export interface PublicUser {
   bio: string;
   avatarUrl: string | null;
   socialLinks: SocialLinkDTO[];
+  /** Public Plus badge. Billing details stay on ViewerDTO only. */
+  subscribed: boolean;
 }
 
 export interface TimelineEntry extends ItemDTO {
@@ -110,6 +112,8 @@ export interface SearchHit {
   imageUrl: string | null;
   createdAt: string;
   score: number;
+  /** Set on person hits so the Plus seal can render without a second query. */
+  subscribed?: boolean;
 }
 
 export type NotificationType = "LIKE" | "COMMENT" | "REPLY" | "FOLLOW" | "FOLLOW_REQUEST" | "FOLLOW_ACCEPTED";

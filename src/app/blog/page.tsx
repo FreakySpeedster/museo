@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Tabs } from "@/components/ui/Tabs";
 import { LinkButton } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
+import { PlusSeal } from "@/components/ui/PlusSeal";
 
 type Props = { searchParams: Promise<{ view?: string; author?: string }> };
 
@@ -28,7 +29,7 @@ export default async function BlogPage({ searchParams }: Props) {
   const mine = sp.view === "mine";
   if (mine && !viewer) redirect("/login");
   const author = !mine && sp.author ? sp.author.toLowerCase().slice(0, 40) : undefined;
-  const authorUser = author ? await db.user.findUnique({ where: { username: author }, select: { id: true, username: true, displayName: true, avatarUrl: true } }) : null;
+  const authorUser = author ? await db.user.findUnique({ where: { username: author }, select: { id: true, username: true, displayName: true, avatarUrl: true, subscribed: true } }) : null;
   const { posts, nextCursor } = await listPosts({ mine, author, viewerId: viewer?.id });
   const plan = !viewer ? "guest" : viewer.subscribed ? "plus" : "free";
   const priceLabel = process.env.PLUS_PRICE_LABEL || "$4 / month";
@@ -41,12 +42,21 @@ export default async function BlogPage({ searchParams }: Props) {
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4 pt-5 md:mb-8 md:pt-12">
         <div className="min-w-0">
           {authorUser ? (
-            <Link href={`/u/${authorUser.username}`} className="mb-3 flex w-fit items-center gap-2.5">
-              <Avatar name={authorUser.displayName} username={authorUser.username} avatarUrl={authorUser.avatarUrl} size="sm" />
+            <div className="mb-3 flex w-fit items-center gap-2.5">
+              <Link href={`/u/${authorUser.username}`} className="shrink-0 rounded-full">
+                <Avatar name={authorUser.displayName} username={authorUser.username} avatarUrl={authorUser.avatarUrl} size="sm" />
+              </Link>
               <span className="text-meta text-muted">@{authorUser.username}</span>
-            </Link>
+            </div>
           ) : null}
-          <h1 className="text-title font-semibold tracking-tight">{authorUser ? `${authorUser.displayName}'s blog` : mine ? "Your posts" : "Blog"}</h1>
+          <h1 className="flex items-center gap-2 text-title font-semibold tracking-tight">
+            {authorUser ? (
+              <>
+                <span className="min-w-0 truncate">{authorUser.displayName}&apos;s blog</span>
+                {authorUser.subscribed ? <PlusSeal size="lg" /> : null}
+              </>
+            ) : mine ? "Your posts" : "Blog"}
+          </h1>
           <p className="mt-1 max-w-xl text-meta text-muted md:text-body">
             {authorUser ? "Reviews and stories about the things they collect." : mine ? "Drafts stay private until you publish them." : "Reviews and stories about the things people collect, written by Museo Plus members."}
           </p>

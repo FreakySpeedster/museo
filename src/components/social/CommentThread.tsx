@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import clsx from "clsx";
 import { CornerDownRight, MessageCircle, SmilePlus, Trash2, X } from "lucide-react";
 import type { CommentDTO } from "@/lib/dto";
@@ -9,6 +8,7 @@ import { ApiError, api } from "@/lib/client";
 import { timeAgo } from "@/lib/time";
 import { REACTION_EMOJIS } from "@/lib/validation";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { Button } from "@/components/ui/Button";
 import { FormError, Textarea } from "@/components/ui/Field";
 import { useKeyboard } from "@/lib/use-keyboard-inset";
@@ -79,7 +79,7 @@ export function CommentThread({
       id: `tmp-${Date.now()}`,
       body: text,
       createdAt: new Date().toISOString(),
-      user: { id: viewerId ?? "", username: "", displayName: "You", bio: "", avatarUrl: null, socialLinks: [] },
+      user: { id: viewerId ?? "", username: "", displayName: "You", bio: "", avatarUrl: null, socialLinks: [], subscribed: false },
       parentId: parentId ?? null,
       reactions: [],
     };
@@ -257,11 +257,12 @@ function CommentRow({
       <Avatar name={c.user.displayName} username={c.user.username} avatarUrl={c.user.avatarUrl} size="xs" />
       <div className="min-w-0 flex-1">
         <p className="text-caption">
-          {c.user.username ? (
-            <Link href={`/u/${c.user.username}`} className="font-medium hover:underline">{c.user.displayName}</Link>
-          ) : (
-            <span className="font-medium">{c.user.displayName}</span>
-          )}
+          <UserName
+            user={c.user}
+            href={c.user.username ? undefined : false}
+            size="sm"
+            nameClassName="font-medium hover:underline"
+          />
           <span className="ml-1.5 text-muted">{timeAgo(c.createdAt)}</span>
         </p>
         <p className="whitespace-pre-line text-meta leading-relaxed">{c.body}</p>

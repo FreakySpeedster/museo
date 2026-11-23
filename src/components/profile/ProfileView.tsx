@@ -14,6 +14,7 @@ import { ProfilePosts } from "./ProfilePosts";
 import { FollowListDialog, type ConnectionKind } from "@/components/social/FollowListDialog";
 import { gsap, reducedMotion, useGSAP } from "@/lib/gsap";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Menu } from "@/components/ui/Menu";
@@ -387,7 +388,9 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
           <Avatar name={user.displayName} username={user.username} avatarUrl={user.avatarUrl} size={wide ? 144 : 84} className="shadow-xl ring-4 ring-surface" />
         </span>
         <div data-head className="min-w-0 [grid-area:name]">
-          <h1 className="truncate text-body font-semibold tracking-tight sm:text-heading">{user.displayName}</h1>
+          <h1 className="truncate text-body font-semibold tracking-tight sm:text-heading">
+            <UserName user={user} href={false} interactive size="header" nameClassName="text-body font-semibold tracking-tight sm:text-heading" className="max-w-full" />
+          </h1>
           <p className="truncate text-meta text-muted">@{user.username}</p>
         </div>
         <div data-head className="grid grid-cols-3 [grid-area:stats] sm:flex sm:gap-8" data-testid="profile-stats">
@@ -465,7 +468,7 @@ export function ProfileView({ profile, viewer, stripeEnabled, priceLabel, initia
         <ProfilePosts username={user.username} isOwner={isOwner} subscribed={subscribed} />
       ) : (
       <>
-      <ProfileStickyBar headerRef={header} displayName={user.displayName} username={user.username} avatarUrl={user.avatarUrl}>
+      <ProfileStickyBar headerRef={header} displayName={user.displayName} username={user.username} avatarUrl={user.avatarUrl} subscribed={user.subscribed}>
         {page && (isOwner || pages.length > 1) && (
           <PageSwitcher pages={pages} activeId={page.id} onSelect={selectPage} isOwner={isOwner} locked={locked} onCreate={startCreatePage} onReorder={isOwner ? persistPageOrder : undefined} />
         )}

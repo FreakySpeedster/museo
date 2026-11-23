@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { toTimelineEntry, toPublicUser } from "../mappers";
+import { toTimelineEntry, toPublicUser, publicUserSelect } from "../mappers";
 import { attachSocial } from "./social";
 import { itemVisibleWhere, publicItemFilter } from "../visibility";
 import type { CommentDTO, TimelineEntry } from "../dto";
@@ -9,7 +9,7 @@ import { probeImageDims } from "../image-dims";
 export const FEED_PAGE_SIZE = 10;
 
 const include = {
-  user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true, socialLinks: true } },
+  user: { select: publicUserSelect },
   shelf: { include: { page: true } },
 } as const;
 
@@ -18,11 +18,11 @@ export async function attachPreviewComments(items: TimelineEntry[]): Promise<Tim
   if (items.length === 0) return items;
   const ids = items.map((i) => i.id);
   const comments = await db.$queryRawUnsafe<
-    Array<{ id: string; itemId: string; body: string; createdAt: Date; userId: string; username: string; displayName: string; bio: string; avatarUrl: string | null }>
+    Array<{ id: string; itemId: string; body: string; createdAt: Date; userId: string; username: string; displayName: string; bio: string; avatarUrl: string | null; subscribed: boolean }>
   >(
     `
     SELECT c.id, c."itemId", c.body, c."createdAt", c."userId",
-           u.username, u."displayName", u.bio, u."avatarUrl"
+           u.username, u."displayName", u.bio, u."avatarUrl", u.subscribed
     FROM (
       SELECT *, row_number() OVER (PARTITION BY "itemId" ORDER BY "createdAt" ASC) AS rn
       FROM "ItemComment"
@@ -47,6 +47,7 @@ export async function attachPreviewComments(items: TimelineEntry[]): Promise<Tim
         displayName: r.displayName,
         bio: r.bio,
         avatarUrl: r.avatarUrl,
+        subscribed: r.subscribed,
       }),
       parentId: null,
       reactions: [],

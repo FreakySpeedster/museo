@@ -8,6 +8,7 @@ import { ArrowUpDown, Check, Package, Rows3, Search, UserRound, X } from "lucide
 import type { SearchHit, SearchSort, SearchType } from "@/lib/dto";
 import { api } from "@/lib/client";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Sheet } from "@/components/ui/Modal";
@@ -168,23 +169,38 @@ export function SearchPage({ initialQ, initialType, initialSort }: { initialQ: s
         {items.map((h) => {
           const Icon = ICONS[h.kind];
           return (
-            <Link key={`${h.kind}-${h.id}`} href={h.href} onClick={() => rememberSearch(q)} className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-surface-hover sm:mx-0 sm:rounded-2xl sm:border sm:border-border sm:bg-surface sm:p-3">
+            <div key={`${h.kind}-${h.id}`} className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-2.5 hover:bg-surface-hover sm:mx-0 sm:rounded-2xl sm:border sm:border-border sm:bg-surface sm:p-3">
               {h.kind === "person" ? (
-                <Avatar name={h.title} username={h.subtitle.replace(/^@/, "")} avatarUrl={h.imageUrl} size="md" />
-              ) : h.kind === "item" || h.imageUrl ? (
-                <ItemImage src={h.imageUrl} alt="" art={{ seed: h.id, title: h.title, collection: h.subtitle }} className="size-12 shrink-0 rounded-lg object-cover" />
+                <Link href={h.href} onClick={() => rememberSearch(q)} className="shrink-0 rounded-full">
+                  <Avatar name={h.title} username={h.subtitle.replace(/^@/, "")} avatarUrl={h.imageUrl} size="md" />
+                </Link>
               ) : (
-                <span className="grid size-12 place-items-center rounded-lg bg-surface-hover text-muted">
-                  <Icon className="size-5" aria-hidden />
-                </span>
+                <Link href={h.href} onClick={() => rememberSearch(q)} className="shrink-0">
+                  {h.kind === "item" || h.imageUrl ? (
+                    <ItemImage src={h.imageUrl} alt="" art={{ seed: h.id, title: h.title, collection: h.subtitle }} className="size-12 rounded-lg object-cover" />
+                  ) : (
+                    <span className="grid size-12 place-items-center rounded-lg bg-surface-hover text-muted">
+                      <Icon className="size-5" aria-hidden />
+                    </span>
+                  )}
+                </Link>
               )}
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-body font-semibold">{h.title}</span>
-                <span className="block truncate text-caption text-muted">
+                {h.kind === "person" ? (
+                  <UserName
+                    user={{ displayName: h.title, username: h.subtitle.replace(/^@/, ""), subscribed: h.subscribed }}
+                    href={h.href}
+                    nameClassName="text-body font-semibold"
+                    className="min-w-0"
+                  />
+                ) : (
+                  <Link href={h.href} onClick={() => rememberSearch(q)} className="block truncate text-body font-semibold">{h.title}</Link>
+                )}
+                <Link href={h.href} onClick={() => rememberSearch(q)} className="block truncate text-caption text-muted">
                   {h.subtitle} · {timeAgo(h.createdAt)}
-                </span>
+                </Link>
               </span>
-            </Link>
+            </div>
           );
         })}
       </div>

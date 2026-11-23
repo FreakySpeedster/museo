@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { AppError } from "../errors";
-import { toPublicUser } from "../mappers";
+import { publicUserPreviewSelect, toPublicUser } from "../mappers";
 import type { ConnectionDTO } from "../dto";
 import type { FollowState } from "./notifications";
 
@@ -44,7 +44,7 @@ export async function listConnections(
   const cur = decodeCursor(opts.cursor);
   const otherKey = kind === "followers" ? "followerId" : "followingId";
   const after = cur ? { OR: [{ createdAt: { lt: cur.at } }, { createdAt: cur.at, [otherKey]: { lt: cur.id } }] } : {};
-  const userSelect = { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true } } as const;
+  const userSelect = { select: publicUserPreviewSelect } as const;
   const rows =
     kind === "followers"
       ? (await db.follow.findMany({

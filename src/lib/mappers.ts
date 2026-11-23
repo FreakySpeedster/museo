@@ -57,8 +57,29 @@ export const toPageDTO = (p: Page & { shelves?: Array<Shelf & { items?: Item[] }
   shelves: (p.shelves ?? []).map(toShelfDTO),
 });
 
+/** Safe public fields for user cards and bylines. Never add email, stripe ids, or subscriptionStatus. */
+export const publicUserSelect = {
+  id: true,
+  username: true,
+  displayName: true,
+  bio: true,
+  avatarUrl: true,
+  socialLinks: true,
+  subscribed: true,
+} as const;
+
+/** Same as publicUserSelect, without social links (comments, notifications, compact lists). */
+export const publicUserPreviewSelect = {
+  id: true,
+  username: true,
+  displayName: true,
+  bio: true,
+  avatarUrl: true,
+  subscribed: true,
+} as const;
+
 export const toPublicUser = (
-  u: Pick<User, "id" | "username" | "displayName" | "bio" | "avatarUrl"> & { socialLinks?: Prisma.JsonValue | null },
+  u: Pick<User, "id" | "username" | "displayName" | "bio" | "avatarUrl" | "subscribed"> & { socialLinks?: Prisma.JsonValue | null },
 ): PublicUser => ({
   id: u.id,
   username: u.username,
@@ -66,6 +87,7 @@ export const toPublicUser = (
   bio: u.bio,
   avatarUrl: u.avatarUrl,
   socialLinks: normalizeSocialLinks(u.socialLinks ?? []),
+  subscribed: Boolean(u.subscribed),
 });
 
 export const toViewerDTO = (u: User): ViewerDTO => ({
@@ -77,7 +99,7 @@ export const toViewerDTO = (u: User): ViewerDTO => ({
 });
 
 type EntryRow = Item & {
-  user: Pick<User, "id" | "username" | "displayName" | "bio" | "avatarUrl"> & { socialLinks?: Prisma.JsonValue | null };
+  user: Pick<User, "id" | "username" | "displayName" | "bio" | "avatarUrl" | "subscribed"> & { socialLinks?: Prisma.JsonValue | null };
   shelf: Shelf & { page: Page };
 };
 export const toTimelineEntry = (i: EntryRow): TimelineEntry => ({

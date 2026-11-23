@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Layers, NotebookPen } from "lucide-react";
 import type { BlogPostSummaryDTO } from "@/lib/dto";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { ItemImage } from "@/components/art/ItemImage";
 import { Badge } from "@/components/ui/Badge";
 import { count } from "@/lib/plural";
@@ -29,9 +30,9 @@ export function PostCard({ post, showStatus = false }: { post: BlogPostSummaryDT
           <Link href={href} className="after:absolute after:inset-0 focus-visible:outline-none">{post.title}</Link>
         </h2>
         {post.excerpt && <p className="mt-2 line-clamp-3 text-meta text-muted">{post.excerpt}</p>}
-        <div className="mt-auto flex items-center gap-2 pt-4 text-caption text-muted">
+        <div className="relative z-10 mt-auto flex items-center gap-2 pt-4 text-caption text-muted">
           <Avatar name={post.author.displayName} username={post.author.username} avatarUrl={post.author.avatarUrl} size={22} />
-          <span className="truncate font-medium text-foreground">{post.author.displayName}</span>
+          <UserName user={post.author} size="sm" nameClassName="font-medium text-foreground" className="min-w-0" />
           <span aria-hidden>·</span>
           <time dateTime={post.publishedAt ?? post.updatedAt}>{postDate(post.publishedAt ?? post.updatedAt)}</time>
           {post.itemCount > 0 && (

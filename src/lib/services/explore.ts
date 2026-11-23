@@ -1,7 +1,7 @@
 import { db } from "../db";
 import { canonicalKeyFor } from "../canonical";
 import { categoryMeta } from "../categories";
-import { toPublicUser, toTimelineEntry } from "../mappers";
+import { publicUserSelect, toPublicUser, toTimelineEntry } from "../mappers";
 import { itemVisibleWhere } from "../visibility";
 import type { PublicUser, TimelineEntry } from "../dto";
 import { decorateEntries, ownedCopiesForKey } from "./explore-helpers";
@@ -158,9 +158,9 @@ async function cardsFor(ranked: Array<{ k: string; owners: number; likes: number
        ORDER BY i."canonicalKey", (i."imageUrl" IS NULL), (i."sourceItemId" IS NOT NULL), i."createdAt" ASC`,
       keys,
     ),
-    db.$queryRawUnsafe<Array<{ k: string; id: string; username: string; displayName: string; bio: string; avatarUrl: string | null }>>(
-      `SELECT k, id, username, "displayName", bio, "avatarUrl" FROM (
-         SELECT x.k, u.id, u.username, u."displayName", u.bio, u."avatarUrl", row_number() OVER (PARTITION BY x.k ORDER BY x.at DESC) AS rn
+    db.$queryRawUnsafe<Array<{ k: string; id: string; username: string; displayName: string; bio: string; avatarUrl: string | null; subscribed: boolean }>>(
+      `SELECT k, id, username, "displayName", bio, "avatarUrl", subscribed FROM (
+         SELECT x.k, u.id, u.username, u."displayName", u.bio, u."avatarUrl", u.subscribed, row_number() OVER (PARTITION BY x.k ORDER BY x.at DESC) AS rn
          FROM (SELECT i."canonicalKey" AS k, i."userId", max(i."createdAt") AS at
                FROM "Item" i JOIN "Shelf" s ON s.id = i."shelfId" JOIN "Page" p ON p.id = s."pageId"
                WHERE ${PUBLIC} AND i."canonicalKey" = ANY($1::text[]) GROUP BY i."canonicalKey", i."userId") x
@@ -242,8 +242,8 @@ export async function exploreItem(key: string, viewerId?: string | null) {
   if (!ranked) return null;
   const [card] = await cardsFor([ranked], viewerId);
   if (!card) return null;
-  const more = await db.$queryRawUnsafe<Array<{ id: string; username: string; displayName: string; bio: string; avatarUrl: string | null }>>(
-    `SELECT DISTINCT ON (u.id) u.id, u.username, u."displayName", u.bio, u."avatarUrl"
+  const more = await db.$queryRawUnsafe<Array<{ id: string; username: string; displayName: string; bio: string; avatarUrl: string | null; subscribed: boolean }>>(
+    `SELECT DISTINCT ON (u.id) u.id, u.username, u."displayName", u.bio, u."avatarUrl", u.subscribed
      FROM "Item" i JOIN "Shelf" s ON s.id = i."shelfId" JOIN "Page" p ON p.id = s."pageId" JOIN "User" u ON u.id = i."userId"
      WHERE ${PUBLIC} AND i."canonicalKey" = $1 ORDER BY u.id LIMIT 8`,
     key,
@@ -253,7 +253,7 @@ export async function exploreItem(key: string, viewerId?: string | null) {
 }
 
 const include = {
-  user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true, socialLinks: true } },
+  user: { select: publicUserSelect },
   shelf: { include: { page: true } },
 } as const;
 

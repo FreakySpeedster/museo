@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import type { BlogPostSummaryDTO } from "@/lib/dto";
 import { api } from "@/lib/client";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { timeAgo } from "@/lib/time";
 
 /** "Read about it": published blog posts that tag this item. Renders nothing when there are none. */
@@ -35,7 +36,7 @@ export function ItemBlogPosts({ itemId }: { itemId: string }) {
                 {p.excerpt && <p className="mt-0.5 line-clamp-2 text-caption text-muted">{p.excerpt}</p>}
                 <p className="mt-1.5 flex items-center gap-1.5 text-micro text-muted">
                   <Avatar name={p.author.displayName} username={p.author.username} avatarUrl={p.author.avatarUrl} size={16} />
-                  {p.author.displayName}
+                  <UserName user={p.author} href={false} interactive={false} size="sm" />
                   {p.publishedAt && <> · {timeAgo(p.publishedAt)}</>}
                 </p>
               </div>

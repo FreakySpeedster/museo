@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { ArrowRight, Package, Search, UserRound, Rows3 } from "lucide-react";
 import type { SearchHit } from "@/lib/dto";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 
 const ICONS = { person: UserRound, item: Package, shelf: Rows3 };
 
@@ -145,7 +146,18 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                     </span>
                   )}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-meta font-medium">{h.title}</span>
+                    {h.kind === "person" ? (
+                      <UserName
+                        user={{ displayName: h.title, username: h.subtitle.replace(/^@/, ""), subscribed: h.subscribed }}
+                        href={false}
+                        interactive={false}
+                        size="sm"
+                        nameClassName="text-meta font-medium"
+                        className="min-w-0"
+                      />
+                    ) : (
+                      <span className="block truncate text-meta font-medium">{h.title}</span>
+                    )}
                     <span className="block truncate text-caption text-muted">{h.subtitle}</span>
                   </span>
                 </button>

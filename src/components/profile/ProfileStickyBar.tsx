@@ -9,6 +9,7 @@ interface Props {
   displayName: string;
   username: string;
   avatarUrl?: string | null;
+  subscribed?: boolean;
   children?: ReactNode;
 }
 
@@ -36,12 +37,12 @@ function useCompactWhenAway(target: RefObject<HTMLDivElement | null>): boolean {
 }
 
 /** Pins the page switcher to the top of the viewport (below the phone top bar); compact identity slides in once the header is gone. */
-export function ProfileStickyBar({ headerRef, displayName, username, avatarUrl, children }: Props) {
+export function ProfileStickyBar({ headerRef, displayName, username, avatarUrl, subscribed, children }: Props) {
   const compact = useCompactWhenAway(headerRef);
   return (
     <div className={`sticky z-30 -mx-4 sm:-mx-6 ${STICKY_TOP_CLASS}`} data-testid="profile-sticky-bar" data-compact={compact ? "true" : "false"}>
       <div className="profile-sticky-bg flex min-h-12 items-center gap-1 px-4 sm:px-6">
-        <CompactIdentity visible={compact} displayName={displayName} username={username} avatarUrl={avatarUrl} />
+        <CompactIdentity visible={compact} displayName={displayName} username={username} avatarUrl={avatarUrl} subscribed={subscribed} />
         <div className="min-w-0 flex-1">{children}</div>
       </div>
     </div>

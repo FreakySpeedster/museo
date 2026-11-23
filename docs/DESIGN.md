@@ -38,8 +38,10 @@ Source of truth: `src/app/globals.css`. Roles are CSS variables, wired into Tail
 | accent-subtle | `--accent-subtle` | `bg-accent-subtle` | Soft accent tints |
 | danger / success / warning / info | `--danger` etc. | `text-danger` `bg-danger-subtle` … | Status |
 | focus | `--focus` | `outline-focus` `ring-focus` | Focus rings |
+| gold | `--gold` | `text-gold` `bg-gold` | Rare highlights, including the Plus seal |
+| gold-deep / gold-bright / gold-subtle | `--gold-deep` etc. | `text-gold-deep` … | Seal rim, facet highlight, and engraved fill |
 
-The canvas is a warm off-white (`#FAFAF8`) in light and near-black (`#0C0C0B`) in dark. The brand accent is monochrome: black (`#000000`) in light with white contrast, and white (`#FFFFFF`) in dark with black contrast. Hover is near-black (`#171717`) in light and neutral-200 (`#E5E5E5`) in dark; pressed is `#262626` / `#D4D4D4`. Focus rings, text selection, links, active nav, badges and the logo mark all use these tokens. Accent-as-text and white-or-black-on-fill meet WCAG AA. Danger stays red and success stays green. Decorative gold (`--gold`) is reserved for rare highlights, never body text or brand chrome. Do not add background blobs, confetti, or candy gradients.
+The canvas is a warm off-white (`#FAFAF8`) in light and near-black (`#0C0C0B`) in dark. The brand accent is monochrome: black (`#000000`) in light with white contrast, and white (`#FFFFFF`) in dark with black contrast. Hover is near-black (`#171717`) in light and neutral-200 (`#E5E5E5`) in dark; pressed is `#262626` / `#D4D4D4`. Focus rings, text selection, links, active nav, badges and the logo mark all use these tokens. Accent-as-text and white-or-black-on-fill meet WCAG AA. Danger stays red and success stays green. Decorative gold (`--gold`, with `--gold-deep`, `--gold-bright`, and `--gold-subtle`) is reserved for rare highlights such as the Museo Plus curator's seal, never body text or brand chrome. Do not add background blobs, confetti, or candy gradients.
 
 ### Type
 

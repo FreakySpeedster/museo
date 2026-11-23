@@ -7,6 +7,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import type { SearchHit } from "@/lib/dto";
 import { api } from "@/lib/client";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 const KEY = "museo.recent-searches";
@@ -109,7 +110,14 @@ export function SearchSuggestions({ onPick, onNavigate }: { onPick: (q: string) 
                 <Link href={p.href} onClick={onNavigate} className="flex w-28 flex-col items-center gap-2 rounded-2xl border border-border bg-surface p-3 text-center transition-colors hover:bg-surface-hover">
                   <Avatar name={p.title} username={p.subtitle.replace(/^@/, "")} avatarUrl={p.imageUrl} size={56} />
                   <span className="w-full">
-                    <span className="block truncate text-meta font-semibold">{p.title}</span>
+                    <UserName
+                      user={{ displayName: p.title, username: p.subtitle.replace(/^@/, ""), subscribed: p.subscribed }}
+                      href={false}
+                      interactive={false}
+                      size="sm"
+                      nameClassName="text-meta font-semibold"
+                      className="w-full justify-center"
+                    />
                     <span className="block truncate text-caption text-muted">{p.subtitle}</span>
                   </span>
                 </Link>

@@ -11,6 +11,7 @@ import { ApiError, api } from "@/lib/client";
 import { timeAgo } from "@/lib/time";
 import { count, plural } from "@/lib/plural";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { Menu } from "@/components/ui/Menu";
 import { TagList } from "@/components/ui/Tags";
 import { useToast } from "@/components/ui/Toast";
@@ -111,9 +112,9 @@ export function FeedPost({ entry, viewerId, onPatch, eager }: { entry: TimelineE
           <Avatar name={e.user.displayName} username={e.user.username} avatarUrl={e.user.avatarUrl} size={32} />
         </Link>
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="truncate text-meta">
-            <Link href={`/u/${e.user.username}`} className="font-semibold">{e.user.username}</Link>
-            <span className="text-muted"> · {timeAgo(e.createdAt)}</span>
+          <p className="flex min-w-0 items-baseline gap-1 text-meta">
+            <UserName user={e.user} label="username" size="md" nameClassName="font-semibold" className="min-w-0" />
+            <span className="shrink-0 text-muted">· {timeAgo(e.createdAt)}</span>
           </p>
           <Link href={`/u/${e.user.username}?page=${e.page.id}`} className="block truncate text-caption text-muted hover:text-foreground">{e.shelf.name}</Link>
         </div>
@@ -188,7 +189,7 @@ export function FeedPost({ entry, viewerId, onPatch, eager }: { entry: TimelineE
           <ul className="space-y-1 pt-1" data-testid="post-comments">
             {preview.map((c) => (
               <li key={c.id} className="text-meta leading-snug">
-                <Link href={`/u/${c.user.username}`} className="font-semibold">{c.user.username}</Link>{" "}
+                <UserName user={c.user} label="username" size="sm" nameClassName="font-semibold" />{" "}
                 <span className="whitespace-pre-line text-foreground/90">{c.body}</span>
               </li>
             ))}

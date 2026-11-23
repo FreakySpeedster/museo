@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { canViewItem } from "../visibility";
-import { toTimelineEntry } from "../mappers";
+import { publicUserSelect, toTimelineEntry } from "../mappers";
 import { decorateEntries } from "./feed";
 import { AppError } from "../errors";
 import { downloadImage, resolveLinkPreview, resolveThumbnail } from "../link-preview";
@@ -329,7 +329,7 @@ export async function getVisibleItem(id: string, viewerId?: string | null) {
   const item = await db.item.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true, socialLinks: true } },
+      user: { select: publicUserSelect },
       shelf: { include: { page: true } },
     },
   });

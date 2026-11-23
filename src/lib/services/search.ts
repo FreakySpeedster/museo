@@ -7,7 +7,7 @@ const like = (q: string) => `%${q.replace(/[%_\\]/g, "\\$&")}%`;
 const visItem = `AND ((i.visibility = 'public' AND s.visibility = 'public' AND p.visibility = 'public') OR i."userId" = $5)`;
 const visShelf = `AND ((s.visibility = 'public' AND p.visibility = 'public') OR p."userId" = $5)`;
 
-type PersonRow = { id: string; username: string; displayName: string; avatarUrl: string | null; createdAt: Date; score: number; followers: bigint };
+type PersonRow = { id: string; username: string; displayName: string; avatarUrl: string | null; createdAt: Date; score: number; followers: bigint; subscribed: boolean };
 type ItemRow = { id: string; title: string; description: string; imageUrl: string | null; createdAt: Date; score: number; likes: bigint; username: string; shelfName: string };
 type ShelfRow = { id: string; name: string; category: string; createdAt: Date; score: number; likes: bigint; username: string; pageId: string };
 
@@ -17,7 +17,7 @@ async function people(q: string, sort: SearchSort, take: number, offset: number)
     sort === "new" ? 'u."createdAt" DESC' : sort === "top" ? "followers DESC, score DESC" : "score DESC, followers DESC";
   const rows = await db.$queryRawUnsafe<PersonRow[]>(
     `
-    SELECT u.id, u.username, u."displayName", u."avatarUrl", u."createdAt",
+    SELECT u.id, u.username, u."displayName", u."avatarUrl", u."createdAt", u.subscribed,
       GREATEST(similarity(u.username, $1), similarity(u."displayName", $1)) AS score,
       (SELECT COUNT(*) FROM "Follow" f WHERE f."followingId" = u.id) AS followers
     FROM "User" u
@@ -39,6 +39,7 @@ async function people(q: string, sort: SearchSort, take: number, offset: number)
     imageUrl: r.avatarUrl,
     createdAt: r.createdAt.toISOString(),
     score: Number(r.score),
+    subscribed: Boolean(r.subscribed),
   }));
 }
 
@@ -148,7 +149,7 @@ export async function searchPage(q: string, type: SearchType, sort: SearchSort, 
   return { items: slice, nextCursor: hasMore ? String(offset + slice.length) : null };
 }
 
-type SuggestPersonRow = { id: string; username: string; displayName: string; avatarUrl: string | null; createdAt: Date; followers: bigint };
+type SuggestPersonRow = { id: string; username: string; displayName: string; avatarUrl: string | null; createdAt: Date; followers: bigint; subscribed: boolean };
 type TrendingShelfRow = { id: string; name: string; category: string; createdAt: Date; username: string; pageId: string; cover: string | null; recent: bigint };
 
 /**
@@ -159,7 +160,7 @@ export async function searchSuggestions(viewerId?: string | null, limit = 6): Pr
   const [people, shelves] = await Promise.all([
     db.$queryRawUnsafe<SuggestPersonRow[]>(
       `
-      SELECT u.id, u.username, u."displayName", u."avatarUrl", u."createdAt",
+      SELECT u.id, u.username, u."displayName", u."avatarUrl", u."createdAt", u.subscribed,
         (SELECT COUNT(*) FROM "Follow" f WHERE f."followingId" = u.id) AS followers
       FROM "User" u
       WHERE u.id <> $1
@@ -198,6 +199,7 @@ export async function searchSuggestions(viewerId?: string | null, limit = 6): Pr
       imageUrl: r.avatarUrl,
       createdAt: r.createdAt.toISOString(),
       score: Number(r.followers),
+      subscribed: Boolean(r.subscribed),
     })),
     collections: shelves.map((r) => ({
       kind: "shelf" as const,

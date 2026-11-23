@@ -2,7 +2,7 @@ import { db } from "../db";
 import { AppError } from "../errors";
 import { canViewItem } from "../visibility";
 import { notify } from "./notifications";
-import { toItemDTO, toPublicUser } from "../mappers";
+import { publicUserPreviewSelect, publicUserSelect, toItemDTO, toPublicUser } from "../mappers";
 import type { CommentDTO, ItemDTO, ReactionDTO } from "../dto";
 import type { Item } from "@prisma/client";
 
@@ -38,7 +38,7 @@ export async function canCommentOnItem(viewerId: string, ownerId: string): Promi
 async function loadVisibleItem(itemId: string, viewerId?: string | null) {
   const item = await db.item.findUnique({
     where: { id: itemId },
-    include: { user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true, socialLinks: true } }, shelf: { include: { page: true } } },
+    include: { user: { select: publicUserSelect }, shelf: { include: { page: true } } },
   });
   if (!item || !canViewItem(item, viewerId)) throw new AppError("NOT_FOUND", "That item is gone.");
   return item;
@@ -60,7 +60,7 @@ export async function toggleLike(userId: string, itemId: string) {
 }
 
 const commentInclude = {
-  user: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true } },
+  user: { select: publicUserPreviewSelect },
   reactions: { select: { emoji: true, userId: true } },
 } as const;
 
@@ -129,7 +129,7 @@ function toCommentDTO(
     body: string;
     createdAt: Date;
     parentId: string | null;
-    user: { id: string; username: string; displayName: string; bio: string; avatarUrl: string | null };
+    user: { id: string; username: string; displayName: string; bio: string; avatarUrl: string | null; subscribed: boolean };
     reactions: Array<{ emoji: string; userId: string }>;
   },
   viewerId?: string | null,

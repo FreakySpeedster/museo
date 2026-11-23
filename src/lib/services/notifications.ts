@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { AppError } from "../errors";
-import { toPublicUser } from "../mappers";
+import { publicUserPreviewSelect, toPublicUser } from "../mappers";
 import type { NotificationDTO, NotificationType } from "../dto";
 
 const PAGE_SIZE = 30;
@@ -30,7 +30,7 @@ export async function listNotifications(userId: string, cursor?: string | null):
     take: PAGE_SIZE + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     include: {
-      actor: { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true } },
+      actor: { select: publicUserPreviewSelect },
       item: { select: { id: true, title: true, imageUrl: true } },
       comment: { select: { body: true } },
     },

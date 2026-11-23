@@ -1,7 +1,7 @@
 import { db } from "../db";
 import { AppError } from "../errors";
 import { firstImageSrc, htmlToText, sanitizeHtml } from "../html";
-import { toPublicUser } from "../mappers";
+import { publicUserPreviewSelect, toPublicUser } from "../mappers";
 import { canViewItem, itemVisibleWhere } from "../visibility";
 import { saveUploadedImage } from "../uploads";
 import type { BlogPostDTO, BlogPostSummaryDTO, BlogStatus, TaggedItemDTO } from "../dto";
@@ -12,7 +12,7 @@ import type { z } from "zod";
 export const BLOG_PAGE_SIZE = 12;
 const EXCERPT_LEN = 220;
 
-const authorSelect = { select: { id: true, username: true, displayName: true, bio: true, avatarUrl: true } } as const;
+const authorSelect = { select: publicUserPreviewSelect } as const;
 const itemSelect = {
   id: true,
   title: true,

@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import { Avatar } from "@/components/ui/Avatar";
+import { UserName } from "@/components/ui/UserName";
 import { reducedMotion } from "@/lib/gsap";
 
 interface Props {
@@ -9,10 +10,11 @@ interface Props {
   displayName: string;
   username: string;
   avatarUrl?: string | null;
+  subscribed?: boolean;
 }
 
 /** Compact identity for the sticky profile bar. Width collapses to 0 when hidden so the bar height never changes. */
-export function CompactIdentity({ visible, displayName, username, avatarUrl }: Props) {
+export function CompactIdentity({ visible, displayName, username, avatarUrl, subscribed }: Props) {
   return (
     <div
       data-testid="compact-identity"
@@ -33,7 +35,14 @@ export function CompactIdentity({ visible, displayName, username, avatarUrl }: P
         >
           <Avatar name={displayName} username={username} avatarUrl={avatarUrl} size={32} className="ring-2 ring-background" />
           <span className="min-w-0 text-left leading-tight">
-            <span className="block truncate text-meta font-semibold tracking-tight">{displayName}</span>
+            <UserName
+              user={{ displayName, username, subscribed }}
+              href={false}
+              interactive={false}
+              size="sm"
+              nameClassName="text-meta font-semibold tracking-tight"
+              className="max-w-full"
+            />
             <span className="block truncate text-caption text-muted">@{username}</span>
           </span>
         </button>
