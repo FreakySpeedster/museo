@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Gem, History, House, LayoutGrid, LogOut, Menu as MenuIcon, NotebookPen, Settings } from "lucide-react";
+import { Gem, History, House, LayoutGrid, LogOut, Menu as MenuIcon, NotebookPen, Settings, Star } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -107,6 +107,7 @@ export function UserMenu({
           <div className="px-3 py-2 text-caption text-muted">@{username}</div>
           {variant !== "icon" && <Link role="menuitem" href="/" className={item} onClick={close}><House className="size-4" aria-hidden /> Home feed</Link>}
           {variant !== "icon" && <Link role="menuitem" href={`/u/${username}`} className={item} onClick={close}><LayoutGrid className="size-4" aria-hidden /> My collections</Link>}
+          <Link role="menuitem" href="/saved" className={item} onClick={close} data-testid="menu-saved"><Star className="size-4" aria-hidden /> Saved</Link>
           <Link role="menuitem" href="/timeline" className={item} onClick={close}><History className="size-4" aria-hidden /> Timeline</Link>
           <Link role="menuitem" href="/blog?view=mine" className={item} onClick={close}><NotebookPen className="size-4" aria-hidden /> Your posts</Link>
           <Link role="menuitem" href="/pricing" className={item} onClick={close}><Gem className="size-4" aria-hidden /> {plus ? "Manage plan" : "Upgrade to Plus"}</Link>

@@ -17,6 +17,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Clock, Eye, MoreHorizontal, Refres
 import { ItemBlogPosts } from "@/components/blog/ItemBlogPosts";
 import { LikeButton } from "@/components/social/LikeButton";
 import { CollectButton } from "@/components/collect/CollectButton";
+import { SaveButton } from "@/components/saves/SaveButton";
 import { CommentThread } from "@/components/social/CommentThread";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { IconButton } from "@/components/ui/IconButton";
@@ -342,6 +343,7 @@ export function ItemBody({
                       <Compass className="size-4" aria-hidden /> Who else has it
                     </Link>
                   )}
+                  <SaveButton itemId={it.id} savedByMe={it.savedByMe} signedIn={Boolean(viewerId)} iconClassName="size-5" onChange={(saved) => onUpdated({ ...it, savedByMe: saved })} />
                   <CollectButton
                     itemId={it.id}
                     ownerId={isOwner ? (viewerId ?? "") : "someone-else"}

@@ -17,6 +17,7 @@ import { TagList } from "@/components/ui/Tags";
 import { useToast } from "@/components/ui/Toast";
 import { LikeButton } from "@/components/social/LikeButton";
 import { CollectButton } from "@/components/collect/CollectButton";
+import { SaveButton } from "@/components/saves/SaveButton";
 import { PostMedia } from "./PostMedia";
 
 const CAPTION_CLAMP = 140;
@@ -161,6 +162,7 @@ export function FeedPost({ entry, viewerId, onPatch, eager }: { entry: TimelineE
           <Send className="size-6" strokeWidth={1.75} aria-hidden />
         </button>
         <span className="flex-1" />
+        <SaveButton itemId={e.id} savedByMe={e.savedByMe} signedIn={signedIn} onChange={(saved) => onPatch({ ...e, savedByMe: saved })} />
         <CollectButton itemId={e.id} ownerId={e.user.id} viewerId={viewerId} collected={e.collected} onChange={(c) => onPatch({ ...e, collected: c })} />
       </div>
 
