@@ -16,6 +16,8 @@ export interface ItemDTO {
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+  /** On the viewer's private Want list (only ever sent to that viewer). */
+  savedByMe?: boolean;
   visibility: "public" | "private";
   /** Unique views from other people (24h dedupe). */
   viewCount: number;

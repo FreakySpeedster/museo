@@ -46,6 +46,7 @@ model User {
   blogPosts              BlogPost[]
   passwordResets         PasswordResetToken[]
   itemReports            ItemReport[]
+  savedItems             SavedItem[]
 }
 
 model Session {
@@ -147,6 +148,7 @@ model Item {
   views         ItemView[]
   blogTags      BlogPostItem[]
   reports       ItemReport[]
+  saves         SavedItem[]
 
   @@index([shelfId, position])
   @@index([userId, createdAt])
@@ -181,6 +183,20 @@ model ItemLike {
   @@index([createdAt])
 }
 
+/// Private "Want" list: items a user saved (their own or anyone's). Only the saver can read it.
+model SavedItem {
+  userId    String
+  itemId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([userId, itemId])
+  @@index([userId, createdAt])
+  @@index([itemId])
+  @@index([createdAt])
+}
+
 model ItemComment {
   id            String            @id @default(cuid())
   itemId        String
@@ -209,6 +225,7 @@ model Follow {
 
   @@id([followerId, followingId])
   @@index([followingId])
+  @@index([createdAt])
 }
 
 /// Pending follow, awaiting the target's approval (when their followPolicy is "request").

@@ -12,7 +12,8 @@ import { Field, FormError, Input, PasswordInput } from "./ui/Field";
 import { Spinner } from "./ui/Button";
 import { useToast } from "./ui/Toast";
 
-export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHint?: boolean }) {
+/** `next`: a same-origin path to return to after signing in (already checked with safeNext on the server). */
+export function AuthForm({ mode, demoHint, next }: { mode: "login" | "signup"; demoHint?: boolean; next?: string | null }) {
   const router = useRouter();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
@@ -49,7 +50,7 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
         : { email: f.get("email"), password: f.get("password") };
       const { user } = await api<{ user: { username: string } }>(`/api/auth/${mode}`, { json: body });
       toast.success(isSignup ? "Welcome to Museo! Let’s start your first collection." : "Welcome back!");
-      router.push(`/u/${user.username}`);
+      router.push(next ?? `/u/${user.username}`);
       router.refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
@@ -61,7 +62,7 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
     setBusy(true);
     try {
       await api("/api/auth/login", { json: { email: "demo@shelfie.app", password: "demo1234" } });
-      router.push("/u/demo");
+      router.push(next ?? "/u/demo");
       router.refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Demo account not available");
@@ -141,7 +142,7 @@ export function AuthForm({ mode, demoHint }: { mode: "login" | "signup"; demoHin
         )}
         <p className="mt-6 text-center text-meta text-muted">
           {isSignup ? "Already have an account?" : "New here?"}{" "}
-          <Link href={isSignup ? "/login" : "/signup"} className="font-medium text-foreground underline decoration-accent decoration-2 underline-offset-4">
+          <Link href={`${isSignup ? "/login" : "/signup"}${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="font-medium text-foreground underline decoration-accent decoration-2 underline-offset-4">
             {isSignup ? "Log in" : "Create an account"}
           </Link>
         </p>

@@ -2,6 +2,7 @@ import { db } from "../db";
 import { AppError } from "../errors";
 import { canViewItem } from "../visibility";
 import { notify } from "./notifications";
+import { savedIdsFor } from "./saves";
 import { publicUserPreviewSelect, publicUserSelect, toItemDTO, toPublicUser } from "../mappers";
 import type { CommentDTO, ItemDTO, ReactionDTO } from "../dto";
 import type { Item } from "@prisma/client";
@@ -9,10 +10,11 @@ import type { Item } from "@prisma/client";
 export async function attachSocial<T extends { id: string }>(items: T[], viewerId?: string | null): Promise<T[]> {
   if (items.length === 0) return items;
   const ids = items.map((i) => i.id);
-  const [likeGroups, commentGroups, myLikes] = await Promise.all([
+  const [likeGroups, commentGroups, myLikes, mySaves] = await Promise.all([
     db.itemLike.groupBy({ by: ["itemId"], where: { itemId: { in: ids } }, _count: { _all: true } }),
     db.itemComment.groupBy({ by: ["itemId"], where: { itemId: { in: ids } }, _count: { _all: true } }),
     viewerId ? db.itemLike.findMany({ where: { userId: viewerId, itemId: { in: ids } }, select: { itemId: true } }) : Promise.resolve([]),
+    savedIdsFor(viewerId, ids),
   ]);
   const likes = new Map(likeGroups.map((g) => [g.itemId, g._count._all]));
   const comments = new Map(commentGroups.map((g) => [g.itemId, g._count._all]));
@@ -22,6 +24,7 @@ export async function attachSocial<T extends { id: string }>(items: T[], viewerI
     likeCount: likes.get(item.id) ?? 0,
     commentCount: comments.get(item.id) ?? 0,
     likedByMe: mine.has(item.id),
+    ...(viewerId ? { savedByMe: mySaves.has(item.id) } : {}),
   }));
 }
 
