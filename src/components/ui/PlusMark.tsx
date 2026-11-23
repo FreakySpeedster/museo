@@ -4,8 +4,8 @@ import clsx from "clsx";
 import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 
-/** Visual size as a fraction of the name font. Header is slightly larger so it reads at ~9px on text-body. */
-const DOT_EM = { sm: "0.45em", md: "0.45em", lg: "0.45em", header: "0.55em" } as const;
+/** Visual size as a fraction of the name font. Header is slightly larger so it reads at ~20px on text-body. */
+const DOT_EM = { sm: "1.2em", md: "1.2em", lg: "1.2em", header: "1.25em" } as const;
 export type PlusMarkSize = keyof typeof DOT_EM;
 
 /** Fallback font size when the mark is not inheriting from a name. */
@@ -15,6 +15,11 @@ const FONT: Record<PlusMarkSize, string> = {
   lg: "text-body",
   header: "text-body sm:text-heading",
 };
+
+/** 12% of the 32-unit diameter. */
+const TICK_STROKE = 3.84;
+/** Check path is nudged slightly left and down so it looks optically centred. */
+const TICK = "M8.2 17.4 13.2 22.2 22.4 10.2";
 
 export function PlusMark({
   size = "md",
@@ -101,7 +106,7 @@ export function PlusMark({
     }
   }
 
-  // Padding grows the hit area to 24px; matching negative margin keeps the layout box at the dot size.
+  // Padding grows the hit area to 24px; matching negative margin keeps the layout box at the badge size.
   const inset = interactive ? `max(0px, calc((24px - ${em}) / 2))` : "0px";
   const box: CSSProperties = {
     width: em,
@@ -109,11 +114,21 @@ export function PlusMark({
     boxSizing: "content-box",
     padding: inset,
     margin: interactive ? `calc(-1 * ${inset})` : 0,
-    // Lift the dot so its center sits near the name's cap / x-height middle, not on the baseline.
-    transform: "translateY(-0.08em)",
   };
 
-  const dot = <span aria-hidden className="block size-full rounded-full bg-plus" />;
+  const badge = (
+    <svg viewBox="0 0 32 32" aria-hidden className="block size-full">
+      <circle cx="16" cy="16" r="16" className="fill-plus" />
+      <path
+        d={TICK}
+        fill="none"
+        stroke="white"
+        strokeWidth={TICK_STROKE}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 
   const shared = {
     ref: wrap as never,
@@ -146,11 +161,11 @@ export function PlusMark({
       }}
       onKeyDown={onKey}
     >
-      {dot}
+      {badge}
     </button>
   ) : (
     <span {...shared} role="img">
-      {dot}
+      {badge}
     </span>
   );
 

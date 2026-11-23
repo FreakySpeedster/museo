@@ -70,9 +70,11 @@ describe("Plus mark markup", () => {
     const html = renderToStaticMarkup(createElement(PlusMark));
     expect(html).toContain("Museo Plus member");
     expect(html).toContain("data-testid=\"plus-mark\"");
-    expect(html).toContain("bg-plus");
-    expect(html).toContain("rounded-full");
-    expect(html).not.toContain("<svg");
+    expect(html).toContain("<svg");
+    expect(html).toContain("viewBox=\"0 0 32 32\"");
+    expect(html).toContain("fill-plus");
+    expect(html).toContain("stroke-linecap=\"round\"");
+    expect(html).toContain("stroke-linejoin=\"round\"");
     expect(html).not.toContain("text-accent");
   });
 

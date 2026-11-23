@@ -34,7 +34,7 @@ export function UserName({
   const to = href === false ? null : (href ?? (user.username ? `/u/${user.username}` : null));
   const markInteractive = interactive ?? href !== false;
   return (
-    <span className={clsx("inline-flex max-w-full items-baseline gap-[0.3em] align-middle", className, nameClassName)}>
+    <span className={clsx("inline-flex max-w-full items-center gap-[0.25em] align-middle", className, nameClassName)}>
       {to ? (
         <Link href={to} className="min-w-0 truncate">
           {text}
