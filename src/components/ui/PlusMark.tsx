@@ -120,7 +120,7 @@ export function PlusMark({
     "data-testid": "plus-mark",
     "aria-label": "Museo Plus member" as const,
     className: clsx(
-      "relative inline-grid shrink-0 place-items-center rounded-full align-middle text-accent after:absolute after:-inset-1.5",
+      "relative inline-grid shrink-0 place-items-center rounded-full align-middle text-plus after:absolute after:-inset-1.5",
       interactive && "cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
       className,
     ),

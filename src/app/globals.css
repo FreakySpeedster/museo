@@ -31,6 +31,7 @@
   --focus: #000000;
   --brand-dot: #855E42;
   --gold: #c48a1a;
+  --plus: #996844;
   --wood-1: #d9b68a;
   --wood-2: #b98f5e;
   --info: #155e8a;
@@ -129,6 +130,7 @@
   --focus: #ffffff;
   --brand-dot: #996844;
   --gold: #e8b84a;
+  --plus: #b47d56;
   --wood-1: #5a4530;
   --wood-2: #3d2e1f;
   --info: #7ec8f0;
@@ -183,6 +185,7 @@
   --color-warning-subtle: var(--warning-subtle);
   --color-focus: var(--focus);
   --color-gold: var(--gold);
+  --color-plus: var(--plus);
   --color-info: var(--info);
   --color-info-subtle: var(--info-subtle);
 

@@ -71,6 +71,8 @@ describe("Plus mark markup", () => {
     expect(html).toContain("Museo Plus member");
     expect(html).toContain("data-testid=\"plus-mark\"");
     expect(html).toContain("viewBox=\"0 0 32 32\"");
+    expect(html).toContain("text-plus");
+    expect(html).not.toContain("text-accent");
   });
 
   it("renders the mark beside a Plus member's name and hides it for free accounts", () => {
