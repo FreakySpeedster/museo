@@ -41,7 +41,7 @@ export function CompactIdentity({ visible, displayName, username, avatarUrl, sub
               interactive={false}
               size="sm"
               nameClassName="text-meta font-semibold tracking-tight"
-              className="max-w-full"
+              className="max-w-full text-meta"
             />
             <span className="block truncate text-caption text-muted">@{username}</span>
           </span>

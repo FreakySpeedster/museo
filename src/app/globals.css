@@ -300,24 +300,7 @@ a:focus-visible,
   border-radius: var(--radius-md);
 }
 
-/* Museo Plus mark: a single twinkle on first paint and hover. */
-@keyframes plus-mark-twinkle {
-  0% { transform: scale(0.78); opacity: 0.4; }
-  45% { transform: scale(1.14); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-.plus-mark-twinkle {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: plus-mark-twinkle 620ms var(--ease-out) 1;
-  pointer-events: none;
-}
-.plus-mark-twinkle-tiny {
-  animation-delay: 90ms;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .plus-mark-twinkle, .plus-mark-twinkle-tiny { animation: none; opacity: 1; }
   html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

@@ -34,15 +34,15 @@ export function UserName({
   const to = href === false ? null : (href ?? (user.username ? `/u/${user.username}` : null));
   const markInteractive = interactive ?? href !== false;
   return (
-    <span className={clsx("inline-flex max-w-full items-center gap-1 align-middle", className)}>
+    <span className={clsx("inline-flex max-w-full items-baseline gap-[0.3em] align-middle", className, nameClassName)}>
       {to ? (
-        <Link href={to} className={clsx("min-w-0 truncate", nameClassName)}>
+        <Link href={to} className="min-w-0 truncate">
           {text}
         </Link>
       ) : (
-        <span className={clsx("min-w-0 truncate", nameClassName)}>{text}</span>
+        <span className="min-w-0 truncate">{text}</span>
       )}
-      {user.subscribed ? <PlusMark size={size} interactive={markInteractive} className="shrink-0" /> : null}
+      {user.subscribed ? <PlusMark size={size} inheritFont interactive={markInteractive} className="shrink-0" /> : null}
     </span>
   );
 }

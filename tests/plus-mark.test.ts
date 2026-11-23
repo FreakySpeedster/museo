@@ -66,12 +66,13 @@ describe("profile and search expose Plus as a public flag", () => {
 });
 
 describe("Plus mark markup", () => {
-  it("labels the Plus sparkle for assistive tech", () => {
+  it("labels the Plus mark for assistive tech", () => {
     const html = renderToStaticMarkup(createElement(PlusMark));
     expect(html).toContain("Museo Plus member");
     expect(html).toContain("data-testid=\"plus-mark\"");
-    expect(html).toContain("viewBox=\"0 0 32 32\"");
-    expect(html).toContain("text-plus");
+    expect(html).toContain("bg-plus");
+    expect(html).toContain("rounded-full");
+    expect(html).not.toContain("<svg");
     expect(html).not.toContain("text-accent");
   });
 

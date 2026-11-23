@@ -261,7 +261,7 @@ function CommentRow({
             user={c.user}
             href={c.user.username ? undefined : false}
             size="sm"
-            nameClassName="font-medium hover:underline"
+            nameClassName="font-medium"
           />
           <span className="ml-1.5 text-muted">{timeAgo(c.createdAt)}</span>
         </p>
