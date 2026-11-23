@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/client";
 import { Avatar } from "./ui/Avatar";
-import { PlusSeal } from "./ui/PlusSeal";
+import { PlusMark } from "./ui/PlusMark";
 import { useToast } from "./ui/Toast";
 
 /** Account menu. `sidebar` = bottom row of the left sidebar; `tab` = avatar tab in the phone bottom bar; `icon` = menu button in the phone top bar on your own profile. */
@@ -90,7 +90,7 @@ export function UserMenu({
           <span className="nav-label min-w-0 pr-3 text-left leading-tight">
             <span className="flex items-center gap-1.5">
               <span className="max-w-28 truncate text-meta font-semibold">{displayName}</span>
-              {plus && <PlusSeal size="sm" interactive={false} />}
+              {plus && <PlusMark size="sm" interactive={false} />}
             </span>
             <span className="block max-w-36 truncate text-caption text-muted">@{username}</span>
           </span>

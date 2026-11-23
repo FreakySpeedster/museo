@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { CompactIdentity } from "@/components/profile/CompactIdentity";
-import { PlusSeal } from "@/components/ui/PlusSeal";
+import { PlusMark } from "@/components/ui/PlusMark";
 import { UserName } from "@/components/ui/UserName";
 import { db } from "@/lib/db";
 import { publicUserPreviewSelect, publicUserSelect, toPublicUser } from "@/lib/mappers";
@@ -65,15 +65,15 @@ describe("profile and search expose Plus as a public flag", () => {
   });
 });
 
-describe("Plus seal markup", () => {
-  it("labels the curator's seal for assistive tech", () => {
-    const html = renderToStaticMarkup(createElement(PlusSeal));
+describe("Plus mark markup", () => {
+  it("labels the Plus sparkle for assistive tech", () => {
+    const html = renderToStaticMarkup(createElement(PlusMark));
     expect(html).toContain("Museo Plus member");
-    expect(html).toContain("data-testid=\"plus-seal\"");
+    expect(html).toContain("data-testid=\"plus-mark\"");
     expect(html).toContain("viewBox=\"0 0 32 32\"");
   });
 
-  it("renders the seal beside a Plus member's name and hides it for free accounts", () => {
+  it("renders the mark beside a Plus member's name and hides it for free accounts", () => {
     const plus = renderToStaticMarkup(
       createElement(UserName, { user: { username: "mei", displayName: "Mei Chen", subscribed: true } }),
     );
@@ -88,7 +88,7 @@ describe("Plus seal markup", () => {
     expect(free).not.toContain("Museo Plus member");
   });
 
-  it("shows the seal in the compact profile identity when the user is on Plus", () => {
+  it("shows the mark in the compact profile identity when the user is on Plus", () => {
     const shown = renderToStaticMarkup(
       createElement(CompactIdentity, {
         visible: true,

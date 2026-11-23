@@ -31,9 +31,6 @@
   --focus: #000000;
   --brand-dot: #855E42;
   --gold: #c48a1a;
-  --gold-deep: #8a5a0a;
-  --gold-bright: #e8c56a;
-  --gold-subtle: #f6edd4;
   --wood-1: #d9b68a;
   --wood-2: #b98f5e;
   --info: #155e8a;
@@ -132,9 +129,6 @@
   --focus: #ffffff;
   --brand-dot: #996844;
   --gold: #e8b84a;
-  --gold-deep: #b8862a;
-  --gold-bright: #f5d98a;
-  --gold-subtle: #3a2e12;
   --wood-1: #5a4530;
   --wood-2: #3d2e1f;
   --info: #7ec8f0;
@@ -189,9 +183,6 @@
   --color-warning-subtle: var(--warning-subtle);
   --color-focus: var(--focus);
   --color-gold: var(--gold);
-  --color-gold-deep: var(--gold-deep);
-  --color-gold-bright: var(--gold-bright);
-  --color-gold-subtle: var(--gold-subtle);
   --color-info: var(--info);
   --color-info-subtle: var(--info-subtle);
 
@@ -306,21 +297,24 @@ a:focus-visible,
   border-radius: var(--radius-md);
 }
 
-/* Museo Plus curator's seal: a single light sweep on first paint and hover. */
-@keyframes plus-seal-shimmer {
-  from { transform: translateX(-18px) skewX(-18deg); }
-  to { transform: translateX(34px) skewX(-18deg); }
+/* Museo Plus mark: a single twinkle on first paint and hover. */
+@keyframes plus-mark-twinkle {
+  0% { transform: scale(0.78); opacity: 0.4; }
+  45% { transform: scale(1.14); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
-.plus-seal-shine {
+.plus-mark-twinkle {
   transform-box: fill-box;
   transform-origin: center;
-  animation: plus-seal-shimmer 720ms var(--ease-out) 1;
-  mix-blend-mode: overlay;
+  animation: plus-mark-twinkle 620ms var(--ease-out) 1;
   pointer-events: none;
+}
+.plus-mark-twinkle-tiny {
+  animation-delay: 90ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .plus-seal-shine { animation: none; opacity: 0; }
+  .plus-mark-twinkle, .plus-mark-twinkle-tiny { animation: none; opacity: 1; }
   html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

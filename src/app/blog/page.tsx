@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Tabs } from "@/components/ui/Tabs";
 import { LinkButton } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
-import { PlusSeal } from "@/components/ui/PlusSeal";
+import { PlusMark } from "@/components/ui/PlusMark";
 
 type Props = { searchParams: Promise<{ view?: string; author?: string }> };
 
@@ -53,7 +53,7 @@ export default async function BlogPage({ searchParams }: Props) {
             {authorUser ? (
               <>
                 <span className="min-w-0 truncate">{authorUser.displayName}&apos;s blog</span>
-                {authorUser.subscribed ? <PlusSeal size="lg" /> : null}
+                {authorUser.subscribed ? <PlusMark size="lg" /> : null}
               </>
             ) : mine ? "Your posts" : "Blog"}
           </h1>

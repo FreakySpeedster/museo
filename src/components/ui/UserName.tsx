@@ -2,9 +2,9 @@
 
 import clsx from "clsx";
 import Link from "next/link";
-import { PlusSeal, type PlusSealSize } from "./PlusSeal";
+import { PlusMark, type PlusMarkSize } from "./PlusMark";
 
-/** The fields a name + Plus seal needs. Wider user objects (PublicUser, ViewerDTO) satisfy this. */
+/** The fields a name + Plus mark needs. Wider user objects (PublicUser, ViewerDTO) satisfy this. */
 export type NameUser = {
   username: string;
   displayName: string;
@@ -24,7 +24,7 @@ export function UserName({
   /** Profile URL. Pass false to render plain text when a parent is already the link, or you're already on the profile. */
   href?: string | false;
   label?: "display" | "username";
-  size?: PlusSealSize;
+  size?: PlusMarkSize;
   /** Defaults to true when this component owns the profile link; false when `href` is false. */
   interactive?: boolean;
   className?: string;
@@ -32,7 +32,7 @@ export function UserName({
 }) {
   const text = label === "username" ? user.username : user.displayName;
   const to = href === false ? null : (href ?? (user.username ? `/u/${user.username}` : null));
-  const sealInteractive = interactive ?? href !== false;
+  const markInteractive = interactive ?? href !== false;
   return (
     <span className={clsx("inline-flex max-w-full items-center gap-1 align-middle", className)}>
       {to ? (
@@ -42,7 +42,7 @@ export function UserName({
       ) : (
         <span className={clsx("min-w-0 truncate", nameClassName)}>{text}</span>
       )}
-      {user.subscribed ? <PlusSeal size={size} interactive={sealInteractive} className="shrink-0" /> : null}
+      {user.subscribed ? <PlusMark size={size} interactive={markInteractive} className="shrink-0" /> : null}
     </span>
   );
 }

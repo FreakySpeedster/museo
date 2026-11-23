@@ -5,28 +5,29 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboard
 import { createPortal } from "react-dom";
 
 const SIZES = { sm: 14, md: 16, lg: 18, header: 22 } as const;
-export type PlusSealSize = keyof typeof SIZES;
+export type PlusMarkSize = keyof typeof SIZES;
 
-/** 8-lobe scalloped seal, drawn at 32×32 and scaled down so it stays crisp at 14–22px. */
-const SEAL =
-  "M16 3.65Q21.55 2.6 24.73 7.27Q29.4 10.45 28.35 16Q29.4 21.55 24.73 24.73Q21.55 29.4 16 28.35Q10.45 29.4 7.27 24.73Q2.6 21.55 3.65 16Q2.6 10.45 7.27 7.27Q10.45 2.6 16 3.65Z";
+/** 4-point sparkle, drawn at 32×32 so it stays crisp and bold at 14–22px. */
+const SPARKLE =
+  "M13.8 2.8C13.8 11.78,17.61 16.4,25 16.4C17.61 16.4,13.8 21.02,13.8 30C13.8 21.02,9.99 16.4,2.6 16.4C9.99 16.4,13.8 11.78,13.8 2.8Z";
+const SPARKLE_TINY =
+  "M25.6 2.6C25.6 5.48,26.97 7.1,29.4 7.1C26.97 7.1,25.6 8.72,25.6 11.6C25.6 8.72,24.23 7.1,21.8 7.1C24.23 7.1,25.6 5.48,25.6 2.6Z";
 
-export function PlusSeal({
+export function PlusMark({
   size = "md",
   interactive = true,
   className,
 }: {
-  size?: PlusSealSize;
-  /** False when the seal sits inside a button or link, so we don't nest interactive elements. */
+  size?: PlusMarkSize;
+  /** False when the mark sits inside a button or link, so we don't nest interactive elements. */
   interactive?: boolean;
   className?: string;
 }) {
   const raw = useId().replace(/:/g, "");
-  const gid = `psg-${raw}`;
-  const tipId = `pst-${raw}`;
+  const tipId = `pmt-${raw}`;
   const px = SIZES[size];
   const [open, setOpen] = useState(false);
-  const [shine, setShine] = useState(true);
+  const [twinkle, setTwinkle] = useState(true);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const wrap = useRef<HTMLButtonElement | HTMLSpanElement | null>(null);
   const tip = useRef<HTMLDivElement>(null);
@@ -43,13 +44,13 @@ export function PlusSeal({
     setPos({ top, left });
   }
 
-  function retriggerShine() {
-    setShine(false);
-    requestAnimationFrame(() => setShine(true));
+  function retriggerTwinkle() {
+    setTwinkle(false);
+    requestAnimationFrame(() => setTwinkle(true));
   }
 
   useEffect(() => {
-    const t = window.setTimeout(() => setShine(false), 900);
+    const t = window.setTimeout(() => setTwinkle(false), 800);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -87,7 +88,7 @@ export function PlusSeal({
     if (!interactive) return;
     window.clearTimeout(hover.current);
     setOpen(true);
-    retriggerShine();
+    retriggerTwinkle();
   }
   function hide() {
     if (!interactive) return;
@@ -98,7 +99,7 @@ export function PlusSeal({
     if (!interactive) return;
     window.clearTimeout(hover.current);
     setOpen((o) => !o);
-    retriggerShine();
+    retriggerTwinkle();
   }
   function onKey(e: ReactKeyboardEvent) {
     if (e.key === "Enter" || e.key === " ") {
@@ -108,54 +109,18 @@ export function PlusSeal({
   }
 
   const svg = (
-    <svg viewBox="0 0 32 32" width={px} height={px} aria-hidden className="block">
-      <defs>
-        <linearGradient id={gid} x1="6" y1="4" x2="26" y2="28" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="var(--gold-bright)" />
-          <stop offset="45%" stopColor="var(--gold)" />
-          <stop offset="100%" stopColor="var(--gold-deep)" />
-        </linearGradient>
-        <linearGradient id={`${gid}-rim`} x1="8" y1="5" x2="24" y2="27" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="var(--gold-bright)" />
-          <stop offset="100%" stopColor="var(--gold-deep)" />
-        </linearGradient>
-        <clipPath id={`${gid}-clip`}>
-          <path d={SEAL} />
-        </clipPath>
-      </defs>
-      <path d={SEAL} fill={`url(#${gid})`} />
-      <path d={SEAL} fill="none" stroke={`url(#${gid}-rim)`} strokeWidth="1.2" />
-      <circle cx="16" cy="16" r="8.4" fill="var(--gold-deep)" opacity="0.2" />
-      <circle cx="16" cy="16" r="8.4" fill="none" stroke="var(--gold-deep)" strokeWidth="0.7" opacity="0.5" />
-      {/* Engraved museum arch */}
-      <path
-        d="M11.05 20.6V13.15C11.05 10.45 13.15 8.55 16 8.55S20.95 10.45 20.95 13.15V20.6h-2.45v-6.35c0-1.45-1.1-2.45-2.5-2.45s-2.5 1-2.5 2.45v6.35Z"
-        fill="var(--gold-subtle)"
-        stroke="var(--gold-deep)"
-        strokeWidth="0.55"
-        strokeLinejoin="round"
-      />
-      {shine && (
-        <rect
-          className="plus-seal-shine"
-          x="-10"
-          y="0"
-          width="16"
-          height="32"
-          fill="var(--gold-bright)"
-          opacity="0.55"
-          clipPath={`url(#${gid}-clip)`}
-        />
-      )}
+    <svg viewBox="0 0 32 32" width={px} height={px} aria-hidden className="block fill-current">
+      <path d={SPARKLE} className={twinkle ? "plus-mark-twinkle" : undefined} />
+      <path d={SPARKLE_TINY} className={twinkle ? "plus-mark-twinkle plus-mark-twinkle-tiny" : undefined} />
     </svg>
   );
 
   const shared = {
     ref: wrap as never,
-    "data-testid": "plus-seal",
+    "data-testid": "plus-mark",
     "aria-label": "Museo Plus member" as const,
     className: clsx(
-      "relative inline-grid shrink-0 place-items-center rounded-full align-middle text-gold after:absolute after:-inset-1.5",
+      "relative inline-grid shrink-0 place-items-center rounded-full align-middle text-accent after:absolute after:-inset-1.5",
       interactive && "cursor-pointer outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
       className,
     ),
